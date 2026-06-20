@@ -1,0 +1,21 @@
+{
+  "name": "onboardai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "tsc -b packages/capture packages/redaction packages/flow packages/overlay packages/eval-harness packages/fixtures packages/cli apps/desktop",
+    "lint": "tsc -p tsconfig.check.json --noEmit --pretty false",
+    "typecheck": "tsc -p tsconfig.check.json --noEmit --pretty false",
+    "test": "pnpm build && node --test tests packages",
+    "flow:validate": "pnpm --filter @onboardai/cli onboardai flow validate flows",
+    "flow:search": "pnpm --filter @onboardai/cli onboardai flow search",
+    "eval:odoo": "pnpm --filter @onboardai/cli onboardai eval run odoo",
+    "eval:notion": "pnpm --filter @onboardai/cli onboardai eval run notion"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.24",
+    "typescript": "5.9.3"
+  }
+}

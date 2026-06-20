@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@onboardai/capture": ["packages/capture/src/index.ts"],
+      "@onboardai/redaction": ["packages/redaction/src/index.ts"],
+      "@onboardai/flow": ["packages/flow/src/index.ts"],
+      "@onboardai/overlay": ["packages/overlay/src/index.ts"],
+      "@onboardai/eval-harness": ["packages/eval-harness/src/index.ts"],
+      "@onboardai/fixtures": ["packages/fixtures/src/index.ts"]
+    }
+  }
+}
