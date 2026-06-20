@@ -9,6 +9,8 @@
     "lint": "tsc -p tsconfig.check.json --noEmit --pretty false",
     "typecheck": "tsc -p tsconfig.check.json --noEmit --pretty false",
     "test": "pnpm build && node --test tests packages",
+    "capture:materialize:odoo": "pnpm build && pnpm --filter @onboardai/cli onboardai capture materialize odoo",
+    "capture:materialize:notion": "pnpm build && pnpm --filter @onboardai/cli onboardai capture materialize notion",
     "capture:normalize:odoo": "pnpm build && pnpm --filter @onboardai/cli onboardai capture normalize odoo",
     "capture:normalize:notion": "pnpm build && pnpm --filter @onboardai/cli onboardai capture normalize notion",
     "flow:validate": "pnpm build && pnpm --filter @onboardai/cli onboardai flow validate flows",

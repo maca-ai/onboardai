@@ -1,9 +1,13 @@
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createNormalizedCaptureManifest,
   createRawCaptureArtifact,
-  normalizeDemonstrationToFlowMarkdown
+  normalizeDemonstrationToFlowMarkdown,
+  writeLocalCaptureBundle
 } from "../dist/index.js";
 
 const demonstration = {
@@ -96,4 +100,31 @@ test("normalized capture manifest records redacted evidence without raw paths", 
   assert.equal(manifest.json.includes("keyboard-event-log"), true);
   assert.equal(manifest.json.includes("mouse-event-log"), true);
   assert.doesNotThrow(() => JSON.parse(manifest.json));
+});
+
+test("local capture adapter writes unsafe raw screen and input artifacts under raw capture paths", () => {
+  const root = mkdtempSync(join(tmpdir(), "onboardai-capture-"));
+
+  try {
+    const bundle = writeLocalCaptureBundle(demonstration, root);
+
+    assert.equal(bundle.captureId, "capture-test-001");
+    assert.equal(bundle.rawArtifacts.every((artifact) => artifact.safety === "unsafe-to-share-local-only"), true);
+    assert.equal(bundle.rawArtifacts.every((artifact) => artifact.gitPolicy === "excluded-from-git"), true);
+
+    for (const artifact of bundle.rawArtifacts) {
+      const absolutePath = join(root, artifact.path);
+      assert.equal(existsSync(absolutePath), true);
+      assert.match(artifact.path, /^captures\/raw\//);
+    }
+
+    const screenRecording = readFileSync(join(root, "captures/raw/test/recording.mov"), "utf8");
+    const mouseLog = readFileSync(join(root, "captures/raw/test/mouse-events.jsonl"), "utf8");
+
+    assert.match(screenRecording, /fixture screen recording marker/);
+    assert.match(screenRecording, /unsafe-to-share=true/);
+    assert.match(mouseLog, /opportunity-card/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

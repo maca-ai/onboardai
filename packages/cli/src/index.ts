@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown } from "@onboardai/capture";
+import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, writeLocalCaptureBundle } from "@onboardai/capture";
 import { runDeterministicEval, type EvalRunResult } from "@onboardai/eval-harness";
 import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
 import { parseFlowMarkdown, searchFlowDocuments, validateFlowMarkdown } from "@onboardai/flow";
@@ -40,6 +40,15 @@ if (args[0] === "flow" && args[1] === "validate") {
     const artifact = normalizeFixtureCapture(tool);
     console.log(`normalized ${tool} capture to ${artifact.path}`);
   }
+} else if (args[0] === "capture" && args[1] === "materialize") {
+  const tool = args[2];
+  if (tool !== "odoo" && tool !== "notion") {
+    console.error("usage: onboardai capture materialize <odoo|notion>");
+    process.exitCode = 1;
+  } else {
+    const bundle = materializeFixtureCapture(tool);
+    console.log(`materialized ${tool} fixture capture: ${bundle.writes.length} raw artifact(s)`);
+  }
 } else if (args[0] === "eval" && args[1] === "run") {
   const tool = args[2];
   if (tool !== "odoo" && tool !== "notion") {
@@ -61,7 +70,7 @@ if (args[0] === "flow" && args[1] === "validate") {
   console.log(`fixture proof ${passed ? "passed" : "failed"}: ${results.filter((result) => result.passed).length}/${results.length} tools`);
   process.exitCode = passed ? 0 : 1;
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -91,6 +100,7 @@ function safeReadDir(root: string): string[] {
 
 function runEval(tool: ToolName): EvalRunResult {
   const fixture = getDeterministicFixture(tool);
+  materializeFixtureCapture(tool);
   normalizeFixtureCapture(tool);
   const markdown = readFileSync(resolveWorkspacePath(fixture.flowPath), "utf8");
   const validation = validateFlowMarkdown(markdown);
@@ -100,6 +110,10 @@ function runEval(tool: ToolName): EvalRunResult {
   }
 
   return runDeterministicEval(parseFlowMarkdown(markdown), fixture);
+}
+
+function materializeFixtureCapture(tool: ToolName): ReturnType<typeof writeLocalCaptureBundle> {
+  return writeLocalCaptureBundle(getSeniorDemonstration(tool), workspaceRoot);
 }
 
 function normalizeFixtureCapture(tool: ToolName): { readonly path: string; readonly markdown: string } {
@@ -285,7 +299,7 @@ ${results.map(renderToolProofSection).join("\n")}
 
 - Real odoo and notion environments are not available in this repo.
 - Native screen recording, frame extraction, keyboard event capture, mouse event capture, and desktop overlay behavior are not implemented yet.
-- The \`.mp4\` eval recording files in fixture runs are local ignored markers, not live target-tool recordings.
+- The raw screen recording and \`.mp4\` eval recording files in fixture runs are local ignored markers, not native target-tool recordings.
 - Fixture proof is not full production reliability and is not full PII compliance.
 
 ## next experiment

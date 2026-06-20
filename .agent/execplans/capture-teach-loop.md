@@ -141,6 +141,9 @@ record observations here.
 - observation: the full fixture proof is now reproducible through one command.
   evidence: `pnpm proof:fixtures` regenerates both normalized flows and manifests, reruns both fixture evals, refreshes reviewer evidence, and writes `evals/reports/two-tool-fixture-proof.md`; latest run passed 2/2 tools.
 
+- observation: the fixture capture adapter can now materialize local raw artifacts under git-ignored paths.
+  evidence: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` each wrote 4 raw artifacts under `captures/raw/...`; `git check-ignore` confirmed the screen recording, keyboard log, and mouse log paths are ignored.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -183,13 +186,17 @@ record observations here.
   rationale: fixture eval success is meaningful but does not prove native capture, desktop overlay behavior, or real odoo/notion held-out evals.
   date-author: 2026-06-20, codex fixture proof milestone.
 
+- decision: local fixture capture materialization writes explicit marker files, not fake native recordings.
+  rationale: this proves local filesystem persistence and raw artifact policy without overstating native screen/input capture support.
+  date-author: 2026-06-20, codex local capture adapter spike.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
 
 current evidence:
 
-- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage.
+- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage; added local fixture capture materialization for raw screen/input marker artifacts.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
@@ -202,7 +209,7 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 21 tests, 21 pass, 0 fail.
+- latest test suite passed: 22 tests, 22 pass, 0 fail.
 
 completion rate:
 
@@ -220,7 +227,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- implement a real local capture adapter spike that writes raw screen recording, keyboard log, mouse log, redacted frame metadata, and a normalized capture manifest using the same artifact contracts, then rerun `pnpm proof:fixtures` against adapter output.
+- implement a native capture adapter spike for one platform target that can write an actual raw screen recording plus keyboard and mouse logs into the same ignored artifact contract, then compare its output to the fixture materialization contract before integrating it with `pnpm proof:fixtures`.
 
 at completion, record:
 
@@ -580,15 +587,26 @@ latest results on 2026-06-20:
 two-tool fixture proof command:
 
 ```sh
+pnpm capture:materialize:odoo
+pnpm capture:materialize:notion
 pnpm proof:fixtures
 ```
 
 latest results on 2026-06-20:
 
+- `pnpm capture:materialize:odoo`: passed; wrote 4 raw fixture artifacts under `captures/raw/odoo-qualify-opportunity/`.
+- `pnpm capture:materialize:notion`: passed; wrote 4 raw fixture artifacts under `captures/raw/notion-update-task-status/`.
+- `git check-ignore` for materialized screen recording, keyboard log, and mouse log paths: passed.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 22 tests, 22 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
 - `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
 - final fixture proof report: `evals/reports/two-tool-fixture-proof.md`.
 - report confirms 6/6 steps completed, 0 below-threshold events, 0 human-help incidents, 0 invented-step incidents, and no api/backend/dom/selector/mcp violations.
 - report explicitly states real-tool proof was not run and remains unproven.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
 ## idempotence-and-recovery
 
@@ -635,3 +653,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: capture normalization added: deterministic senior demonstration records now generate the two `flow.md` files before eval, with redaction and required raw screen/keyboard/mouse artifact metadata.
 - 2026-06-20: normalized capture manifests added: each generated fixture flow now has a shareable manifest under `captures/normalized/` with redacted frame paths, input evidence, raw artifact kind/safety summaries, and no raw capture paths.
 - 2026-06-20: two-tool fixture proof command added: `pnpm proof:fixtures` refreshes both fixture evals and writes `evals/reports/two-tool-fixture-proof.md` with confirmed fixture capability and unproven real-tool limits.
+- 2026-06-20: local fixture capture materialization added: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` write ignored raw marker artifacts for screen recording, keyboard logs, mouse logs, and senior notes.

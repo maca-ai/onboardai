@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { redactShareableText } from "@onboardai/redaction";
 
 export type CaptureInputKind = "screen-recording" | "keyboard-event-log" | "mouse-event-log" | "human-context-notes";
@@ -131,7 +133,43 @@ export interface NormalizedCaptureManifestArtifact {
   readonly json: string;
 }
 
+export interface LocalCaptureWrite {
+  readonly path: string;
+  readonly content: string;
+}
+
+export interface LocalCaptureBundle {
+  readonly captureId: string;
+  readonly rawArtifacts: readonly RawCaptureArtifact[];
+  readonly writes: readonly LocalCaptureWrite[];
+}
+
 export const belowConfidenceMessage = "screen state not recognized. ask a human or restart this step.";
+
+export function createLocalCaptureBundle(demonstration: SeniorDemonstration): LocalCaptureBundle {
+  validateDemonstration(demonstration);
+
+  return {
+    captureId: demonstration.captureId,
+    rawArtifacts: demonstration.rawArtifacts,
+    writes: demonstration.rawArtifacts.map((artifact) => ({
+      path: artifact.path,
+      content: rawArtifactContent(demonstration, artifact)
+    }))
+  };
+}
+
+export function writeLocalCaptureBundle(demonstration: SeniorDemonstration, rootDir: string): LocalCaptureBundle {
+  const bundle = createLocalCaptureBundle(demonstration);
+
+  for (const write of bundle.writes) {
+    const absolutePath = resolve(rootDir, write.path);
+    mkdirSync(dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, write.content);
+  }
+
+  return bundle;
+}
 
 export function normalizeDemonstrationToFlowMarkdown(demonstration: SeniorDemonstration, outputPath: string): NormalizedFlowArtifact {
   validateDemonstration(demonstration);
@@ -374,4 +412,32 @@ function redactManifestString(
   replacements.push(...redacted.replacements);
   businessSensitiveTags.push(...redacted.businessSensitiveTags);
   return redacted.text;
+}
+
+function rawArtifactContent(demonstration: SeniorDemonstration, artifact: RawCaptureArtifact): string {
+  if (artifact.kind === "screen-recording") {
+    return [
+      "fixture screen recording marker",
+      `capture-id=${demonstration.captureId}`,
+      `flow-id=${demonstration.flowId}`,
+      "unsafe-to-share=true",
+      "note=this marker is not a native OS screen recording"
+    ].join("\n");
+  }
+
+  if (artifact.kind === "keyboard-event-log") {
+    return `${demonstration.steps
+      .flatMap((step) => step.inputEvents.filter((event) => event.kind === "keyboard").map((event) => ({ stepId: step.stepId, ...event })))
+      .map((event) => JSON.stringify(event))
+      .join("\n")}\n`;
+  }
+
+  if (artifact.kind === "mouse-event-log") {
+    return `${demonstration.steps
+      .flatMap((step) => step.inputEvents.filter((event) => event.kind === "mouse").map((event) => ({ stepId: step.stepId, ...event })))
+      .map((event) => JSON.stringify(event))
+      .join("\n")}\n`;
+  }
+
+  return demonstration.humanNotes ? `${demonstration.humanNotes}\n` : "";
 }

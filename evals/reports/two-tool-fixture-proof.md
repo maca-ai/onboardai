@@ -85,7 +85,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 
 - Real odoo and notion environments are not available in this repo.
 - Native screen recording, frame extraction, keyboard event capture, mouse event capture, and desktop overlay behavior are not implemented yet.
-- The `.mp4` eval recording files in fixture runs are local ignored markers, not live target-tool recordings.
+- The raw screen recording and `.mp4` eval recording files in fixture runs are local ignored markers, not native target-tool recordings.
 - Fixture proof is not full production reliability and is not full PII compliance.
 
 ## next experiment
