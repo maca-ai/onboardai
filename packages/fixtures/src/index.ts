@@ -1,3 +1,5 @@
+import { createRawCaptureArtifact, type SeniorDemonstration } from "@onboardai/capture";
+
 export type ToolName = "odoo" | "notion";
 
 export interface ScreenRegion {
@@ -153,4 +155,139 @@ export const deterministicFixtures: Record<ToolName, DeterministicFixture> = {
 
 export function getDeterministicFixture(tool: ToolName): DeterministicFixture {
   return deterministicFixtures[tool];
+}
+
+export const seniorDemonstrations: Record<ToolName, SeniorDemonstration> = {
+  odoo: {
+    flowId: "odoo-qualify-opportunity",
+    flowVersion: 1,
+    tool: "odoo",
+    toolSurface: "browser-or-pwa",
+    captureId: "capture-fixture-odoo-qualify-001",
+    createdAt: "2026-06-20t00:00:00z",
+    createdByRole: "senior-demonstrator",
+    terminalBusinessState: "demo opportunity visible with stage qualified",
+    dataClass: "clean-demo",
+    rawArtifacts: [
+      createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "screen-recording", "captures/raw/odoo-qualify-opportunity/recording.mov"),
+      createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "keyboard-event-log", "captures/raw/odoo-qualify-opportunity/keyboard-events.jsonl"),
+      createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "mouse-event-log", "captures/raw/odoo-qualify-opportunity/mouse-events.jsonl"),
+      createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "human-context-notes", "captures/raw/odoo-qualify-opportunity/senior-notes.md")
+    ],
+    frames: deterministicFixtures.odoo.observations.map((observation) => ({
+      frameId: observation.stateId,
+      redactedFramePath: observation.frame,
+      visibleText: observation.visibleText
+    })),
+    anchors: deterministicFixtures.odoo.observations.flatMap((observation) =>
+      observation.regions.map((region) => ({ ...region, frameId: observation.stateId, anchorId: region["anchor-id"] }))
+    ),
+    steps: [
+      {
+        stepId: "step-001",
+        title: "open the opportunity",
+        instructionText: "select the opportunity card named demo opportunity.",
+        expectedFrameId: "pipeline",
+        expectedVisibleText: ["pipeline", "demo opportunity", "new"],
+        highlightAnchorId: "opportunity-card",
+        userAction: { kind: "click", targetAnchorId: "opportunity-card", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "opportunity-card" }],
+        successVisibleText: ["demo opportunity", "stage"],
+        terminal: false
+      },
+      {
+        stepId: "step-002",
+        title: "choose qualified stage",
+        instructionText: "select the qualified stage.",
+        expectedFrameId: "opportunity-detail",
+        expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+        highlightAnchorId: "qualified-stage",
+        userAction: { kind: "click", targetAnchorId: "qualified-stage", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "qualified-stage" }],
+        successVisibleText: ["demo opportunity", "qualified", "unsaved changes"],
+        terminal: false
+      },
+      {
+        stepId: "step-003",
+        title: "save the qualified stage",
+        instructionText: "save the opportunity so the qualified stage remains visible.",
+        expectedFrameId: "qualified-unsaved",
+        expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+        highlightAnchorId: "save-button",
+        userAction: { kind: "click", targetAnchorId: "save-button", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "save-button" }],
+        successVisibleText: ["demo opportunity", "qualified", "saved"],
+        terminal: true
+      }
+    ],
+    humanNotes: "fixture senior demonstrated qualifying the visible demo opportunity."
+  },
+  notion: {
+    flowId: "notion-update-task-status",
+    flowVersion: 1,
+    tool: "notion",
+    toolSurface: "desktop-or-browser",
+    captureId: "capture-fixture-notion-ready-review-001",
+    createdAt: "2026-06-20t00:00:00z",
+    createdByRole: "senior-demonstrator",
+    terminalBusinessState: "demo task visible with status ready for review",
+    dataClass: "clean-demo",
+    rawArtifacts: [
+      createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "screen-recording", "captures/raw/notion-update-task-status/recording.mov"),
+      createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "keyboard-event-log", "captures/raw/notion-update-task-status/keyboard-events.jsonl"),
+      createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "mouse-event-log", "captures/raw/notion-update-task-status/mouse-events.jsonl"),
+      createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "human-context-notes", "captures/raw/notion-update-task-status/senior-notes.md")
+    ],
+    frames: deterministicFixtures.notion.observations.map((observation) => ({
+      frameId: observation.stateId,
+      redactedFramePath: observation.frame,
+      visibleText: observation.visibleText
+    })),
+    anchors: deterministicFixtures.notion.observations.flatMap((observation) =>
+      observation.regions.map((region) => ({ ...region, frameId: observation.stateId, anchorId: region["anchor-id"] }))
+    ),
+    steps: [
+      {
+        stepId: "step-001",
+        title: "open the demo task",
+        instructionText: "select the row for demo task.",
+        expectedFrameId: "task-list",
+        expectedVisibleText: ["project tasks", "demo task", "status: not started"],
+        highlightAnchorId: "demo-task-row",
+        userAction: { kind: "click", targetAnchorId: "demo-task-row", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "demo-task-row" }],
+        successVisibleText: ["demo task", "status", "not started"],
+        terminal: false
+      },
+      {
+        stepId: "step-002",
+        title: "open status choices",
+        instructionText: "open the status property.",
+        expectedFrameId: "task-page",
+        expectedVisibleText: ["demo task", "status", "not started", "ready for review"],
+        highlightAnchorId: "status-property",
+        userAction: { kind: "click", targetAnchorId: "status-property", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "status-property" }],
+        successVisibleText: ["status", "ready for review"],
+        terminal: false
+      },
+      {
+        stepId: "step-003",
+        title: "choose ready for review",
+        instructionText: "select ready for review.",
+        expectedFrameId: "status-menu",
+        expectedVisibleText: ["status", "not started", "ready for review"],
+        highlightAnchorId: "ready-for-review-option",
+        userAction: { kind: "click", targetAnchorId: "ready-for-review-option", manualOnly: true },
+        inputEvents: [{ kind: "mouse", event: "click", anchorId: "ready-for-review-option" }],
+        successVisibleText: ["demo task", "status", "ready for review"],
+        terminal: true
+      }
+    ],
+    humanNotes: "fixture senior demonstrated changing the visible demo task status."
+  }
+};
+
+export function getSeniorDemonstration(tool: ToolName): SeniorDemonstration {
+  return seniorDemonstrations[tool];
 }

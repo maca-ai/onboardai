@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deterministicFixtures, notionLikeFixture, odooLikeFixture } from "../dist/index.js";
+import { deterministicFixtures, getSeniorDemonstration, notionLikeFixture, odooLikeFixture } from "../dist/index.js";
 
 test("clean odoo-like and notion-like fixture contracts exist", () => {
   assert.equal(odooLikeFixture.tool, "odoo");
@@ -16,4 +16,17 @@ test("deterministic fixtures provide three manual screen-observation transitions
   assert.equal(deterministicFixtures.notion.transitions.length, 3);
   assert.equal(deterministicFixtures.odoo.transitions.every((transition) => transition.action.kind === "click"), true);
   assert.equal(deterministicFixtures.notion.transitions.every((transition) => transition.action.kind === "click"), true);
+});
+
+test("fixture senior demonstrations include required screen-plus-input raw artifacts", () => {
+  for (const tool of ["odoo", "notion"]) {
+    const demonstration = getSeniorDemonstration(tool);
+    const rawKinds = demonstration.rawArtifacts.map((artifact) => artifact.kind);
+
+    assert.equal(rawKinds.includes("screen-recording"), true);
+    assert.equal(rawKinds.includes("keyboard-event-log"), true);
+    assert.equal(rawKinds.includes("mouse-event-log"), true);
+    assert.equal(demonstration.steps.length, 3);
+    assert.equal(demonstration.steps.every((step) => step.inputEvents.length > 0), true);
+  }
 });

@@ -90,6 +90,7 @@ do not weaken any constraint to make an eval pass.
 - [x] build local flow library search as library function
 - [x] expose flow search as cli command
 - [x] build capture artifact model
+- [x] build senior-demonstration to normalized `flow.md` generation
 - [x] build redaction pipeline for forbidden persisted secrets
 - [x] build screen-state matcher with confidence output
 - [x] build overlay guidance renderer contract
@@ -127,6 +128,12 @@ record observations here.
 - observation: fixture eval evidence can be generated without any target-tool privileged access.
   evidence: `pnpm eval:odoo` passed 3/3 steps and `pnpm eval:notion` passed 3/3 steps using only fixture screen observations and simulated low-level fixture input transitions.
 
+- observation: generated flows must preserve the `flow.md` schema's kebab-case field names.
+  evidence: first generated-flow test run failed because the normalizer emitted `targetAnchorId`; fixing it to emit `target-anchor-id` allowed the harness to match manual actions and pass both fixture evals.
+
+- observation: capture normalization can be verified without real target tools by using deterministic senior demonstration records.
+  evidence: `pnpm capture:normalize:odoo` and `pnpm capture:normalize:notion` generated the two committed `flow.md` files from raw artifact metadata, redacted frame references, mouse input events, keyboard log artifacts, and human notes.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -157,13 +164,17 @@ record observations here.
   rationale: this keeps proof inside the allowed boundary: the harness reads `flow.md`, compares visible text in fixture observations, asks the overlay for text/highlight guidance, and applies only deterministic fixture input primitives with no DOM, selectors, APIs, backend access, MCP, LLM inference, embeddings, or vector database.
   date-author: 2026-06-20, codex fixture eval milestone.
 
+- decision: fixture eval commands regenerate `flow.md` from senior demonstration records before running.
+  rationale: this makes the proof exercise capture-to-normalized-flow behavior instead of relying on static hand-authored flow files.
+  date-author: 2026-06-20, codex normalization milestone.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
 
 current evidence:
 
-- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored.
+- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
@@ -173,9 +184,9 @@ current evidence:
 
 what the eval showed:
 
-- odoo fixture teaching eval passed: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- notion fixture teaching eval passed: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 16 tests, 16 pass, 0 fail.
+- odoo fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
+- notion fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
+- latest test suite passed: 20 tests, 20 pass, 0 fail.
 
 completion rate:
 
@@ -193,7 +204,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- add a capture-normalization layer that converts a senior fixture demonstration record into `flow.md`, including keyboard/mouse event logs and redacted frame references, then rerun both fixture evals from generated flows instead of hand-authored flows.
+- add generated redacted frame metadata artifacts under `captures/normalized/` for each flow, then make eval reports cite the normalized capture manifest alongside `flow.md`.
 
 at completion, record:
 
@@ -492,6 +503,33 @@ evals/reports/notion-fixture-notion-ready-review-001.md
 evals/reviewer-checklists/notion-fixture-notion-ready-review-001.md
 ```
 
+capture-normalization milestone commands:
+
+```sh
+pnpm capture:normalize:odoo
+pnpm capture:normalize:notion
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+pnpm eval:odoo
+pnpm eval:notion
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures --glob "!**/*.mp4" -i
+```
+
+latest results on 2026-06-20:
+
+- `pnpm capture:normalize:odoo`: passed; generated `flows/odoo/qualify-opportunity.flow.md`.
+- `pnpm capture:normalize:notion`: passed; generated `flows/notion/update-task-status.flow.md`.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- first `pnpm test` after normalization: failed because generated steps used `targetAnchorId` instead of `target-anchor-id`; fixed serializer.
+- second `pnpm test`: passed; 20 tests, 20 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm eval:odoo`: passed; 3/3 steps.
+- `pnpm eval:notion`: passed; 3/3 steps.
+- artifact secret scan across `flows`, `evals`, and `captures`: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -534,3 +572,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: initial execplan created from project interview decisions.
 - 2026-06-20: milestone 1 scaffold added: pnpm TypeScript workspace, package skeletons, baseline verification scripts, capture/redaction/flow/overlay/eval/fixture/cli contracts, teach decision note, and passing baseline tests.
 - 2026-06-20: fixture eval loop added: two three-step flow fixtures, deterministic screen-state matcher, explicit manual fixture transitions, CLI eval evidence writer, odoo/notion fixture reports, and reviewer checklists.
+- 2026-06-20: capture normalization added: deterministic senior demonstration records now generate the two `flow.md` files before eval, with redaction and required raw screen/keyboard/mouse artifact metadata.

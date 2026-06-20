@@ -17,10 +17,17 @@ importers:
 
   apps/desktop: {}
 
-  packages/capture: {}
+  packages/capture:
+    dependencies:
+      '@onboardai/redaction':
+        specifier: workspace:*
+        version: link:../redaction
 
   packages/cli:
     dependencies:
+      '@onboardai/capture':
+        specifier: workspace:*
+        version: link:../capture
       '@onboardai/eval-harness':
         specifier: workspace:*
         version: link:../eval-harness
@@ -43,7 +50,11 @@ importers:
         specifier: workspace:*
         version: link:../overlay
 
-  packages/fixtures: {}
+  packages/fixtures:
+    dependencies:
+      '@onboardai/capture':
+        specifier: workspace:*
+        version: link:../capture
 
   packages/flow:
     dependencies:

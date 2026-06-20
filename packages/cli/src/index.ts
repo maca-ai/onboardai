@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { normalizeDemonstrationToFlowMarkdown } from "@onboardai/capture";
 import { runDeterministicEval, type EvalRunResult } from "@onboardai/eval-harness";
-import { getDeterministicFixture, type ToolName } from "@onboardai/fixtures";
+import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
 import { parseFlowMarkdown, searchFlowDocuments, validateFlowMarkdown } from "@onboardai/flow";
 
 const args = process.argv.slice(2);
@@ -30,6 +31,15 @@ if (args[0] === "flow" && args[1] === "validate") {
   const query = args.slice(2).join(" ");
   const files = listFlowFiles(resolveWorkspacePath("flows")).map((path) => ({ path, content: readFileSync(path, "utf8") }));
   console.log(searchFlowDocuments(files, query).join("\n"));
+} else if (args[0] === "capture" && args[1] === "normalize") {
+  const tool = args[2];
+  if (tool !== "odoo" && tool !== "notion") {
+    console.error("usage: onboardai capture normalize <odoo|notion>");
+    process.exitCode = 1;
+  } else {
+    const artifact = normalizeFixtureCapture(tool);
+    console.log(`normalized ${tool} capture to ${artifact.path}`);
+  }
 } else if (args[0] === "eval" && args[1] === "run") {
   const tool = args[2];
   if (tool !== "odoo" && tool !== "notion") {
@@ -42,7 +52,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = result.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | eval run <odoo|notion>");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture normalize <odoo|notion> | eval run <odoo|notion>");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -72,6 +82,7 @@ function safeReadDir(root: string): string[] {
 
 function runEval(tool: ToolName): EvalRunResult {
   const fixture = getDeterministicFixture(tool);
+  normalizeFixtureCapture(tool);
   const markdown = readFileSync(resolveWorkspacePath(fixture.flowPath), "utf8");
   const validation = validateFlowMarkdown(markdown);
 
@@ -80,6 +91,19 @@ function runEval(tool: ToolName): EvalRunResult {
   }
 
   return runDeterministicEval(parseFlowMarkdown(markdown), fixture);
+}
+
+function normalizeFixtureCapture(tool: ToolName): { readonly path: string; readonly markdown: string } {
+  const fixture = getDeterministicFixture(tool);
+  const demonstration = getSeniorDemonstration(tool);
+  const artifact = normalizeDemonstrationToFlowMarkdown(demonstration, fixture.flowPath);
+  const outputPath = resolveWorkspacePath(artifact.path);
+  const outputDir = dirname(outputPath);
+
+  mkdirSync(outputDir, { recursive: true });
+  writeFileSync(outputPath, artifact.markdown);
+
+  return { path: artifact.path, markdown: artifact.markdown };
 }
 
 function writeEvalEvidence(result: EvalRunResult): void {

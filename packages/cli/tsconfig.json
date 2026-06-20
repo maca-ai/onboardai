@@ -4,6 +4,6 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "references": [{ "path": "../eval-harness" }, { "path": "../fixtures" }, { "path": "../flow" }],
+  "references": [{ "path": "../capture" }, { "path": "../eval-harness" }, { "path": "../fixtures" }, { "path": "../flow" }],
   "include": ["src/**/*.ts"]
 }

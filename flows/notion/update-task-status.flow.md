@@ -15,20 +15,25 @@ supports-overlay-highlights: true
 input-automation-allowed: false
 ---
 
-# update task status
+# notion update task status
 
-The senior demonstrator opened a clean notion-like task list, selected the demo task, changed the status, and confirmed the visible page state.
+This normalized flow was generated from one senior demonstration using screen recording, keyboard and mouse event logs, and optional senior notes. Raw capture artifacts are unsafe-to-share and excluded from git; anchors reference redacted frame paths only.
 
 ## step 1
 
-Open the demo task from the project task list.
+select the row for demo task.
 
 ```json
 {
   "step-id": "step-001",
   "title": "open the demo task",
   "expected-state": {
-    "visible-text": ["project tasks", "demo task", "status: not started"],
+    "visible-text": [
+      "project tasks",
+      "demo task",
+      "status: not started"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "demo-task-row",
@@ -43,8 +48,16 @@ Open the demo task from the project task list.
   "instruction": {
     "text": "select the row for demo task.",
     "highlight-anchor-id": "demo-task-row",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -52,7 +65,11 @@ Open the demo task from the project task list.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["demo task", "status", "not started"],
+    "visible-text": [
+      "demo task",
+      "status",
+      "not started"
+    ],
     "terminal": false
   },
   "fallback": {
@@ -64,14 +81,20 @@ Open the demo task from the project task list.
 
 ## step 2
 
-Open the status property.
+open the status property.
 
 ```json
 {
   "step-id": "step-002",
   "title": "open status choices",
   "expected-state": {
-    "visible-text": ["demo task", "status", "not started", "ready for review"],
+    "visible-text": [
+      "demo task",
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "status-property",
@@ -86,8 +109,16 @@ Open the status property.
   "instruction": {
     "text": "open the status property.",
     "highlight-anchor-id": "status-property",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -95,7 +126,10 @@ Open the status property.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["status", "ready for review"],
+    "visible-text": [
+      "status",
+      "ready for review"
+    ],
     "terminal": false
   },
   "fallback": {
@@ -107,14 +141,19 @@ Open the status property.
 
 ## step 3
 
-Choose ready for review.
+select ready for review.
 
 ```json
 {
   "step-id": "step-003",
   "title": "choose ready for review",
   "expected-state": {
-    "visible-text": ["status", "not started", "ready for review"],
+    "visible-text": [
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "ready-for-review-option",
@@ -129,8 +168,16 @@ Choose ready for review.
   "instruction": {
     "text": "select ready for review.",
     "highlight-anchor-id": "ready-for-review-option",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -138,7 +185,11 @@ Choose ready for review.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["demo task", "status", "ready for review"],
+    "visible-text": [
+      "demo task",
+      "status",
+      "ready for review"
+    ],
     "terminal": true
   },
   "fallback": {
@@ -148,10 +199,16 @@ Choose ready for review.
 }
 ```
 
+
+## senior notes
+
+fixture senior demonstrated changing the visible demo task status.
+
 ## evidence
 
-- redacted frames: `captures/redacted/notion-update-task-status/`
-- eval run: `evals/runs/notion/fixture-notion-ready-review-001/`
+- raw capture: local unsafe artifacts under ignored capture paths
+- redacted frames: captures/redacted/notion-update-task-status
+- input logs: keyboard and mouse event logs captured in raw artifacts
 
 ## safety
 

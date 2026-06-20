@@ -15,20 +15,25 @@ supports-overlay-highlights: true
 input-automation-allowed: false
 ---
 
-# qualify opportunity
+# odoo qualify opportunity
 
-The senior demonstrator opened a clean odoo-like pipeline, selected the demo opportunity, moved it to qualified, and saved the visible stage change.
+This normalized flow was generated from one senior demonstration using screen recording, keyboard and mouse event logs, and optional senior notes. Raw capture artifacts are unsafe-to-share and excluded from git; anchors reference redacted frame paths only.
 
 ## step 1
 
-Select the demo opportunity from the pipeline.
+select the opportunity card named demo opportunity.
 
 ```json
 {
   "step-id": "step-001",
   "title": "open the opportunity",
   "expected-state": {
-    "visible-text": ["pipeline", "demo opportunity", "new"],
+    "visible-text": [
+      "pipeline",
+      "demo opportunity",
+      "new"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "opportunity-card",
@@ -43,8 +48,16 @@ Select the demo opportunity from the pipeline.
   "instruction": {
     "text": "select the opportunity card named demo opportunity.",
     "highlight-anchor-id": "opportunity-card",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -52,7 +65,10 @@ Select the demo opportunity from the pipeline.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["demo opportunity", "stage"],
+    "visible-text": [
+      "demo opportunity",
+      "stage"
+    ],
     "terminal": false
   },
   "fallback": {
@@ -64,14 +80,20 @@ Select the demo opportunity from the pipeline.
 
 ## step 2
 
-Change the opportunity stage to qualified.
+select the qualified stage.
 
 ```json
 {
   "step-id": "step-002",
   "title": "choose qualified stage",
   "expected-state": {
-    "visible-text": ["demo opportunity", "stage", "new", "qualified"],
+    "visible-text": [
+      "demo opportunity",
+      "stage",
+      "new",
+      "qualified"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "qualified-stage",
@@ -86,8 +108,16 @@ Change the opportunity stage to qualified.
   "instruction": {
     "text": "select the qualified stage.",
     "highlight-anchor-id": "qualified-stage",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -95,7 +125,11 @@ Change the opportunity stage to qualified.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["demo opportunity", "qualified", "unsaved changes"],
+    "visible-text": [
+      "demo opportunity",
+      "qualified",
+      "unsaved changes"
+    ],
     "terminal": false
   },
   "fallback": {
@@ -107,14 +141,20 @@ Change the opportunity stage to qualified.
 
 ## step 3
 
-Save the visible qualified stage.
+save the opportunity so the qualified stage remains visible.
 
 ```json
 {
   "step-id": "step-003",
   "title": "save the qualified stage",
   "expected-state": {
-    "visible-text": ["demo opportunity", "stage", "qualified", "unsaved changes"],
+    "visible-text": [
+      "demo opportunity",
+      "stage",
+      "qualified",
+      "unsaved changes"
+    ],
+    "forbidden-visible-secrets": true,
     "screen-region-hints": [
       {
         "anchor-id": "save-button",
@@ -129,8 +169,16 @@ Save the visible qualified stage.
   "instruction": {
     "text": "save the opportunity so the qualified stage remains visible.",
     "highlight-anchor-id": "save-button",
-    "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "allowed-guidance": [
+      "text",
+      "highlight"
+    ],
+    "forbidden-guidance": [
+      "click",
+      "type",
+      "submit",
+      "automate"
+    ]
   },
   "user-action": {
     "kind": "click",
@@ -138,7 +186,11 @@ Save the visible qualified stage.
     "manual-only": true
   },
   "success-condition": {
-    "visible-text": ["demo opportunity", "qualified", "saved"],
+    "visible-text": [
+      "demo opportunity",
+      "qualified",
+      "saved"
+    ],
     "terminal": true
   },
   "fallback": {
@@ -148,10 +200,16 @@ Save the visible qualified stage.
 }
 ```
 
+
+## senior notes
+
+fixture senior demonstrated qualifying the visible demo opportunity.
+
 ## evidence
 
-- redacted frames: `captures/redacted/odoo-qualify-opportunity/`
-- eval run: `evals/runs/odoo/fixture-odoo-qualify-001/`
+- raw capture: local unsafe artifacts under ignored capture paths
+- redacted frames: captures/redacted/odoo-qualify-opportunity
+- input logs: keyboard and mouse event logs captured in raw artifacts
 
 ## safety
 
