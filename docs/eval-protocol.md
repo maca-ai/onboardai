@@ -70,6 +70,7 @@ each run should write:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/reviewer-checklists/<tool>-<run-id>.md
 /evals/reports/<tool>-<run-id>.md
+/evals/reports/fixture-proof-audit.json
 ```
 
 ## required metrics
@@ -130,6 +131,8 @@ a tool eval fails if any of these happen:
 the project goal passes only when both odoo and notion evals pass.
 
 if one passes and the other fails, the project is not complete.
+
+fixture proof runs must also write a machine-readable proof audit that verifies both required tools, completion, held-out eval frames, terminal visible text, no human help, no invented steps, no privileged access, and reviewer signoff.
 
 ## failure log template
 

@@ -105,6 +105,7 @@ do not weaken any constraint to make an eval pass.
 - [x] collect fixture senior-review checklist evidence
 - [x] separate fixture senior capture observations from held-out eval observations
 - [x] require explicit terminal visible text for fixture eval pass
+- [x] add machine-readable two-tool fixture proof audit
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -155,6 +156,9 @@ record observations here.
 
 - observation: terminal business state now depends on explicit visible text, not tool-specific keyword shortcuts.
   evidence: `EvalRunResult` records `terminalExpectedVisibleText` and `terminalMissingVisibleText`; a regression test removes terminal-only text from the held-out final observation and the eval fails even after all three step transitions complete.
+
+- observation: the two-tool fixture proof now has a machine-readable audit gate.
+  evidence: `pnpm proof:fixtures` writes `evals/reports/fixture-proof-audit.json` with `passed: true`, required tools `odoo` and `notion`, 6/6 steps completed, zero human-help incidents, zero invented-step incidents, zero privileged-access violations, and no findings.
 
 ## decision-log
 
@@ -210,6 +214,10 @@ record observations here.
   rationale: the v0 proof should exercise a generated `flow.md` against a separate first-time-user screen sequence, rather than replaying the same frame paths that produced the flow.
   date-author: 2026-06-20, codex held-out fixture proof.
 
+- decision: make `proof fixtures` fail from a structured audit, not only per-tool boolean results.
+  rationale: a single audit object makes the proof contract explicit across both tools and catches missing held-out evidence, terminal visible text, reviewer signoff, human-help, invented-step, or privileged-access invariants before the Markdown report can claim success.
+  date-author: 2026-06-20, codex fixture proof audit.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -220,16 +228,16 @@ current evidence:
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
-- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results.
+- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
-- cli changes: added `@onboardai/cli` commands for flow validation/search and deterministic eval evidence generation.
-- proof changes: added `pnpm proof:fixtures` and `evals/reports/two-tool-fixture-proof.md` to compare both fixture evals and record limitations.
+- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, and audited two-tool fixture proof.
+- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, and `evals/reports/fixture-proof-audit.json` to compare both fixture evals, machine-check the proof invariants, and record limitations.
 
 what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 27 tests, 27 pass, 0 fail.
+- latest test suite passed: 29 tests, 29 pass, 0 fail.
 
 completion rate:
 
@@ -681,6 +689,27 @@ latest results on 2026-06-20:
 - forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+machine-readable fixture proof audit command:
+
+```sh
+pnpm build
+node --test packages/eval-harness
+pnpm proof:fixtures
+```
+
+latest results on 2026-06-20:
+
+- first targeted `node --test packages/eval-harness`: failed because it raced a parallel build and loaded stale `dist` output; no code change was made for that failure.
+- second targeted `node --test packages/eval-harness`: passed; 8 tests, 8 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `evals/reports/fixture-proof-audit.json`: `passed` true, tools audited `odoo` and `notion`, 6/6 steps completed, zero below-threshold events, zero human-help incidents, zero invented-step incidents, zero privileged-access violations, and no findings.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 29 tests, 29 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -729,3 +758,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: local fixture capture materialization added: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` write ignored raw marker artifacts for screen recording, keyboard logs, mouse logs, and senior notes.
 - 2026-06-20: native capture readiness gate added: fixture readiness remains explicit, native readiness fails closed without verified docs and every required screen/input artifact path, and `docs/native-capture-adapter-spike.md` records the Tauri evidence gap.
 - 2026-06-20: held-out fixture proof strengthened: senior capture observations now feed normalized flows while eval observations use separate held-out frame paths, and terminal business state requires explicit final visible text.
+- 2026-06-20: machine-readable fixture proof audit added: `proof fixtures` now writes `evals/reports/fixture-proof-audit.json` and fails unless both required tools satisfy the no-help, no-invention, no-privileged-access, held-out, terminal-text, and reviewer-signoff gates.

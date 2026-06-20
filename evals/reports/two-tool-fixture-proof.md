@@ -11,6 +11,8 @@
 - api/backend/dom/selector/mcp violations: none
 - held-out eval runs: 2/2
 - fixture proof result: passed
+- machine audit result: passed
+- machine audit findings: none
 - real-tool proof result: not run
 
 ## confirmed fixture capability
@@ -82,6 +84,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - confidence below `0.75` fails closed instead of showing a target
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations
+- machine audit requires both odoo and notion results to pass all no-help, no-invention, no-privileged-access, held-out-frame, terminal-text, and reviewer-signoff gates
 
 ## tool-specific fixture differences
 

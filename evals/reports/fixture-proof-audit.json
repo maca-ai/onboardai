@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "requiredTools": [
+    "odoo",
+    "notion"
+  ],
+  "toolsAudited": [
+    "odoo",
+    "notion"
+  ],
+  "findings": [],
+  "summary": {
+    "toolsPassed": 2,
+    "toolsRequired": 2,
+    "stepsCompleted": 6,
+    "stepsRequired": 6,
+    "belowThresholdEvents": 0,
+    "humanHelpIncidents": 0,
+    "inventedStepIncidents": 0,
+    "privilegedAccessViolations": 0
+  }
+}

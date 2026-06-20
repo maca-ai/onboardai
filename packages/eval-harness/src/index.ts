@@ -78,6 +78,28 @@ export interface EvalRunResult {
   readonly trace: readonly StepTraceEntry[];
 }
 
+export interface EvalProofAuditFinding {
+  readonly tool: string;
+  readonly message: string;
+}
+
+export interface EvalProofAuditResult {
+  readonly passed: boolean;
+  readonly requiredTools: readonly string[];
+  readonly toolsAudited: readonly string[];
+  readonly findings: readonly EvalProofAuditFinding[];
+  readonly summary: {
+    readonly toolsPassed: number;
+    readonly toolsRequired: number;
+    readonly stepsCompleted: number;
+    readonly stepsRequired: number;
+    readonly belowThresholdEvents: number;
+    readonly humanHelpIncidents: number;
+    readonly inventedStepIncidents: number;
+    readonly privilegedAccessViolations: number;
+  };
+}
+
 export function matchScreenState(step: FlowStep, observation: ScreenObservation): ScreenStateMatch {
   const expectedVisibleText = step["expected-state"]["visible-text"] ?? [];
   const normalizedVisible = observation.visibleText.map((text) => text.toLowerCase());
@@ -89,6 +111,59 @@ export function matchScreenState(step: FlowStep, observation: ScreenObservation)
     confidence,
     matchedVisibleText,
     missingVisibleText
+  };
+}
+
+export function auditEvalProofResults(
+  results: readonly EvalRunResult[],
+  requiredTools: readonly string[] = ["odoo", "notion"]
+): EvalProofAuditResult {
+  const findings: EvalProofAuditFinding[] = [];
+  const resultsByTool = new Map<string, EvalRunResult[]>();
+
+  for (const result of results) {
+    const existing = resultsByTool.get(result.tool) ?? [];
+    resultsByTool.set(result.tool, [...existing, result]);
+  }
+
+  for (const requiredTool of requiredTools) {
+    const toolResults = resultsByTool.get(requiredTool) ?? [];
+    if (toolResults.length === 0) {
+      findings.push({ tool: requiredTool, message: "missing required eval result" });
+      continue;
+    }
+
+    if (toolResults.length > 1) {
+      findings.push({ tool: requiredTool, message: "duplicate eval results for required tool" });
+    }
+
+    auditSingleEvalResult(toolResults[0], findings);
+  }
+
+  for (const result of results) {
+    if (!requiredTools.includes(result.tool)) {
+      findings.push({ tool: result.tool, message: "unexpected tool in proof audit" });
+    }
+  }
+
+  const requiredResults = requiredTools.flatMap((tool) => resultsByTool.get(tool)?.slice(0, 1) ?? []);
+  const summary = {
+    toolsPassed: requiredResults.filter((result) => result.passed).length,
+    toolsRequired: requiredTools.length,
+    stepsCompleted: requiredResults.reduce((sum, result) => sum + result.stepsCompleted, 0),
+    stepsRequired: requiredResults.reduce((sum, result) => sum + result.stepCount, 0),
+    belowThresholdEvents: requiredResults.reduce((sum, result) => sum + result.belowThresholdEvents, 0),
+    humanHelpIncidents: requiredResults.reduce((sum, result) => sum + result.humanHelpIncidents, 0),
+    inventedStepIncidents: requiredResults.reduce((sum, result) => sum + result.inventedStepIncidents, 0),
+    privilegedAccessViolations: requiredResults.reduce((sum, result) => sum + result.privilegedAccessViolations.length, 0)
+  };
+
+  return {
+    passed: findings.length === 0,
+    requiredTools,
+    toolsAudited: requiredResults.map((result) => result.tool),
+    findings,
+    summary
   };
 }
 
@@ -230,6 +305,40 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
     finalVisibleText: finalObservation?.visibleText ?? [],
     trace
   };
+}
+
+function auditSingleEvalResult(result: EvalRunResult, findings: EvalProofAuditFinding[]): void {
+  if (!result.passed) findings.push({ tool: result.tool, message: "eval result did not pass" });
+  if (result.completionRate !== 1) findings.push({ tool: result.tool, message: "completion rate was not 1" });
+  if (result.stepCount === 0) findings.push({ tool: result.tool, message: "eval had no taught steps" });
+  if (result.stepsCompleted !== result.stepCount) findings.push({ tool: result.tool, message: "not all taught steps completed" });
+  if (result.stepsFailed !== 0) findings.push({ tool: result.tool, message: "eval reported failed steps" });
+  if (result.firstStuckStep !== null) findings.push({ tool: result.tool, message: "eval reported a stuck step" });
+  if (result.belowThresholdEvents !== 0) findings.push({ tool: result.tool, message: "overlay had below-threshold events" });
+  if (result.overlayMisreads.length !== 0) findings.push({ tool: result.tool, message: "overlay misread one or more steps" });
+  if (result.inventedStepIncidents !== 0) findings.push({ tool: result.tool, message: "overlay invented steps" });
+  if (result.humanHelpIncidents !== 0) findings.push({ tool: result.tool, message: "human help was used" });
+  if (result.privilegedAccessViolations.length !== 0) findings.push({ tool: result.tool, message: "privileged proof access was used" });
+  if (!result.terminalBusinessStateReached) findings.push({ tool: result.tool, message: "terminal business state was not reached" });
+  if (result.terminalMissingVisibleText.length !== 0) findings.push({ tool: result.tool, message: "terminal visible text was missing" });
+  if (!result.heldOutFromCapture) findings.push({ tool: result.tool, message: "eval observations were not held out from capture frames" });
+  if (result.reviewerSignoffResult !== "accepted") findings.push({ tool: result.tool, message: "senior reviewer did not sign off" });
+  if (result.trace.length !== result.stepCount) findings.push({ tool: result.tool, message: "step trace length did not match step count" });
+
+  result.trace.forEach((entry, index) => {
+    const stepLabel = `${entry.stepId || `step-${index + 1}`}`;
+    if (!entry.success) findings.push({ tool: result.tool, message: `${stepLabel} did not succeed` });
+    if (entry.overlayKind !== "instruction") findings.push({ tool: result.tool, message: `${stepLabel} did not show instruction guidance` });
+    if (entry.overlayConfidence < 0.75) findings.push({ tool: result.tool, message: `${stepLabel} confidence was below 0.75` });
+    if (!entry.highlightedAnchorId) findings.push({ tool: result.tool, message: `${stepLabel} did not highlight a grounded anchor` });
+    if (entry.actionPrimitive.manualOnly !== true) findings.push({ tool: result.tool, message: `${stepLabel} action was not manual-only` });
+    if (!entry.currentFrame.startsWith("evals/fixtures/")) {
+      findings.push({ tool: result.tool, message: `${stepLabel} did not use held-out fixture frame evidence` });
+    }
+    if (entry.currentFrame.startsWith("captures/raw/") || entry.currentFrame.startsWith("captures/unsafe/") || entry.currentFrame.startsWith("captures/tmp/")) {
+      findings.push({ tool: result.tool, message: `${stepLabel} used unsafe capture frame evidence` });
+    }
+  });
 }
 
 function findTransition(

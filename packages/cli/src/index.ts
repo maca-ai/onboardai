@@ -2,7 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, writeLocalCaptureBundle } from "@onboardai/capture";
-import { runDeterministicEval, type EvalRunResult } from "@onboardai/eval-harness";
+import { auditEvalProofResults, runDeterministicEval, type EvalProofAuditResult, type EvalRunResult } from "@onboardai/eval-harness";
 import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
 import { parseFlowMarkdown, searchFlowDocuments, validateFlowMarkdown } from "@onboardai/flow";
 
@@ -65,10 +65,11 @@ if (args[0] === "flow" && args[1] === "validate") {
   for (const result of results) {
     writeEvalEvidence(result);
   }
-  writeTwoToolFixtureProof(results);
-  const passed = results.every((result) => result.passed);
-  console.log(`fixture proof ${passed ? "passed" : "failed"}: ${results.filter((result) => result.passed).length}/${results.length} tools`);
-  process.exitCode = passed ? 0 : 1;
+  const audit = auditEvalProofResults(results);
+  writeTwoToolFixtureProof(results, audit);
+  writeFixtureProofAudit(audit);
+  console.log(`fixture proof ${audit.passed ? "passed" : "failed"}: ${audit.summary.toolsPassed}/${audit.summary.toolsRequired} tools`);
+  process.exitCode = audit.passed ? 0 : 1;
 } else {
   console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures");
 }
@@ -154,10 +155,16 @@ function writeEvalEvidence(result: EvalRunResult): void {
   writeFileSync(join(checklistDir, `${result.tool}-${result.runId}.md`), renderReviewerChecklist(result));
 }
 
-function writeTwoToolFixtureProof(results: readonly EvalRunResult[]): void {
+function writeTwoToolFixtureProof(results: readonly EvalRunResult[], audit: EvalProofAuditResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
-  writeFileSync(join(reportDir, "two-tool-fixture-proof.md"), renderTwoToolFixtureProof(results));
+  writeFileSync(join(reportDir, "two-tool-fixture-proof.md"), renderTwoToolFixtureProof(results, audit));
+}
+
+function writeFixtureProofAudit(audit: EvalProofAuditResult): void {
+  const reportDir = resolveWorkspacePath(join("evals", "reports"));
+  mkdirSync(reportDir, { recursive: true });
+  writeFileSync(join(reportDir, "fixture-proof-audit.json"), `${JSON.stringify(audit, null, 2)}\n`);
 }
 
 function renderReport(result: EvalRunResult): string {
@@ -245,7 +252,7 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 `;
 }
 
-function renderTwoToolFixtureProof(results: readonly EvalRunResult[]): string {
+function renderTwoToolFixtureProof(results: readonly EvalRunResult[], audit: EvalProofAuditResult): string {
   const passedCount = results.filter((result) => result.passed).length;
   const totalSteps = results.reduce((sum, result) => sum + result.stepCount, 0);
   const completedSteps = results.reduce((sum, result) => sum + result.stepsCompleted, 0);
@@ -268,6 +275,8 @@ function renderTwoToolFixtureProof(results: readonly EvalRunResult[]): string {
 - api/backend/dom/selector/mcp violations: ${privilegedAccessViolations.length === 0 ? "none" : privilegedAccessViolations.join("; ")}
 - held-out eval runs: ${heldOutCount}/${results.length}
 - fixture proof result: ${passedCount === results.length ? "passed" : "failed"}
+- machine audit result: ${audit.passed ? "passed" : "failed"}
+- machine audit findings: ${audit.findings.length === 0 ? "none" : audit.findings.map((finding) => `${finding.tool}: ${finding.message}`).join("; ")}
 - real-tool proof result: not run
 
 ## confirmed fixture capability
@@ -298,6 +307,7 @@ ${results.map(renderToolProofSection).join("\n")}
 - confidence below \`0.75\` fails closed instead of showing a target
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations
+- machine audit requires both odoo and notion results to pass all no-help, no-invention, no-privileged-access, held-out-frame, terminal-text, and reviewer-signoff gates
 
 ## tool-specific fixture differences
 

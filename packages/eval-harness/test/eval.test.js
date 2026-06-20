@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getDeterministicFixture } from "@onboardai/fixtures";
 import { parseFlowMarkdown } from "@onboardai/flow";
-import { matchScreenState, runDeterministicEval } from "../dist/index.js";
+import { auditEvalProofResults, matchScreenState, runDeterministicEval } from "../dist/index.js";
 
 test("odoo-like fixture eval reaches the terminal business state without privileged access", () => {
   const fixture = getDeterministicFixture("odoo");
@@ -86,4 +86,35 @@ test("terminal business state fails when held-out final screen misses required t
   assert.equal(result.terminalBusinessStateReached, false);
   assert.deepEqual(result.terminalMissingVisibleText, ["stage"]);
   assert.equal(result.stepsCompleted, 3);
+});
+
+test("proof audit accepts only complete held-out two-tool eval evidence", () => {
+  const odooFixture = getDeterministicFixture("odoo");
+  const notionFixture = getDeterministicFixture("notion");
+  const odooFlow = parseFlowMarkdown(readFileSync(odooFixture.flowPath, "utf8"));
+  const notionFlow = parseFlowMarkdown(readFileSync(notionFixture.flowPath, "utf8"));
+  const audit = auditEvalProofResults([
+    runDeterministicEval(odooFlow, odooFixture),
+    runDeterministicEval(notionFlow, notionFixture)
+  ]);
+
+  assert.equal(audit.passed, true);
+  assert.deepEqual(audit.requiredTools, ["odoo", "notion"]);
+  assert.deepEqual(audit.toolsAudited, ["odoo", "notion"]);
+  assert.equal(audit.findings.length, 0);
+  assert.equal(audit.summary.toolsPassed, 2);
+  assert.equal(audit.summary.stepsCompleted, 6);
+});
+
+test("proof audit fails if a required eval invariant is missing", () => {
+  const fixture = getDeterministicFixture("odoo");
+  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const result = runDeterministicEval(flow, fixture);
+  const audit = auditEvalProofResults([
+    { ...result, heldOutFromCapture: false },
+    runDeterministicEval(parseFlowMarkdown(readFileSync(getDeterministicFixture("notion").flowPath, "utf8")), getDeterministicFixture("notion"))
+  ]);
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("held out")), true);
 });
