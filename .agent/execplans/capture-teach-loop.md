@@ -138,6 +138,9 @@ record observations here.
 - observation: shareable normalized capture manifests can cite capture evidence without leaking raw capture paths.
   evidence: `captures/normalized/capture-fixture-odoo-qualify-001/manifest.json` and `captures/normalized/capture-fixture-notion-ready-review-001/manifest.json` contain raw artifact kind/safety summaries, redacted frame paths, anchors, and step input evidence; raw/unsafe/tmp path scan found no matches.
 
+- observation: the full fixture proof is now reproducible through one command.
+  evidence: `pnpm proof:fixtures` regenerates both normalized flows and manifests, reruns both fixture evals, refreshes reviewer evidence, and writes `evals/reports/two-tool-fixture-proof.md`; latest run passed 2/2 tools.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -176,6 +179,10 @@ record observations here.
   rationale: raw captures are unsafe-to-share and git-ignored; shareable artifacts should prove that screen, keyboard, and mouse inputs existed without revealing local raw paths.
   date-author: 2026-06-20, codex manifest milestone.
 
+- decision: keep the two-tool proof report explicit about unproven real-tool behavior.
+  rationale: fixture eval success is meaningful but does not prove native capture, desktop overlay behavior, or real odoo/notion held-out evals.
+  date-author: 2026-06-20, codex fixture proof milestone.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -189,6 +196,7 @@ current evidence:
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, four screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search and deterministic eval evidence generation.
+- proof changes: added `pnpm proof:fixtures` and `evals/reports/two-tool-fixture-proof.md` to compare both fixture evals and record limitations.
 
 what the eval showed:
 
@@ -212,7 +220,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- build an end-to-end fixture command that creates normalized flow, normalized capture manifest, eval report, and reviewer checklist in one run for each tool, then add a final two-tool proof report that separates fixture proof from unproven real-tool capture.
+- implement a real local capture adapter spike that writes raw screen recording, keyboard log, mouse log, redacted frame metadata, and a normalized capture manifest using the same artifact contracts, then rerun `pnpm proof:fixtures` against adapter output.
 
 at completion, record:
 
@@ -511,6 +519,7 @@ evals/reports/notion-fixture-notion-ready-review-001.md
 evals/reviewer-checklists/notion-fixture-notion-ready-review-001.md
 captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
 captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
+evals/reports/two-tool-fixture-proof.md
 ```
 
 capture-normalization milestone commands:
@@ -568,6 +577,19 @@ latest results on 2026-06-20:
 - forbidden secret scan across `flows`, `evals`, and `captures`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+two-tool fixture proof command:
+
+```sh
+pnpm proof:fixtures
+```
+
+latest results on 2026-06-20:
+
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- final fixture proof report: `evals/reports/two-tool-fixture-proof.md`.
+- report confirms 6/6 steps completed, 0 below-threshold events, 0 human-help incidents, 0 invented-step incidents, and no api/backend/dom/selector/mcp violations.
+- report explicitly states real-tool proof was not run and remains unproven.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -612,3 +634,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: fixture eval loop added: two three-step flow fixtures, deterministic screen-state matcher, explicit manual fixture transitions, CLI eval evidence writer, odoo/notion fixture reports, and reviewer checklists.
 - 2026-06-20: capture normalization added: deterministic senior demonstration records now generate the two `flow.md` files before eval, with redaction and required raw screen/keyboard/mouse artifact metadata.
 - 2026-06-20: normalized capture manifests added: each generated fixture flow now has a shareable manifest under `captures/normalized/` with redacted frame paths, input evidence, raw artifact kind/safety summaries, and no raw capture paths.
+- 2026-06-20: two-tool fixture proof command added: `pnpm proof:fixtures` refreshes both fixture evals and writes `evals/reports/two-tool-fixture-proof.md` with confirmed fixture capability and unproven real-tool limits.

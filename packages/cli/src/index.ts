@@ -51,8 +51,17 @@ if (args[0] === "flow" && args[1] === "validate") {
     console.log(`${tool} eval ${result.passed ? "passed" : "failed"}: ${result.stepsCompleted}/${result.stepCount} steps`);
     process.exitCode = result.passed ? 0 : 1;
   }
+} else if (args[0] === "proof" && args[1] === "fixtures") {
+  const results = [runEval("odoo"), runEval("notion")];
+  for (const result of results) {
+    writeEvalEvidence(result);
+  }
+  writeTwoToolFixtureProof(results);
+  const passed = results.every((result) => result.passed);
+  console.log(`fixture proof ${passed ? "passed" : "failed"}: ${results.filter((result) => result.passed).length}/${results.length} tools`);
+  process.exitCode = passed ? 0 : 1;
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture normalize <odoo|notion> | eval run <odoo|notion>");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -131,6 +140,12 @@ function writeEvalEvidence(result: EvalRunResult): void {
   writeFileSync(join(checklistDir, `${result.tool}-${result.runId}.md`), renderReviewerChecklist(result));
 }
 
+function writeTwoToolFixtureProof(results: readonly EvalRunResult[]): void {
+  const reportDir = resolveWorkspacePath(join("evals", "reports"));
+  mkdirSync(reportDir, { recursive: true });
+  writeFileSync(join(reportDir, "two-tool-fixture-proof.md"), renderTwoToolFixtureProof(results));
+}
+
 function renderReport(result: EvalRunResult): string {
   return `# eval report
 
@@ -206,6 +221,97 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 - accepted: ${result.passed}
 - rejected: ${!result.passed}
 - notes: deterministic fixture senior review accepted each taught step only if the harness reached the terminal visible business state with no violations.
+`;
+}
+
+function renderTwoToolFixtureProof(results: readonly EvalRunResult[]): string {
+  const passedCount = results.filter((result) => result.passed).length;
+  const totalSteps = results.reduce((sum, result) => sum + result.stepCount, 0);
+  const completedSteps = results.reduce((sum, result) => sum + result.stepsCompleted, 0);
+  const belowThresholdEvents = results.reduce((sum, result) => sum + result.belowThresholdEvents, 0);
+  const humanHelpIncidents = results.reduce((sum, result) => sum + result.humanHelpIncidents, 0);
+  const inventedStepIncidents = results.reduce((sum, result) => sum + result.inventedStepIncidents, 0);
+  const privilegedAccessViolations = results.flatMap((result) => result.privilegedAccessViolations);
+
+  return `# two-tool fixture proof
+
+## summary
+
+- proof substrate: deterministic clean fixtures
+- tools passed: ${passedCount}/${results.length}
+- steps completed: ${completedSteps}/${totalSteps}
+- below-threshold events: ${belowThresholdEvents}
+- human-help incidents: ${humanHelpIncidents}
+- invented-step incidents: ${inventedStepIncidents}
+- api/backend/dom/selector/mcp violations: ${privilegedAccessViolations.length === 0 ? "none" : privilegedAccessViolations.join("; ")}
+- fixture proof result: ${passedCount === results.length ? "passed" : "failed"}
+- real-tool proof result: not run
+
+## confirmed fixture capability
+
+The fixture loop demonstrates that one senior demonstration record can be normalized into \`flow.md\`, linked to a normalized capture manifest, and used by the deterministic mock user harness to complete the same workflow using overlay guidance only.
+
+Each fixture eval used only:
+
+- generated \`flow.md\`
+- normalized capture manifest
+- redacted frame references
+- visible screen-observation text
+- explicit simulated low-level fixture input transitions
+
+No eval used APIs, backend access, database reads, DOM inspection, browser selectors, target-tool MCP, computer-use automation, embeddings, vector search, or LLM inference.
+
+## tool results
+
+${results.map(renderToolProofSection).join("\n")}
+
+## shared teaching primitives
+
+- yaml frontmatter defines tool, capture id, terminal business state, confidence threshold, redaction policy, and input automation policy
+- embedded JSON step data defines expected visible state, grounded instruction text, manual user action, success condition, and fail-closed fallback
+- overlay guidance is text plus region highlight only
+- screen-state confidence is computed from visible text in fixture observations
+- confidence below \`0.75\` fails closed instead of showing a target
+- fixture user action is matched against explicit manual transition data
+- reviewer checklist accepts only completed evals with terminal visible business state and no violations
+
+## tool-specific fixture differences
+
+- odoo-like fixture workflow: open opportunity, select qualified stage, save visible qualified state
+- notion-like fixture workflow: open task, open status property, select ready for review
+- both workflows use three manual click transitions, but different visible text, anchors, terminal states, and redacted frame paths
+
+## unproven limits
+
+- Real odoo and notion environments are not available in this repo.
+- Native screen recording, frame extraction, keyboard event capture, mouse event capture, and desktop overlay behavior are not implemented yet.
+- The \`.mp4\` eval recording files in fixture runs are local ignored markers, not live target-tool recordings.
+- Fixture proof is not full production reliability and is not full PII compliance.
+
+## next experiment
+
+Implement a real local capture adapter spike that writes raw screen recording, keyboard log, mouse log, redacted frame metadata, and a normalized capture manifest using the same artifact contracts, then rerun this proof against the adapter output.
+`;
+}
+
+function renderToolProofSection(result: EvalRunResult): string {
+  return `### ${result.tool}
+
+- flow id: ${result.flowId}
+- run id: ${result.runId}
+- passed: ${result.passed}
+- completion rate: ${result.completionRate}
+- steps completed: ${result.stepsCompleted}/${result.stepCount}
+- first stuck step: ${result.firstStuckStep ?? "none"}
+- overlay confidence per step: ${result.overlayConfidencePerStep.map((entry) => `${entry.stepId}=${entry.confidence}`).join(", ")}
+- overlay misreads: ${result.overlayMisreads.length === 0 ? "none" : result.overlayMisreads.join("; ")}
+- terminal business state: ${result.terminalBusinessState}
+- terminal business state reached: ${result.terminalBusinessStateReached}
+- reviewer signoff: ${result.reviewerSignoffResult}
+- flow: flows/${result.tool}/${result.tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md
+- normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
+- eval report: evals/reports/${result.tool}-${result.runId}.md
+- reviewer checklist: evals/reviewer-checklists/${result.tool}-${result.runId}.md
 `;
 }
 
