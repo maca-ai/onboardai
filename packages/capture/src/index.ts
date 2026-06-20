@@ -144,7 +144,55 @@ export interface LocalCaptureBundle {
   readonly writes: readonly LocalCaptureWrite[];
 }
 
+export type CaptureAdapterKind = "fixture" | "native";
+export type CaptureAdapterPlatform = "fixture" | "macos" | "windows";
+
+export interface CaptureAdapterReadiness {
+  readonly adapterKind: CaptureAdapterKind;
+  readonly platform: CaptureAdapterPlatform;
+  readonly docsVerified: boolean;
+  readonly screenRecording: boolean;
+  readonly keyboardEventLog: boolean;
+  readonly mouseEventLog: boolean;
+  readonly redactedFrameOutput: boolean;
+  readonly rawArtifactsIgnored: boolean;
+  readonly blockers: readonly string[];
+}
+
 export const belowConfidenceMessage = "screen state not recognized. ask a human or restart this step.";
+
+export function fixtureCaptureReadiness(): CaptureAdapterReadiness {
+  return {
+    adapterKind: "fixture",
+    platform: "fixture",
+    docsVerified: true,
+    screenRecording: true,
+    keyboardEventLog: true,
+    mouseEventLog: true,
+    redactedFrameOutput: true,
+    rawArtifactsIgnored: true,
+    blockers: []
+  };
+}
+
+export function assertNativeCaptureReady(readiness: CaptureAdapterReadiness): void {
+  if (readiness.adapterKind !== "native") {
+    throw new Error("native capture readiness requires a native adapter");
+  }
+
+  const missing: string[] = [];
+  if (!readiness.docsVerified) missing.push("verified official documentation");
+  if (!readiness.screenRecording) missing.push("screen recording");
+  if (!readiness.keyboardEventLog) missing.push("keyboard event log");
+  if (!readiness.mouseEventLog) missing.push("mouse event log");
+  if (!readiness.redactedFrameOutput) missing.push("redacted frame output");
+  if (!readiness.rawArtifactsIgnored) missing.push("raw artifact git ignore");
+  missing.push(...readiness.blockers);
+
+  if (missing.length > 0) {
+    throw new Error(`native capture adapter is not ready: ${missing.join(", ")}`);
+  }
+}
 
 export function createLocalCaptureBundle(demonstration: SeniorDemonstration): LocalCaptureBundle {
   validateDemonstration(demonstration);

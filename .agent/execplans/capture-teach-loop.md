@@ -92,6 +92,7 @@ do not weaken any constraint to make an eval pass.
 - [x] build capture artifact model
 - [x] build senior-demonstration to normalized `flow.md` generation
 - [x] build normalized capture manifests for redacted frame and input evidence
+- [x] add native capture readiness gate so unverified adapters cannot be used as proof
 - [x] build redaction pipeline for forbidden persisted secrets
 - [x] build screen-state matcher with confidence output
 - [x] build overlay guidance renderer contract
@@ -144,6 +145,9 @@ record observations here.
 - observation: the fixture capture adapter can now materialize local raw artifacts under git-ignored paths.
   evidence: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` each wrote 4 raw artifacts under `captures/raw/...`; `git check-ignore` confirmed the screen recording, keyboard log, and mouse log paths are ignored.
 
+- observation: Context7 verified several Tauri v2 concepts, but not enough to justify adding a native capture dependency yet.
+  evidence: Context7 `/websites/v2_tauri_app` documented v2 capabilities, permission files, plugin command exposure, global shortcut support, and platform-specific window behavior; it did not verify a complete official path for screen recording, full keyboard event logging, full mouse event logging, macos/windows permission recovery, deterministic native capture tests, or overlay behavior.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -190,13 +194,17 @@ record observations here.
   rationale: this proves local filesystem persistence and raw artifact policy without overstating native screen/input capture support.
   date-author: 2026-06-20, codex local capture adapter spike.
 
+- decision: keep native capture behind an explicit readiness gate until official docs or Context7 verify every required input and persistence behavior.
+  rationale: fixture proof should not silently upgrade into a native proof; a native adapter must show verified screen recording, keyboard logging, mouse logging, redacted frame output, raw artifact ignore policy, and zero blockers before it can be used as evidence.
+  date-author: 2026-06-20, codex native capture readiness spike.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
 
 current evidence:
 
-- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage; added local fixture capture materialization for raw screen/input marker artifacts.
+- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage; added local fixture capture materialization for raw screen/input marker artifacts; added native capture readiness checks that fail closed until docs and all capture inputs are verified.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
@@ -209,7 +217,7 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 22 tests, 22 pass, 0 fail.
+- latest test suite passed: 25 tests, 25 pass, 0 fail.
 
 completion rate:
 
@@ -227,7 +235,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- implement a native capture adapter spike for one platform target that can write an actual raw screen recording plus keyboard and mouse logs into the same ignored artifact contract, then compare its output to the fixture materialization contract before integrating it with `pnpm proof:fixtures`.
+- verify the exact native adapter stack through official docs or Context7, then implement an isolated native capture spike for one platform target that can write an actual raw screen recording plus keyboard and mouse logs into the same ignored artifact contract. Do not add the adapter to proof commands until `assertNativeCaptureReady` accepts its evidence.
 
 at completion, record:
 
@@ -608,6 +616,30 @@ latest results on 2026-06-20:
 - forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+native capture readiness gate command:
+
+```sh
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+pnpm proof:fixtures
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures/normalized --glob "!**/*.mp4" -i
+rg -n "captures/(raw|unsafe|tmp)/" flows evals captures/normalized --glob "!**/*.mp4"
+```
+
+latest results on 2026-06-20:
+
+- Context7 `/websites/v2_tauri_app`: verified Tauri v2 capabilities, permission files, plugin command exposure, global shortcut plugin support, and platform-specific window behavior.
+- Context7 `/websites/v2_tauri_app`: missing evidence for a complete official native capture path covering screen recording, full keyboard event logs, full mouse event logs, macos/windows permission recovery, deterministic native capture tests, and overlay behavior.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 25 tests, 25 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -654,3 +686,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: normalized capture manifests added: each generated fixture flow now has a shareable manifest under `captures/normalized/` with redacted frame paths, input evidence, raw artifact kind/safety summaries, and no raw capture paths.
 - 2026-06-20: two-tool fixture proof command added: `pnpm proof:fixtures` refreshes both fixture evals and writes `evals/reports/two-tool-fixture-proof.md` with confirmed fixture capability and unproven real-tool limits.
 - 2026-06-20: local fixture capture materialization added: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` write ignored raw marker artifacts for screen recording, keyboard logs, mouse logs, and senior notes.
+- 2026-06-20: native capture readiness gate added: fixture readiness remains explicit, native readiness fails closed without verified docs and every required screen/input artifact path, and `docs/native-capture-adapter-spike.md` records the Tauri evidence gap.
