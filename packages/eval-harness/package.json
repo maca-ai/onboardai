@@ -14,5 +14,10 @@
     "lint": "tsc -p tsconfig.json --noEmit --pretty false",
     "typecheck": "tsc -p tsconfig.json --noEmit --pretty false",
     "test": "pnpm run build && node --test test"
+  },
+  "dependencies": {
+    "@onboardai/fixtures": "workspace:*",
+    "@onboardai/flow": "workspace:*",
+    "@onboardai/overlay": "workspace:*"
   }
 }

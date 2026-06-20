@@ -21,11 +21,27 @@ importers:
 
   packages/cli:
     dependencies:
+      '@onboardai/eval-harness':
+        specifier: workspace:*
+        version: link:../eval-harness
+      '@onboardai/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
       '@onboardai/flow':
         specifier: workspace:*
         version: link:../flow
 
-  packages/eval-harness: {}
+  packages/eval-harness:
+    dependencies:
+      '@onboardai/fixtures':
+        specifier: workspace:*
+        version: link:../fixtures
+      '@onboardai/flow':
+        specifier: workspace:*
+        version: link:../flow
+      '@onboardai/overlay':
+        specifier: workspace:*
+        version: link:../overlay
 
   packages/fixtures: {}
 

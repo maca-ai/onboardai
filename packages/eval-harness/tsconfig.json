@@ -4,5 +4,6 @@
     "rootDir": "src",
     "outDir": "dist"
   },
+  "references": [{ "path": "../fixtures" }, { "path": "../flow" }, { "path": "../overlay" }],
   "include": ["src/**/*.ts"]
 }

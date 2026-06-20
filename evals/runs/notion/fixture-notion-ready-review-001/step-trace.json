@@ -1,0 +1,88 @@
+[
+  {
+    "stepId": "step-001",
+    "title": "open the demo task",
+    "fromStateId": "task-list",
+    "currentFrame": "captures/redacted/notion-update-task-status/frame-0001.png",
+    "expectedVisibleText": [
+      "project tasks",
+      "demo task",
+      "status: not started"
+    ],
+    "matchedVisibleText": [
+      "project tasks",
+      "demo task",
+      "status: not started"
+    ],
+    "missingVisibleText": [],
+    "overlayConfidence": 1,
+    "overlayKind": "instruction",
+    "overlayMessage": "select the row for demo task.",
+    "highlightedAnchorId": "demo-task-row",
+    "actionPrimitive": {
+      "kind": "click",
+      "targetAnchorId": "demo-task-row",
+      "manualOnly": true
+    },
+    "toStateId": "task-page",
+    "success": true
+  },
+  {
+    "stepId": "step-002",
+    "title": "open status choices",
+    "fromStateId": "task-page",
+    "currentFrame": "captures/redacted/notion-update-task-status/frame-0002.png",
+    "expectedVisibleText": [
+      "demo task",
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "matchedVisibleText": [
+      "demo task",
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "missingVisibleText": [],
+    "overlayConfidence": 1,
+    "overlayKind": "instruction",
+    "overlayMessage": "open the status property.",
+    "highlightedAnchorId": "status-property",
+    "actionPrimitive": {
+      "kind": "click",
+      "targetAnchorId": "status-property",
+      "manualOnly": true
+    },
+    "toStateId": "status-menu",
+    "success": true
+  },
+  {
+    "stepId": "step-003",
+    "title": "choose ready for review",
+    "fromStateId": "status-menu",
+    "currentFrame": "captures/redacted/notion-update-task-status/frame-0003.png",
+    "expectedVisibleText": [
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "matchedVisibleText": [
+      "status",
+      "not started",
+      "ready for review"
+    ],
+    "missingVisibleText": [],
+    "overlayConfidence": 1,
+    "overlayKind": "instruction",
+    "overlayMessage": "select ready for review.",
+    "highlightedAnchorId": "ready-for-review-option",
+    "actionPrimitive": {
+      "kind": "click",
+      "targetAnchorId": "ready-for-review-option",
+      "manualOnly": true
+    },
+    "toStateId": "ready-for-review-confirmed",
+    "success": true
+  }
+]
