@@ -103,6 +103,8 @@ do not weaken any constraint to make an eval pass.
 - [x] pass odoo held-out teaching eval against clean fixture
 - [x] pass notion held-out teaching eval against clean fixture
 - [x] collect fixture senior-review checklist evidence
+- [x] separate fixture senior capture observations from held-out eval observations
+- [x] require explicit terminal visible text for fixture eval pass
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -147,6 +149,12 @@ record observations here.
 
 - observation: Context7 verified several Tauri v2 concepts, but not enough to justify adding a native capture dependency yet.
   evidence: Context7 `/websites/v2_tauri_app` documented v2 capabilities, permission files, plugin command exposure, global shortcut support, and platform-specific window behavior; it did not verify a complete official path for screen recording, full keyboard event logging, full mouse event logging, macos/windows permission recovery, deterministic native capture tests, or overlay behavior.
+
+- observation: fixture evals are now actually held out from the senior capture frame paths.
+  evidence: senior demonstrations normalize from `captures/redacted/...` frame references, while deterministic eval step traces now use `evals/fixtures/.../held-out-frame-*.png`; `pnpm proof:fixtures` passed 2/2 tools after regenerating `/evals` evidence.
+
+- observation: terminal business state now depends on explicit visible text, not tool-specific keyword shortcuts.
+  evidence: `EvalRunResult` records `terminalExpectedVisibleText` and `terminalMissingVisibleText`; a regression test removes terminal-only text from the held-out final observation and the eval fails even after all three step transitions complete.
 
 ## decision-log
 
@@ -198,6 +206,10 @@ record observations here.
   rationale: fixture proof should not silently upgrade into a native proof; a native adapter must show verified screen recording, keyboard logging, mouse logging, redacted frame output, raw artifact ignore policy, and zero blockers before it can be used as evidence.
   date-author: 2026-06-20, codex native capture readiness spike.
 
+- decision: treat fixture eval observations as held-out from senior capture observations.
+  rationale: the v0 proof should exercise a generated `flow.md` against a separate first-time-user screen sequence, rather than replaying the same frame paths that produced the flow.
+  date-author: 2026-06-20, codex held-out fixture proof.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -208,16 +220,16 @@ current evidence:
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
-- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution.
-- fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, four screen observations each, three manual transitions each, and terminal business states.
+- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results.
+- fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search and deterministic eval evidence generation.
 - proof changes: added `pnpm proof:fixtures` and `evals/reports/two-tool-fixture-proof.md` to compare both fixture evals and record limitations.
 
 what the eval showed:
 
-- odoo fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- notion fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 25 tests, 25 pass, 0 fail.
+- odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
+- notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
+- latest test suite passed: 27 tests, 27 pass, 0 fail.
 
 completion rate:
 
@@ -640,6 +652,35 @@ latest results on 2026-06-20:
 - forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+held-out fixture proof strengthening command:
+
+```sh
+pnpm build
+node --test packages/fixtures packages/eval-harness
+pnpm proof:fixtures
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures/normalized --glob "!**/*.mp4" -i
+rg -n "captures/(raw|unsafe|tmp)/" flows evals captures/normalized --glob "!**/*.mp4"
+```
+
+latest results on 2026-06-20:
+
+- `pnpm build`: passed.
+- first targeted `node --test packages/fixtures packages/eval-harness`: failed because it raced a parallel build and loaded stale `dist` output; no code change was made for that failure.
+- second targeted `node --test packages/fixtures packages/eval-harness`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools with held-out eval runs 2/2.
+- odoo fixture proof: 3/3 steps, completion rate 1, terminal missing visible text none, held out from capture frames true.
+- notion fixture proof: 3/3 steps, completion rate 1, terminal missing visible text none, held out from capture frames true.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 27 tests, 27 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -687,3 +728,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: two-tool fixture proof command added: `pnpm proof:fixtures` refreshes both fixture evals and writes `evals/reports/two-tool-fixture-proof.md` with confirmed fixture capability and unproven real-tool limits.
 - 2026-06-20: local fixture capture materialization added: `pnpm capture:materialize:odoo` and `pnpm capture:materialize:notion` write ignored raw marker artifacts for screen recording, keyboard logs, mouse logs, and senior notes.
 - 2026-06-20: native capture readiness gate added: fixture readiness remains explicit, native readiness fails closed without verified docs and every required screen/input artifact path, and `docs/native-capture-adapter-spike.md` records the Tauri evidence gap.
+- 2026-06-20: held-out fixture proof strengthened: senior capture observations now feed normalized flows while eval observations use separate held-out frame paths, and terminal business state requires explicit final visible text.

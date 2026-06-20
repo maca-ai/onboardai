@@ -18,7 +18,10 @@
 - human-help incidents: 0
 - api/backend/dom/selector violations: none
 - final terminal business state: demo task visible with status ready for review
+- terminal expected visible text: demo task, status, ready for review
+- terminal missing visible text: none
 - terminal business state reached: true
+- held out from capture frames: true
 - reviewer signoff result: accepted
 
 ## evidence
@@ -32,3 +35,5 @@
 ## proof boundary
 
 This fixture eval used only screen observations from the fixture and simulated low-level input primitives. It did not use APIs, backend access, database reads, DOM inspection, browser selectors, target-tool MCP, computer-use automation, embeddings, vector search, or LLM inference.
+
+The eval observations were held out from the senior capture frames. The normalized flow anchors still point to capture redacted frames, while the harness screen observations point to separate held-out eval frame paths.

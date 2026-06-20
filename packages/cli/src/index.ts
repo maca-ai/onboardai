@@ -181,7 +181,10 @@ function renderReport(result: EvalRunResult): string {
 - human-help incidents: ${result.humanHelpIncidents}
 - api/backend/dom/selector violations: ${result.privilegedAccessViolations.length === 0 ? "none" : result.privilegedAccessViolations.join("; ")}
 - final terminal business state: ${result.terminalBusinessState}
+- terminal expected visible text: ${result.terminalExpectedVisibleText.join(", ")}
+- terminal missing visible text: ${result.terminalMissingVisibleText.length === 0 ? "none" : result.terminalMissingVisibleText.join(", ")}
 - terminal business state reached: ${result.terminalBusinessStateReached}
+- held out from capture frames: ${result.heldOutFromCapture}
 - reviewer signoff result: ${result.reviewerSignoffResult}
 
 ## evidence
@@ -195,6 +198,8 @@ function renderReport(result: EvalRunResult): string {
 ## proof boundary
 
 This fixture eval used only screen observations from the fixture and simulated low-level input primitives. It did not use APIs, backend access, database reads, DOM inspection, browser selectors, target-tool MCP, computer-use automation, embeddings, vector search, or LLM inference.
+
+The eval observations were held out from the senior capture frames. The normalized flow anchors still point to capture redacted frames, while the harness screen observations point to separate held-out eval frame paths.
 `;
 }
 
@@ -225,9 +230,11 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 - [${checked}] each taught step was correct
 - [${checked}] no required step was missing
 - [${checked}] terminal business state was reached
+- [${checked}] terminal visible text matched: ${result.terminalExpectedVisibleText.join(", ")}
 - [${checked}] no human help was used during eval
 - [${checked}] no api/backend/dom/selector/mcp access was used
 - [${checked}] overlay did not invent steps
+- [${checked}] eval observations were held out from capture frames
 - [${checked}] below-threshold behavior failed closed
 
 ## reviewer verdict
@@ -246,6 +253,7 @@ function renderTwoToolFixtureProof(results: readonly EvalRunResult[]): string {
   const humanHelpIncidents = results.reduce((sum, result) => sum + result.humanHelpIncidents, 0);
   const inventedStepIncidents = results.reduce((sum, result) => sum + result.inventedStepIncidents, 0);
   const privilegedAccessViolations = results.flatMap((result) => result.privilegedAccessViolations);
+  const heldOutCount = results.filter((result) => result.heldOutFromCapture).length;
 
   return `# two-tool fixture proof
 
@@ -258,6 +266,7 @@ function renderTwoToolFixtureProof(results: readonly EvalRunResult[]): string {
 - human-help incidents: ${humanHelpIncidents}
 - invented-step incidents: ${inventedStepIncidents}
 - api/backend/dom/selector/mcp violations: ${privilegedAccessViolations.length === 0 ? "none" : privilegedAccessViolations.join("; ")}
+- held-out eval runs: ${heldOutCount}/${results.length}
 - fixture proof result: ${passedCount === results.length ? "passed" : "failed"}
 - real-tool proof result: not run
 
@@ -270,7 +279,7 @@ Each fixture eval used only:
 - generated \`flow.md\`
 - normalized capture manifest
 - redacted frame references
-- visible screen-observation text
+- held-out visible screen-observation text
 - explicit simulated low-level fixture input transitions
 
 No eval used APIs, backend access, database reads, DOM inspection, browser selectors, target-tool MCP, computer-use automation, embeddings, vector search, or LLM inference.
@@ -285,6 +294,7 @@ ${results.map(renderToolProofSection).join("\n")}
 - embedded JSON step data defines expected visible state, grounded instruction text, manual user action, success condition, and fail-closed fallback
 - overlay guidance is text plus region highlight only
 - screen-state confidence is computed from visible text in fixture observations
+- terminal business state is accepted only when explicit terminal visible text appears on the held-out final screen observation
 - confidence below \`0.75\` fails closed instead of showing a target
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations
@@ -320,7 +330,10 @@ function renderToolProofSection(result: EvalRunResult): string {
 - overlay confidence per step: ${result.overlayConfidencePerStep.map((entry) => `${entry.stepId}=${entry.confidence}`).join(", ")}
 - overlay misreads: ${result.overlayMisreads.length === 0 ? "none" : result.overlayMisreads.join("; ")}
 - terminal business state: ${result.terminalBusinessState}
+- terminal expected visible text: ${result.terminalExpectedVisibleText.join(", ")}
+- terminal missing visible text: ${result.terminalMissingVisibleText.length === 0 ? "none" : result.terminalMissingVisibleText.join(", ")}
 - terminal business state reached: ${result.terminalBusinessStateReached}
+- held out from capture frames: ${result.heldOutFromCapture}
 - reviewer signoff: ${result.reviewerSignoffResult}
 - flow: flows/${result.tool}/${result.tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md
 - normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json

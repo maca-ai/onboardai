@@ -3,7 +3,7 @@
     "stepId": "step-001",
     "title": "open the opportunity",
     "fromStateId": "pipeline",
-    "currentFrame": "captures/redacted/odoo-qualify-opportunity/frame-0001.png",
+    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0001.png",
     "expectedVisibleText": [
       "pipeline",
       "demo opportunity",
@@ -31,7 +31,7 @@
     "stepId": "step-002",
     "title": "choose qualified stage",
     "fromStateId": "opportunity-detail",
-    "currentFrame": "captures/redacted/odoo-qualify-opportunity/frame-0002.png",
+    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0002.png",
     "expectedVisibleText": [
       "demo opportunity",
       "stage",
@@ -61,7 +61,7 @@
     "stepId": "step-003",
     "title": "save the qualified stage",
     "fromStateId": "qualified-unsaved",
-    "currentFrame": "captures/redacted/odoo-qualify-opportunity/frame-0003.png",
+    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0003.png",
     "expectedVisibleText": [
       "demo opportunity",
       "stage",

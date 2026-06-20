@@ -92,6 +92,9 @@ each report must include:
 - human-help incidents
 - api/backend/dom/selector violations
 - final terminal business state
+- terminal expected visible text
+- terminal missing visible text
+- held out from capture frames
 - reviewer signoff result
 
 ## pass criteria
@@ -99,6 +102,7 @@ each report must include:
 a tool eval passes only if:
 
 - terminal business state is reached
+- the final held-out screen observation contains the terminal expected visible text
 - no human help is used
 - no api/backend/dom/selector/mcp access is used
 - overlay guidance is grounded only in `flow.md`
@@ -186,6 +190,7 @@ state the smallest next experiment.
 - final screen:
 - step trace:
 - capture-to-flow mapping:
+- held-out eval observations:
 - eval recording:
 - failure log:
 
@@ -194,9 +199,11 @@ state the smallest next experiment.
 - [ ] each taught step was correct
 - [ ] no required step was missing
 - [ ] terminal business state was reached
+- [ ] terminal visible text matched
 - [ ] no human help was used during eval
 - [ ] no api/backend/dom/selector/mcp access was used
 - [ ] overlay did not invent steps
+- [ ] eval observations were held out from capture frames
 - [ ] below-threshold behavior failed closed
 
 ## reviewer verdict

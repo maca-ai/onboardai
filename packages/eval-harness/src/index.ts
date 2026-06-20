@@ -68,7 +68,10 @@ export interface EvalRunResult {
   readonly humanHelpIncidents: number;
   readonly privilegedAccessViolations: readonly string[];
   readonly terminalBusinessState: string;
+  readonly terminalExpectedVisibleText: readonly string[];
+  readonly terminalMissingVisibleText: readonly string[];
   readonly terminalBusinessStateReached: boolean;
+  readonly heldOutFromCapture: boolean;
   readonly reviewerSignoffResult: "accepted" | "rejected";
   readonly finalStateId: string;
   readonly finalVisibleText: readonly string[];
@@ -192,7 +195,8 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
   }
 
   const finalObservation = observationsByState.get(currentStateId);
-  const terminalBusinessStateReached = currentStateId === fixture.terminalStateId && Boolean(finalObservation?.visibleText.includes("qualified") || finalObservation?.visibleText.includes("ready for review"));
+  const terminalMissingVisibleText = missingVisibleText(fixture.terminalVisibleText, finalObservation?.visibleText ?? []);
+  const terminalBusinessStateReached = currentStateId === fixture.terminalStateId && terminalMissingVisibleText.length === 0;
   const passed =
     stepsCompleted === flow.steps.length &&
     terminalBusinessStateReached &&
@@ -217,7 +221,10 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
     humanHelpIncidents: 0,
     privilegedAccessViolations,
     terminalBusinessState,
+    terminalExpectedVisibleText: fixture.terminalVisibleText,
+    terminalMissingVisibleText,
     terminalBusinessStateReached,
+    heldOutFromCapture: fixture.heldOutFromCapture,
     reviewerSignoffResult: passed ? "accepted" : "rejected",
     finalStateId: currentStateId,
     finalVisibleText: finalObservation?.visibleText ?? [],
@@ -267,10 +274,18 @@ function failedRun(flow: FlowDocument, fixture: DeterministicFixture, reason: st
     humanHelpIncidents: 0,
     privilegedAccessViolations: [],
     terminalBusinessState: String(flow.frontmatter["terminal-business-state"] ?? ""),
+    terminalExpectedVisibleText: fixture.terminalVisibleText,
+    terminalMissingVisibleText: fixture.terminalVisibleText,
     terminalBusinessStateReached: false,
+    heldOutFromCapture: fixture.heldOutFromCapture,
     reviewerSignoffResult: "rejected",
     finalStateId: fixture.startStateId,
     finalVisibleText: [],
     trace: []
   };
+}
+
+function missingVisibleText(expectedVisibleText: readonly string[], actualVisibleText: readonly string[]): readonly string[] {
+  const normalizedActual = actualVisibleText.map((text) => text.toLowerCase());
+  return expectedVisibleText.filter((expected) => !normalizedActual.includes(expected.toLowerCase()));
 }

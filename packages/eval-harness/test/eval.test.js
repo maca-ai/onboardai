@@ -16,6 +16,10 @@ test("odoo-like fixture eval reaches the terminal business state without privile
   assert.equal(result.humanHelpIncidents, 0);
   assert.equal(result.privilegedAccessViolations.length, 0);
   assert.equal(result.inventedStepIncidents, 0);
+  assert.equal(result.heldOutFromCapture, true);
+  assert.deepEqual(result.terminalMissingVisibleText, []);
+  assert.deepEqual(result.terminalExpectedVisibleText, ["demo opportunity", "stage", "qualified", "saved"]);
+  assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
 
@@ -30,6 +34,10 @@ test("notion-like fixture eval reaches the terminal business state without privi
   assert.equal(result.humanHelpIncidents, 0);
   assert.equal(result.privilegedAccessViolations.length, 0);
   assert.equal(result.inventedStepIncidents, 0);
+  assert.equal(result.heldOutFromCapture, true);
+  assert.deepEqual(result.terminalMissingVisibleText, []);
+  assert.deepEqual(result.terminalExpectedVisibleText, ["demo task", "status", "ready for review"]);
+  assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
 
@@ -59,4 +67,23 @@ test("ambiguous fixture transitions fail instead of guessing", () => {
   assert.equal(result.passed, false);
   assert.equal(result.firstStuckStep, "step-001");
   assert.match(result.trace[0].failureReason, /ambiguous/);
+});
+
+test("terminal business state fails when held-out final screen misses required terminal text", () => {
+  const fixture = getDeterministicFixture("odoo");
+  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const brokenFixture = {
+    ...fixture,
+    observations: fixture.observations.map((observation) =>
+      observation.stateId === fixture.terminalStateId
+        ? { ...observation, visibleText: observation.visibleText.filter((text) => text !== "stage") }
+        : observation
+    )
+  };
+  const result = runDeterministicEval(flow, brokenFixture);
+
+  assert.equal(result.passed, false);
+  assert.equal(result.terminalBusinessStateReached, false);
+  assert.deepEqual(result.terminalMissingVisibleText, ["stage"]);
+  assert.equal(result.stepsCompleted, 3);
 });

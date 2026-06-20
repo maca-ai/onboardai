@@ -14,6 +14,7 @@ fixtures must be:
 - seeded
 - deterministic
 - screen-observation based
+- held out from the senior capture frames
 - free of live customer data
 - strict enough to fail incomplete flows
 - explicit enough to verify terminal business state
@@ -63,7 +64,7 @@ the fixture should expose only screen observations such as:
 
 - visible text
 - approximate regions
-- redacted frame references
+- held-out frame references separate from capture redacted frame references
 - confidence score inputs
 
 ### forbidden proof
@@ -114,7 +115,7 @@ the fixture should expose only screen observations such as:
 
 - visible text
 - approximate regions
-- redacted frame references
+- held-out frame references separate from capture redacted frame references
 - confidence score inputs
 
 ### forbidden proof
@@ -160,6 +161,9 @@ each fixture run must output:
 - action primitive used
 - resulting screen observation
 - final screen
+- terminal expected visible text
+- terminal missing visible text
+- held-out-from-capture status
 - pass or fail result
 - failure reason if any
 

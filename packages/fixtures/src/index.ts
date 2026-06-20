@@ -33,9 +33,11 @@ export interface DeterministicFixture {
   readonly flowPath: string;
   readonly runId: string;
   readonly cleanSeededDemoData: true;
+  readonly heldOutFromCapture: true;
   readonly startStateId: string;
   readonly terminalStateId: string;
   readonly terminalBusinessState: string;
+  readonly terminalVisibleText: readonly string[];
   readonly observations: readonly ScreenObservation[];
   readonly transitions: readonly FixtureTransition[];
   readonly reviewer: {
@@ -62,15 +64,72 @@ export const notionLikeFixture: ToolFixture = {
   terminalBusinessState: "demo task visible with status ready for review"
 };
 
+const captureObservations: Record<ToolName, readonly ScreenObservation[]> = {
+  odoo: [
+    {
+      stateId: "pipeline",
+      frame: "captures/redacted/odoo-qualify-opportunity/frame-0001.png",
+      visibleText: ["pipeline", "demo opportunity", "new"],
+      regions: [{ "anchor-id": "opportunity-card", x: 112, y: 180, width: 320, height: 90 }]
+    },
+    {
+      stateId: "opportunity-detail",
+      frame: "captures/redacted/odoo-qualify-opportunity/frame-0002.png",
+      visibleText: ["demo opportunity", "stage", "new", "qualified"],
+      regions: [{ "anchor-id": "qualified-stage", x: 540, y: 132, width: 148, height: 44 }]
+    },
+    {
+      stateId: "qualified-unsaved",
+      frame: "captures/redacted/odoo-qualify-opportunity/frame-0003.png",
+      visibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+      regions: [{ "anchor-id": "save-button", x: 34, y: 88, width: 92, height: 40 }]
+    },
+    {
+      stateId: "qualified-saved",
+      frame: "captures/redacted/odoo-qualify-opportunity/frame-0004.png",
+      visibleText: ["demo opportunity", "stage", "qualified", "saved"],
+      regions: []
+    }
+  ],
+  notion: [
+    {
+      stateId: "task-list",
+      frame: "captures/redacted/notion-update-task-status/frame-0001.png",
+      visibleText: ["project tasks", "demo task", "status: not started"],
+      regions: [{ "anchor-id": "demo-task-row", x: 88, y: 210, width: 520, height: 48 }]
+    },
+    {
+      stateId: "task-page",
+      frame: "captures/redacted/notion-update-task-status/frame-0002.png",
+      visibleText: ["demo task", "status", "not started", "ready for review"],
+      regions: [{ "anchor-id": "status-property", x: 260, y: 156, width: 220, height: 42 }]
+    },
+    {
+      stateId: "status-menu",
+      frame: "captures/redacted/notion-update-task-status/frame-0003.png",
+      visibleText: ["status", "not started", "ready for review"],
+      regions: [{ "anchor-id": "ready-for-review-option", x: 294, y: 252, width: 236, height: 38 }]
+    },
+    {
+      stateId: "ready-for-review-confirmed",
+      frame: "captures/redacted/notion-update-task-status/frame-0004.png",
+      visibleText: ["demo task", "status", "ready for review"],
+      regions: []
+    }
+  ]
+};
+
 export const deterministicFixtures: Record<ToolName, DeterministicFixture> = {
   odoo: {
     tool: "odoo",
     flowPath: "flows/odoo/qualify-opportunity.flow.md",
     runId: "fixture-odoo-qualify-001",
     cleanSeededDemoData: true,
+    heldOutFromCapture: true,
     startStateId: "pipeline",
     terminalStateId: "qualified-saved",
     terminalBusinessState: "demo opportunity visible with stage qualified",
+    terminalVisibleText: ["demo opportunity", "stage", "qualified", "saved"],
     reviewer: {
       role: "fixture-senior-reviewer",
       name: "odoo fixture reviewer"
@@ -78,26 +137,26 @@ export const deterministicFixtures: Record<ToolName, DeterministicFixture> = {
     observations: [
       {
         stateId: "pipeline",
-        frame: "captures/redacted/odoo-qualify-opportunity/frame-0001.png",
-        visibleText: ["pipeline", "demo opportunity", "new"],
-        regions: [{ "anchor-id": "opportunity-card", x: 112, y: 180, width: 320, height: 90 }]
+        frame: "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0001.png",
+        visibleText: ["pipeline", "kanban", "demo opportunity", "new"],
+        regions: [{ "anchor-id": "opportunity-card", x: 118, y: 184, width: 318, height: 88 }]
       },
       {
         stateId: "opportunity-detail",
-        frame: "captures/redacted/odoo-qualify-opportunity/frame-0002.png",
-        visibleText: ["demo opportunity", "stage", "new", "qualified"],
-        regions: [{ "anchor-id": "qualified-stage", x: 540, y: 132, width: 148, height: 44 }]
+        frame: "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0002.png",
+        visibleText: ["demo opportunity", "stage", "new", "qualified", "expected revenue"],
+        regions: [{ "anchor-id": "qualified-stage", x: 548, y: 134, width: 144, height: 42 }]
       },
       {
         stateId: "qualified-unsaved",
-        frame: "captures/redacted/odoo-qualify-opportunity/frame-0003.png",
-        visibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
-        regions: [{ "anchor-id": "save-button", x: 34, y: 88, width: 92, height: 40 }]
+        frame: "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0003.png",
+        visibleText: ["demo opportunity", "stage", "qualified", "unsaved changes", "activity"],
+        regions: [{ "anchor-id": "save-button", x: 40, y: 90, width: 88, height: 38 }]
       },
       {
         stateId: "qualified-saved",
-        frame: "captures/redacted/odoo-qualify-opportunity/frame-0004.png",
-        visibleText: ["demo opportunity", "stage", "qualified", "saved"],
+        frame: "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0004.png",
+        visibleText: ["demo opportunity", "stage", "qualified", "saved", "chatter"],
         regions: []
       }
     ],
@@ -112,9 +171,11 @@ export const deterministicFixtures: Record<ToolName, DeterministicFixture> = {
     flowPath: "flows/notion/update-task-status.flow.md",
     runId: "fixture-notion-ready-review-001",
     cleanSeededDemoData: true,
+    heldOutFromCapture: true,
     startStateId: "task-list",
     terminalStateId: "ready-for-review-confirmed",
     terminalBusinessState: "demo task visible with status ready for review",
+    terminalVisibleText: ["demo task", "status", "ready for review"],
     reviewer: {
       role: "fixture-senior-reviewer",
       name: "notion fixture reviewer"
@@ -122,26 +183,26 @@ export const deterministicFixtures: Record<ToolName, DeterministicFixture> = {
     observations: [
       {
         stateId: "task-list",
-        frame: "captures/redacted/notion-update-task-status/frame-0001.png",
-        visibleText: ["project tasks", "demo task", "status: not started"],
-        regions: [{ "anchor-id": "demo-task-row", x: 88, y: 210, width: 520, height: 48 }]
+        frame: "evals/fixtures/notion-update-task-status/held-out-frame-0001.png",
+        visibleText: ["project tasks", "table view", "demo task", "status: not started"],
+        regions: [{ "anchor-id": "demo-task-row", x: 94, y: 212, width: 514, height: 46 }]
       },
       {
         stateId: "task-page",
-        frame: "captures/redacted/notion-update-task-status/frame-0002.png",
-        visibleText: ["demo task", "status", "not started", "ready for review"],
-        regions: [{ "anchor-id": "status-property", x: 260, y: 156, width: 220, height: 42 }]
+        frame: "evals/fixtures/notion-update-task-status/held-out-frame-0002.png",
+        visibleText: ["demo task", "properties", "status", "not started", "ready for review"],
+        regions: [{ "anchor-id": "status-property", x: 266, y: 158, width: 214, height: 40 }]
       },
       {
         stateId: "status-menu",
-        frame: "captures/redacted/notion-update-task-status/frame-0003.png",
-        visibleText: ["status", "not started", "ready for review"],
-        regions: [{ "anchor-id": "ready-for-review-option", x: 294, y: 252, width: 236, height: 38 }]
+        frame: "evals/fixtures/notion-update-task-status/held-out-frame-0003.png",
+        visibleText: ["status", "select", "not started", "ready for review"],
+        regions: [{ "anchor-id": "ready-for-review-option", x: 300, y: 256, width: 230, height: 36 }]
       },
       {
         stateId: "ready-for-review-confirmed",
-        frame: "captures/redacted/notion-update-task-status/frame-0004.png",
-        visibleText: ["demo task", "status", "ready for review"],
+        frame: "evals/fixtures/notion-update-task-status/held-out-frame-0004.png",
+        visibleText: ["demo task", "status", "ready for review", "last edited"],
         regions: []
       }
     ],
@@ -174,12 +235,12 @@ export const seniorDemonstrations: Record<ToolName, SeniorDemonstration> = {
       createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "mouse-event-log", "captures/raw/odoo-qualify-opportunity/mouse-events.jsonl"),
       createRawCaptureArtifact("capture-fixture-odoo-qualify-001", "human-context-notes", "captures/raw/odoo-qualify-opportunity/senior-notes.md")
     ],
-    frames: deterministicFixtures.odoo.observations.map((observation) => ({
+    frames: captureObservations.odoo.map((observation) => ({
       frameId: observation.stateId,
       redactedFramePath: observation.frame,
       visibleText: observation.visibleText
     })),
-    anchors: deterministicFixtures.odoo.observations.flatMap((observation) =>
+    anchors: captureObservations.odoo.flatMap((observation) =>
       observation.regions.map((region) => ({
         anchorId: region["anchor-id"],
         frameId: observation.stateId,
@@ -245,12 +306,12 @@ export const seniorDemonstrations: Record<ToolName, SeniorDemonstration> = {
       createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "mouse-event-log", "captures/raw/notion-update-task-status/mouse-events.jsonl"),
       createRawCaptureArtifact("capture-fixture-notion-ready-review-001", "human-context-notes", "captures/raw/notion-update-task-status/senior-notes.md")
     ],
-    frames: deterministicFixtures.notion.observations.map((observation) => ({
+    frames: captureObservations.notion.map((observation) => ({
       frameId: observation.stateId,
       redactedFramePath: observation.frame,
       visibleText: observation.visibleText
     })),
-    anchors: deterministicFixtures.notion.observations.flatMap((observation) =>
+    anchors: captureObservations.notion.flatMap((observation) =>
       observation.regions.map((region) => ({
         anchorId: region["anchor-id"],
         frameId: observation.stateId,

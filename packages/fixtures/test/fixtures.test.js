@@ -14,8 +14,22 @@ test("deterministic fixtures provide three manual screen-observation transitions
   assert.equal(deterministicFixtures.odoo.transitions.length, 3);
   assert.equal(deterministicFixtures.notion.observations.length, 4);
   assert.equal(deterministicFixtures.notion.transitions.length, 3);
+  assert.equal(deterministicFixtures.odoo.heldOutFromCapture, true);
+  assert.equal(deterministicFixtures.notion.heldOutFromCapture, true);
   assert.equal(deterministicFixtures.odoo.transitions.every((transition) => transition.action.kind === "click"), true);
   assert.equal(deterministicFixtures.notion.transitions.every((transition) => transition.action.kind === "click"), true);
+});
+
+test("held-out eval observations are separate from senior capture frames", () => {
+  for (const tool of ["odoo", "notion"]) {
+    const fixture = deterministicFixtures[tool];
+    const demonstration = getSeniorDemonstration(tool);
+    const captureFrames = new Set(demonstration.frames.map((frame) => frame.redactedFramePath));
+
+    assert.equal(fixture.observations.every((observation) => observation.frame.startsWith("evals/fixtures/")), true);
+    assert.equal(fixture.observations.every((observation) => !captureFrames.has(observation.frame)), true);
+    assert.equal(fixture.terminalVisibleText.length > 0, true);
+  }
 });
 
 test("fixture senior demonstrations include required screen-plus-input raw artifacts", () => {

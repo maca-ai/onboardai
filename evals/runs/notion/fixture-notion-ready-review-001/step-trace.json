@@ -3,7 +3,7 @@
     "stepId": "step-001",
     "title": "open the demo task",
     "fromStateId": "task-list",
-    "currentFrame": "captures/redacted/notion-update-task-status/frame-0001.png",
+    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0001.png",
     "expectedVisibleText": [
       "project tasks",
       "demo task",
@@ -31,7 +31,7 @@
     "stepId": "step-002",
     "title": "open status choices",
     "fromStateId": "task-page",
-    "currentFrame": "captures/redacted/notion-update-task-status/frame-0002.png",
+    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0002.png",
     "expectedVisibleText": [
       "demo task",
       "status",
@@ -61,7 +61,7 @@
     "stepId": "step-003",
     "title": "choose ready for review",
     "fromStateId": "status-menu",
-    "currentFrame": "captures/redacted/notion-update-task-status/frame-0003.png",
+    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0003.png",
     "expectedVisibleText": [
       "status",
       "not started",

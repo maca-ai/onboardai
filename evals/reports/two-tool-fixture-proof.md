@@ -9,6 +9,7 @@
 - human-help incidents: 0
 - invented-step incidents: 0
 - api/backend/dom/selector/mcp violations: none
+- held-out eval runs: 2/2
 - fixture proof result: passed
 - real-tool proof result: not run
 
@@ -21,7 +22,7 @@ Each fixture eval used only:
 - generated `flow.md`
 - normalized capture manifest
 - redacted frame references
-- visible screen-observation text
+- held-out visible screen-observation text
 - explicit simulated low-level fixture input transitions
 
 No eval used APIs, backend access, database reads, DOM inspection, browser selectors, target-tool MCP, computer-use automation, embeddings, vector search, or LLM inference.
@@ -39,7 +40,10 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - overlay confidence per step: step-001=1, step-002=1, step-003=1
 - overlay misreads: none
 - terminal business state: demo opportunity visible with stage qualified
+- terminal expected visible text: demo opportunity, stage, qualified, saved
+- terminal missing visible text: none
 - terminal business state reached: true
+- held out from capture frames: true
 - reviewer signoff: accepted
 - flow: flows/odoo/qualify-opportunity.flow.md
 - normalized capture manifest: captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
@@ -57,7 +61,10 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - overlay confidence per step: step-001=1, step-002=1, step-003=1
 - overlay misreads: none
 - terminal business state: demo task visible with status ready for review
+- terminal expected visible text: demo task, status, ready for review
+- terminal missing visible text: none
 - terminal business state reached: true
+- held out from capture frames: true
 - reviewer signoff: accepted
 - flow: flows/notion/update-task-status.flow.md
 - normalized capture manifest: captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
@@ -71,6 +78,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - embedded JSON step data defines expected visible state, grounded instruction text, manual user action, success condition, and fail-closed fallback
 - overlay guidance is text plus region highlight only
 - screen-state confidence is computed from visible text in fixture observations
+- terminal business state is accepted only when explicit terminal visible text appears on the held-out final screen observation
 - confidence below `0.75` fails closed instead of showing a target
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations

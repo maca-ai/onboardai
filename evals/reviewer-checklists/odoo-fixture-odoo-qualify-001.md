@@ -22,9 +22,11 @@
 - [x] each taught step was correct
 - [x] no required step was missing
 - [x] terminal business state was reached
+- [x] terminal visible text matched: demo opportunity, stage, qualified, saved
 - [x] no human help was used during eval
 - [x] no api/backend/dom/selector/mcp access was used
 - [x] overlay did not invent steps
+- [x] eval observations were held out from capture frames
 - [x] below-threshold behavior failed closed
 
 ## reviewer verdict
