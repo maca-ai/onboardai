@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "captureId": "capture-fixture-notion-ready-review-001",
+  "flowId": "notion-update-task-status",
+  "flowPath": "flows/notion/update-task-status.flow.md",
+  "tool": "notion",
+  "generatedAt": "2026-06-20t00:00:00z",
+  "dataClass": "clean-demo",
+  "rawCapturePolicy": "unsafe-to-share-local-only",
+  "redactionPolicy": "hard-secret-redaction-v0",
+  "rawCaptureSummary": {
+    "screenRecordingCaptured": true,
+    "keyboardEventLogCaptured": true,
+    "mouseEventLogCaptured": true,
+    "humanNotesCaptured": true
+  },
+  "rawArtifacts": [
+    {
+      "kind": "screen-recording",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "keyboard-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "mouse-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "human-context-notes",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    }
+  ],
+  "redactedFrames": [
+    {
+      "frameId": "task-list",
+      "path": "captures/redacted/notion-update-task-status/frame-0001.png",
+      "visibleText": [
+        "project tasks",
+        "demo task",
+        "status: not started"
+      ]
+    },
+    {
+      "frameId": "task-page",
+      "path": "captures/redacted/notion-update-task-status/frame-0002.png",
+      "visibleText": [
+        "demo task",
+        "status",
+        "not started",
+        "ready for review"
+      ]
+    },
+    {
+      "frameId": "status-menu",
+      "path": "captures/redacted/notion-update-task-status/frame-0003.png",
+      "visibleText": [
+        "status",
+        "not started",
+        "ready for review"
+      ]
+    },
+    {
+      "frameId": "ready-for-review-confirmed",
+      "path": "captures/redacted/notion-update-task-status/frame-0004.png",
+      "visibleText": [
+        "demo task",
+        "status",
+        "ready for review"
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "anchorId": "demo-task-row",
+      "frameId": "task-list",
+      "x": 88,
+      "y": 210,
+      "width": 520,
+      "height": 48
+    },
+    {
+      "anchorId": "status-property",
+      "frameId": "task-page",
+      "x": 260,
+      "y": 156,
+      "width": 220,
+      "height": 42
+    },
+    {
+      "anchorId": "ready-for-review-option",
+      "frameId": "status-menu",
+      "x": 294,
+      "y": 252,
+      "width": 236,
+      "height": 38
+    }
+  ],
+  "inputEvidence": [
+    {
+      "stepId": "step-001",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "demo-task-row"
+        }
+      ]
+    },
+    {
+      "stepId": "step-002",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "status-property"
+        }
+      ]
+    },
+    {
+      "stepId": "step-003",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "ready-for-review-option"
+        }
+      ]
+    }
+  ],
+  "redaction": {
+    "replacements": [],
+    "businessSensitiveTags": []
+  }
+}

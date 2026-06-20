@@ -180,7 +180,14 @@ export const seniorDemonstrations: Record<ToolName, SeniorDemonstration> = {
       visibleText: observation.visibleText
     })),
     anchors: deterministicFixtures.odoo.observations.flatMap((observation) =>
-      observation.regions.map((region) => ({ ...region, frameId: observation.stateId, anchorId: region["anchor-id"] }))
+      observation.regions.map((region) => ({
+        anchorId: region["anchor-id"],
+        frameId: observation.stateId,
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height
+      }))
     ),
     steps: [
       {
@@ -244,7 +251,14 @@ export const seniorDemonstrations: Record<ToolName, SeniorDemonstration> = {
       visibleText: observation.visibleText
     })),
     anchors: deterministicFixtures.notion.observations.flatMap((observation) =>
-      observation.regions.map((region) => ({ ...region, frameId: observation.stateId, anchorId: region["anchor-id"] }))
+      observation.regions.map((region) => ({
+        anchorId: region["anchor-id"],
+        frameId: observation.stateId,
+        x: region.x,
+        y: region.y,
+        width: region.width,
+        height: region.height
+      }))
     ),
     steps: [
       {

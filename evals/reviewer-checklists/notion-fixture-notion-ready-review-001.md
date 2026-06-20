@@ -13,6 +13,7 @@
 - final screen: evals/runs/notion/fixture-notion-ready-review-001/final-screen.png
 - step trace: evals/runs/notion/fixture-notion-ready-review-001/step-trace.json
 - capture-to-flow mapping: flows/notion/update-task-status.flow.md
+- normalized capture manifest: captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
 - eval recording: evals/runs/notion/fixture-notion-ready-review-001/eval-recording.mp4
 - failure log: evals/runs/notion/fixture-notion-ready-review-001/failure-log.md
 

@@ -91,6 +91,7 @@ do not weaken any constraint to make an eval pass.
 - [x] expose flow search as cli command
 - [x] build capture artifact model
 - [x] build senior-demonstration to normalized `flow.md` generation
+- [x] build normalized capture manifests for redacted frame and input evidence
 - [x] build redaction pipeline for forbidden persisted secrets
 - [x] build screen-state matcher with confidence output
 - [x] build overlay guidance renderer contract
@@ -134,6 +135,9 @@ record observations here.
 - observation: capture normalization can be verified without real target tools by using deterministic senior demonstration records.
   evidence: `pnpm capture:normalize:odoo` and `pnpm capture:normalize:notion` generated the two committed `flow.md` files from raw artifact metadata, redacted frame references, mouse input events, keyboard log artifacts, and human notes.
 
+- observation: shareable normalized capture manifests can cite capture evidence without leaking raw capture paths.
+  evidence: `captures/normalized/capture-fixture-odoo-qualify-001/manifest.json` and `captures/normalized/capture-fixture-notion-ready-review-001/manifest.json` contain raw artifact kind/safety summaries, redacted frame paths, anchors, and step input evidence; raw/unsafe/tmp path scan found no matches.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -168,13 +172,17 @@ record observations here.
   rationale: this makes the proof exercise capture-to-normalized-flow behavior instead of relying on static hand-authored flow files.
   date-author: 2026-06-20, codex normalization milestone.
 
+- decision: normalized capture manifests omit raw artifact paths and persist only raw artifact kind, safety, and git policy.
+  rationale: raw captures are unsafe-to-share and git-ignored; shareable artifacts should prove that screen, keyboard, and mouse inputs existed without revealing local raw paths.
+  date-author: 2026-06-20, codex manifest milestone.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
 
 current evidence:
 
-- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence.
+- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
@@ -186,7 +194,7 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow: 3/3 steps, completion rate 1, terminal business state reached, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 20 tests, 20 pass, 0 fail.
+- latest test suite passed: 21 tests, 21 pass, 0 fail.
 
 completion rate:
 
@@ -204,7 +212,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- add generated redacted frame metadata artifacts under `captures/normalized/` for each flow, then make eval reports cite the normalized capture manifest alongside `flow.md`.
+- build an end-to-end fixture command that creates normalized flow, normalized capture manifest, eval report, and reviewer checklist in one run for each tool, then add a final two-tool proof report that separates fixture proof from unproven real-tool capture.
 
 at completion, record:
 
@@ -501,6 +509,8 @@ evals/runs/notion/fixture-notion-ready-review-001/eval-recording.mp4
 evals/runs/notion/fixture-notion-ready-review-001/failure-log.md
 evals/reports/notion-fixture-notion-ready-review-001.md
 evals/reviewer-checklists/notion-fixture-notion-ready-review-001.md
+captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
+captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
 ```
 
 capture-normalization milestone commands:
@@ -529,6 +539,34 @@ latest results on 2026-06-20:
 - `pnpm eval:odoo`: passed; 3/3 steps.
 - `pnpm eval:notion`: passed; 3/3 steps.
 - artifact secret scan across `flows`, `evals`, and `captures`: no matches.
+
+normalized capture manifest milestone commands:
+
+```sh
+pnpm capture:normalize:odoo
+pnpm capture:normalize:notion
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+pnpm eval:odoo
+pnpm eval:notion
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures --glob "!**/*.mp4" -i
+rg -n "captures/(raw|unsafe|tmp)/" flows evals captures/normalized --glob "!**/*.mp4"
+```
+
+latest results on 2026-06-20:
+
+- `pnpm capture:normalize:odoo`: passed; generated `flows/odoo/qualify-opportunity.flow.md` and `captures/normalized/capture-fixture-odoo-qualify-001/manifest.json`.
+- `pnpm capture:normalize:notion`: passed; generated `flows/notion/update-task-status.flow.md` and `captures/normalized/capture-fixture-notion-ready-review-001/manifest.json`.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 21 tests, 21 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm eval:odoo`: passed; 3/3 steps and report cites normalized manifest.
+- `pnpm eval:notion`: passed; 3/3 steps and report cites normalized manifest.
+- forbidden secret scan across `flows`, `evals`, and `captures`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
 ## idempotence-and-recovery
 
@@ -573,3 +611,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: milestone 1 scaffold added: pnpm TypeScript workspace, package skeletons, baseline verification scripts, capture/redaction/flow/overlay/eval/fixture/cli contracts, teach decision note, and passing baseline tests.
 - 2026-06-20: fixture eval loop added: two three-step flow fixtures, deterministic screen-state matcher, explicit manual fixture transitions, CLI eval evidence writer, odoo/notion fixture reports, and reviewer checklists.
 - 2026-06-20: capture normalization added: deterministic senior demonstration records now generate the two `flow.md` files before eval, with redaction and required raw screen/keyboard/mouse artifact metadata.
+- 2026-06-20: normalized capture manifests added: each generated fixture flow now has a shareable manifest under `captures/normalized/` with redacted frame paths, input evidence, raw artifact kind/safety summaries, and no raw capture paths.

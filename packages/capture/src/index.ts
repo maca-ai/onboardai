@@ -88,6 +88,49 @@ export interface NormalizedFlowArtifact {
   readonly businessSensitiveTags: readonly { readonly kind: string; readonly value: string }[];
 }
 
+export interface NormalizedCaptureManifest {
+  readonly schemaVersion: 1;
+  readonly captureId: string;
+  readonly flowId: string;
+  readonly flowPath: string;
+  readonly tool: SeniorDemonstration["tool"];
+  readonly generatedAt: string;
+  readonly dataClass: SeniorDemonstration["dataClass"];
+  readonly rawCapturePolicy: "unsafe-to-share-local-only";
+  readonly redactionPolicy: "hard-secret-redaction-v0";
+  readonly rawCaptureSummary: {
+    readonly screenRecordingCaptured: boolean;
+    readonly keyboardEventLogCaptured: boolean;
+    readonly mouseEventLogCaptured: boolean;
+    readonly humanNotesCaptured: boolean;
+  };
+  readonly rawArtifacts: readonly {
+    readonly kind: CaptureInputKind;
+    readonly safety: RawCaptureArtifact["safety"];
+    readonly gitPolicy: RawCaptureArtifact["gitPolicy"];
+  }[];
+  readonly redactedFrames: readonly {
+    readonly frameId: string;
+    readonly path: string;
+    readonly visibleText: readonly string[];
+  }[];
+  readonly anchors: readonly DemonstrationAnchor[];
+  readonly inputEvidence: readonly {
+    readonly stepId: string;
+    readonly inputEvents: readonly DemonstrationInputEvent[];
+  }[];
+  readonly redaction: {
+    readonly replacements: readonly string[];
+    readonly businessSensitiveTags: readonly { readonly kind: string; readonly value: string }[];
+  };
+}
+
+export interface NormalizedCaptureManifestArtifact {
+  readonly path: string;
+  readonly manifest: NormalizedCaptureManifest;
+  readonly json: string;
+}
+
 export const belowConfidenceMessage = "screen state not recognized. ask a human or restart this step.";
 
 export function normalizeDemonstrationToFlowMarkdown(demonstration: SeniorDemonstration, outputPath: string): NormalizedFlowArtifact {
@@ -101,6 +144,67 @@ export function normalizeDemonstrationToFlowMarkdown(demonstration: SeniorDemons
     markdown: redacted.text,
     replacements: redacted.replacements,
     businessSensitiveTags: redacted.businessSensitiveTags
+  };
+}
+
+export function createNormalizedCaptureManifest(
+  demonstration: SeniorDemonstration,
+  flowArtifact: NormalizedFlowArtifact,
+  manifestPath: string
+): NormalizedCaptureManifestArtifact {
+  validateDemonstration(demonstration);
+
+  const replacements = [...flowArtifact.replacements];
+  const businessSensitiveTags = [...flowArtifact.businessSensitiveTags];
+  const redactedFrames = demonstration.frames.map((frame) => ({
+    frameId: frame.frameId,
+    path: frame.redactedFramePath,
+    visibleText: frame.visibleText.map((text) => redactManifestString(text, replacements, businessSensitiveTags))
+  }));
+  const inputEvidence = demonstration.steps.map((step) => ({
+    stepId: step.stepId,
+    inputEvents: step.inputEvents.map((event) => redactInputEvent(event, replacements, businessSensitiveTags))
+  }));
+  const rawKinds = new Set(demonstration.rawArtifacts.map((artifact) => artifact.kind));
+  const manifest: NormalizedCaptureManifest = {
+    schemaVersion: 1,
+    captureId: demonstration.captureId,
+    flowId: demonstration.flowId,
+    flowPath: flowArtifact.path,
+    tool: demonstration.tool,
+    generatedAt: demonstration.createdAt,
+    dataClass: demonstration.dataClass,
+    rawCapturePolicy: "unsafe-to-share-local-only",
+    redactionPolicy: "hard-secret-redaction-v0",
+    rawCaptureSummary: {
+      screenRecordingCaptured: rawKinds.has("screen-recording"),
+      keyboardEventLogCaptured: rawKinds.has("keyboard-event-log"),
+      mouseEventLogCaptured: rawKinds.has("mouse-event-log"),
+      humanNotesCaptured: rawKinds.has("human-context-notes")
+    },
+    rawArtifacts: demonstration.rawArtifacts.map((artifact) => ({
+      kind: artifact.kind,
+      safety: artifact.safety,
+      gitPolicy: artifact.gitPolicy
+    })),
+    redactedFrames,
+    anchors: demonstration.anchors,
+    inputEvidence,
+    redaction: {
+      replacements,
+      businessSensitiveTags
+    }
+  };
+  const json = `${JSON.stringify(manifest, null, 2)}\n`;
+
+  if (json.includes("captures/raw/") || json.includes("captures/unsafe/") || json.includes("captures/tmp/")) {
+    throw new Error("normalized capture manifest cannot include raw or unsafe capture paths");
+  }
+
+  return {
+    path: manifestPath,
+    manifest,
+    json
   };
 }
 
@@ -248,4 +352,26 @@ function firstRedactedFrameDirectory(demonstration: SeniorDemonstration): string
   }
 
   return firstFrame.slice(0, firstFrame.lastIndexOf("/"));
+}
+
+function redactInputEvent(
+  event: DemonstrationInputEvent,
+  replacements: string[],
+  businessSensitiveTags: { kind: string; value: string }[]
+): DemonstrationInputEvent {
+  return {
+    ...event,
+    text: event.text ? redactManifestString(event.text, replacements, businessSensitiveTags) : undefined
+  };
+}
+
+function redactManifestString(
+  value: string,
+  replacements: string[],
+  businessSensitiveTags: { kind: string; value: string }[]
+): string {
+  const redacted = redactShareableText(value);
+  replacements.push(...redacted.replacements);
+  businessSensitiveTags.push(...redacted.businessSensitiveTags);
+  return redacted.text;
 }

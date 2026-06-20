@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "captureId": "capture-fixture-odoo-qualify-001",
+  "flowId": "odoo-qualify-opportunity",
+  "flowPath": "flows/odoo/qualify-opportunity.flow.md",
+  "tool": "odoo",
+  "generatedAt": "2026-06-20t00:00:00z",
+  "dataClass": "clean-demo",
+  "rawCapturePolicy": "unsafe-to-share-local-only",
+  "redactionPolicy": "hard-secret-redaction-v0",
+  "rawCaptureSummary": {
+    "screenRecordingCaptured": true,
+    "keyboardEventLogCaptured": true,
+    "mouseEventLogCaptured": true,
+    "humanNotesCaptured": true
+  },
+  "rawArtifacts": [
+    {
+      "kind": "screen-recording",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "keyboard-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "mouse-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "human-context-notes",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    }
+  ],
+  "redactedFrames": [
+    {
+      "frameId": "pipeline",
+      "path": "captures/redacted/odoo-qualify-opportunity/frame-0001.png",
+      "visibleText": [
+        "pipeline",
+        "demo opportunity",
+        "new"
+      ]
+    },
+    {
+      "frameId": "opportunity-detail",
+      "path": "captures/redacted/odoo-qualify-opportunity/frame-0002.png",
+      "visibleText": [
+        "demo opportunity",
+        "stage",
+        "new",
+        "qualified"
+      ]
+    },
+    {
+      "frameId": "qualified-unsaved",
+      "path": "captures/redacted/odoo-qualify-opportunity/frame-0003.png",
+      "visibleText": [
+        "demo opportunity",
+        "stage",
+        "qualified",
+        "unsaved changes"
+      ]
+    },
+    {
+      "frameId": "qualified-saved",
+      "path": "captures/redacted/odoo-qualify-opportunity/frame-0004.png",
+      "visibleText": [
+        "demo opportunity",
+        "stage",
+        "qualified",
+        "saved"
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "anchorId": "opportunity-card",
+      "frameId": "pipeline",
+      "x": 112,
+      "y": 180,
+      "width": 320,
+      "height": 90
+    },
+    {
+      "anchorId": "qualified-stage",
+      "frameId": "opportunity-detail",
+      "x": 540,
+      "y": 132,
+      "width": 148,
+      "height": 44
+    },
+    {
+      "anchorId": "save-button",
+      "frameId": "qualified-unsaved",
+      "x": 34,
+      "y": 88,
+      "width": 92,
+      "height": 40
+    }
+  ],
+  "inputEvidence": [
+    {
+      "stepId": "step-001",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "opportunity-card"
+        }
+      ]
+    },
+    {
+      "stepId": "step-002",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "qualified-stage"
+        }
+      ]
+    },
+    {
+      "stepId": "step-003",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "click",
+          "anchorId": "save-button"
+        }
+      ]
+    }
+  ],
+  "redaction": {
+    "replacements": [],
+    "businessSensitiveTags": []
+  }
+}

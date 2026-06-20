@@ -13,6 +13,7 @@
 - final screen: evals/runs/odoo/fixture-odoo-qualify-001/final-screen.png
 - step trace: evals/runs/odoo/fixture-odoo-qualify-001/step-trace.json
 - capture-to-flow mapping: flows/odoo/qualify-opportunity.flow.md
+- normalized capture manifest: captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
 - eval recording: evals/runs/odoo/fixture-odoo-qualify-001/eval-recording.mp4
 - failure log: evals/runs/odoo/fixture-odoo-qualify-001/failure-log.md
 

@@ -25,6 +25,7 @@
 
 - step trace: evals/runs/odoo/fixture-odoo-qualify-001/step-trace.json
 - final screen: evals/runs/odoo/fixture-odoo-qualify-001/final-screen.png
+- normalized capture manifest: captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
 - eval recording marker: evals/runs/odoo/fixture-odoo-qualify-001/eval-recording.mp4
 - failure log: evals/runs/odoo/fixture-odoo-qualify-001/failure-log.md
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { normalizeDemonstrationToFlowMarkdown } from "@onboardai/capture";
+import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown } from "@onboardai/capture";
 import { runDeterministicEval, type EvalRunResult } from "@onboardai/eval-harness";
 import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
 import { parseFlowMarkdown, searchFlowDocuments, validateFlowMarkdown } from "@onboardai/flow";
@@ -97,11 +97,19 @@ function normalizeFixtureCapture(tool: ToolName): { readonly path: string; reado
   const fixture = getDeterministicFixture(tool);
   const demonstration = getSeniorDemonstration(tool);
   const artifact = normalizeDemonstrationToFlowMarkdown(demonstration, fixture.flowPath);
+  const manifest = createNormalizedCaptureManifest(
+    demonstration,
+    artifact,
+    join("captures", "normalized", demonstration.captureId, "manifest.json")
+  );
   const outputPath = resolveWorkspacePath(artifact.path);
   const outputDir = dirname(outputPath);
+  const manifestPath = resolveWorkspacePath(manifest.path);
 
   mkdirSync(outputDir, { recursive: true });
+  mkdirSync(dirname(manifestPath), { recursive: true });
   writeFileSync(outputPath, artifact.markdown);
+  writeFileSync(manifestPath, manifest.json);
 
   return { path: artifact.path, markdown: artifact.markdown };
 }
@@ -151,6 +159,7 @@ function renderReport(result: EvalRunResult): string {
 
 - step trace: evals/runs/${result.tool}/${result.runId}/step-trace.json
 - final screen: evals/runs/${result.tool}/${result.runId}/final-screen.png
+- normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
 - eval recording marker: evals/runs/${result.tool}/${result.runId}/eval-recording.mp4
 - failure log: evals/runs/${result.tool}/${result.runId}/failure-log.md
 
@@ -178,6 +187,7 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 - final screen: evals/runs/${result.tool}/${result.runId}/final-screen.png
 - step trace: evals/runs/${result.tool}/${result.runId}/step-trace.json
 - capture-to-flow mapping: flows/${result.tool}/${result.tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md
+- normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
 - eval recording: evals/runs/${result.tool}/${result.runId}/eval-recording.mp4
 - failure log: evals/runs/${result.tool}/${result.runId}/failure-log.md
 
@@ -256,6 +266,10 @@ function fixtureRecordingMarker(result: EvalRunResult): string {
     "source=deterministic screen-observation fixture",
     "note=this marker is not a live target-tool screen recording"
   ].join("\n");
+}
+
+function captureIdForResult(result: EvalRunResult): string {
+  return result.tool === "odoo" ? "capture-fixture-odoo-qualify-001" : "capture-fixture-notion-ready-review-001";
 }
 
 function resolveWorkspacePath(path: string): string {

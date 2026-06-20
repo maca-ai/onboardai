@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  createNormalizedCaptureManifest,
   createRawCaptureArtifact,
   normalizeDemonstrationToFlowMarkdown
 } from "../dist/index.js";
@@ -74,4 +75,25 @@ test("normalization rejects unsafe frame references in shareable flow.md", () =>
   };
 
   assert.throws(() => normalizeDemonstrationToFlowMarkdown(unsafe, "flows/odoo/qualify-opportunity.flow.md"), /unsafe frame/);
+});
+
+test("normalized capture manifest records redacted evidence without raw paths", () => {
+  const flow = normalizeDemonstrationToFlowMarkdown(demonstration, "flows/odoo/qualify-opportunity.flow.md");
+  const manifest = createNormalizedCaptureManifest(
+    demonstration,
+    flow,
+    "captures/normalized/capture-test-001/manifest.json"
+  );
+
+  assert.equal(manifest.manifest.rawCaptureSummary.screenRecordingCaptured, true);
+  assert.equal(manifest.manifest.rawCaptureSummary.keyboardEventLogCaptured, true);
+  assert.equal(manifest.manifest.rawCaptureSummary.mouseEventLogCaptured, true);
+  assert.equal(manifest.manifest.redactedFrames[0].path, "captures/redacted/test/frame-0001.png");
+  assert.equal(manifest.json.includes("captures/raw/"), false);
+  assert.equal(manifest.json.includes("senior@example.com"), false);
+  assert.equal(manifest.json.includes("hunter2"), false);
+  assert.equal(manifest.json.includes("screen-recording"), true);
+  assert.equal(manifest.json.includes("keyboard-event-log"), true);
+  assert.equal(manifest.json.includes("mouse-event-log"), true);
+  assert.doesNotThrow(() => JSON.parse(manifest.json));
 });
