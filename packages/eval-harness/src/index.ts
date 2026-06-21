@@ -548,6 +548,10 @@ export function auditRealToolRunArtifacts(
       findings.push({ tool: proof.tool, message: `${reviewerChecklistPath} cannot be validated without file contents` });
     } else {
       auditReviewerChecklist(proof, reviewerChecklistPath, readText(reviewerChecklistPath), findings);
+      const stepTracePath = `${runDir}/step-trace.json`;
+      if (existsPath(stepTracePath)) {
+        auditReviewerStepSignoff(proof, reviewerChecklistPath, readText(reviewerChecklistPath), stepTracePath, readText(stepTracePath), findings);
+      }
     }
   }
 
@@ -1156,6 +1160,40 @@ function auditReviewerChecklist(
 
   if (content.includes("- rejected: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
+  }
+}
+
+function auditReviewerStepSignoff(
+  proof: RealToolProofEvidence,
+  checklistPath: string,
+  checklistContent: string,
+  stepTracePath: string,
+  stepTraceContent: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsedTrace: unknown;
+  try {
+    parsedTrace = JSON.parse(stepTraceContent);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for reviewer step signoff` });
+    return;
+  }
+
+  if (!Array.isArray(parsedTrace)) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for reviewer step signoff` });
+    return;
+  }
+
+  const acceptedLines = new Set(checklistContent.split(/\r?\n/).map((line) => line.trim()));
+  for (const entry of parsedTrace) {
+    if (!isRecord(entry) || typeof entry.stepId !== "string" || entry.stepId.length === 0) {
+      continue;
+    }
+
+    const requiredLine = `- ${entry.stepId}: accepted`;
+    if (!acceptedLines.has(requiredLine)) {
+      findings.push({ tool: proof.tool, message: `${checklistPath} reviewer checklist must contain per-step signoff ${requiredLine}` });
+    }
   }
 }
 

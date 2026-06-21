@@ -24,6 +24,9 @@
 ## checks
 
 - [ ] each taught step was correct
+- step-001:
+- step-002:
+- step-003:
 - [ ] no required step was missing
 - [ ] terminal business state was reached
 - [ ] terminal visible text matched

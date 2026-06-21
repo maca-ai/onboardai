@@ -134,6 +134,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
+- [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json`.
@@ -162,6 +163,7 @@ the senior reviewer must inspect:
 the reviewer may sign off only if:
 
 - [ ] every taught step was correct.
+- [ ] every step id in `step-trace.json` has an explicit accepted line in `reviewer-checklist.md`.
 - [ ] no required step was missing.
 - [ ] the terminal business state was reached.
 - [ ] terminal visible text matched the `flow.md` terminal business state.

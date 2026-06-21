@@ -290,7 +290,19 @@ test("proof real-run validates complete real target-tool run artifacts and write
     writeFileSync(new URL("redacted-frame-0003.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
-    writeFileSync(new URL("reviewer-checklist.md", runDir), "# reviewer checklist\n\n- accepted: true\n");
+    writeFileSync(
+      new URL("reviewer-checklist.md", runDir),
+      [
+        "# reviewer checklist",
+        "",
+        "- step-001: accepted",
+        "- step-002: accepted",
+        "- step-003: accepted",
+        "- accepted: true",
+        "- rejected: false",
+        ""
+      ].join("\n")
+    );
     writeFileSync(
       new URL("flow-evidence.json", runDir),
       `${JSON.stringify(

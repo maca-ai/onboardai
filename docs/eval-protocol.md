@@ -237,7 +237,9 @@ user action, and a current frame path under the same run directory.
 parse and validate, match the target tool, match the recorded flow id and terminal business state, and its
 step ids, instruction text, highlight anchors, and manual action targets must match the real `step-trace.json`.
 
-`reviewer-checklist.md` must contain `- accepted: true` and must not contain `- rejected: true`.
+`reviewer-checklist.md` must contain `- accepted: true`, must not contain `- rejected: true`, and must
+include one per-step acceptance line for every step id in `step-trace.json`, for example
+`- step-001: accepted`.
 
 `outcome-evidence.json` must show completion rate `1`, all taught steps completed, terminal business state
 reached, empty terminal missing visible text, zero human-help incidents, zero invented-step incidents, no
@@ -380,6 +382,9 @@ state the smallest next experiment.
 ## checks
 
 - [ ] each taught step was correct
+- step-001:
+- step-002:
+- step-003:
 - [ ] no required step was missing
 - [ ] terminal business state was reached
 - [ ] terminal visible text matched
