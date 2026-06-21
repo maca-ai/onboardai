@@ -136,6 +136,11 @@ if one passes and the other fails, the project is not complete.
 
 fixture proof runs must also write a machine-readable proof audit that verifies both required tools, completion, held-out eval frames, terminal visible text, no human help, no invented steps, no privileged access, and reviewer signoff.
 
+the machine-readable proof audit must also verify shareable evidence path integrity. every referenced flow,
+normalized manifest, redacted capture frame, held-out eval frame, eval run artifact, report, and reviewer
+checklist path must be project-relative, exist on disk, avoid raw/unsafe/tmp capture locations, and live under
+an allowed shareable evidence directory.
+
 ## failure log template
 
 ```md

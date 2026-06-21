@@ -13,6 +13,10 @@
 - fixture proof result: passed
 - machine audit result: passed
 - machine audit findings: none
+- shareable evidence references audited: 60
+- missing shareable evidence references: 0
+- unsafe shareable evidence references: 0
+- disallowed shareable evidence references: 0
 - real-tool proof result: not run
 
 ## confirmed fixture capability
@@ -87,6 +91,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations
 - machine audit requires both odoo and notion results to pass all no-help, no-invention, no-privileged-access, held-out-frame, terminal-text, and reviewer-signoff gates
+- machine audit requires referenced shareable evidence paths to exist under allowed flow, redacted capture, eval fixture, eval run, report, reviewer checklist, or normalized manifest locations
 
 ## tool-specific fixture differences
 

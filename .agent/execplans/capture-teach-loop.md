@@ -110,6 +110,7 @@ do not weaken any constraint to make an eval pass.
 - [x] require explicit terminal visible text for fixture eval pass
 - [x] add machine-readable two-tool fixture proof audit
 - [x] reject ungrounded instruction highlights and user-action target anchors in `flow.md`
+- [x] audit shareable evidence paths for existence, allowed location, and unsafe capture leaks
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -175,6 +176,9 @@ record observations here.
 
 - observation: normalized flows now fail validation when overlay or action anchors are not grounded in the current step's redacted frame hints, and malformed anchors with missing source frames fail without crashing validation.
   evidence: new flow tests reject `instruction.highlight-anchor-id` and `user-action.target-anchor-id` values that do not appear in the same step's `expected-state.screen-region-hints`; another test removes `source-frame` and validates the error path.
+
+- observation: fixture proof now machine-checks referenced shareable evidence paths instead of relying on report text.
+  evidence: `pnpm proof:fixtures` writes `evals/reports/fixture-proof-audit.json` with `shareableEvidence.passed: true`, 60 references audited, zero missing references, zero unsafe references, and zero disallowed references.
 
 ## decision-log
 
@@ -250,6 +254,10 @@ record observations here.
   rationale: malformed teaching artifacts should be rejected before they reach eval or user-facing overlay guidance; this keeps overlay behavior grounded in captured redacted frame evidence and prevents invented target references.
   date-author: 2026-06-21, codex flow anchor grounding.
 
+- decision: fold shareable evidence path checks into the existing proof audit rather than adding a separate script.
+  rationale: the command that claims fixture proof should fail if any referenced flow, manifest, redacted frame, held-out frame, eval artifact, report, or reviewer checklist path is missing, absolute, outside allowed evidence locations, or points at raw/unsafe/tmp capture material.
+  date-author: 2026-06-21, codex evidence path audit.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -260,16 +268,16 @@ current evidence:
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, per-step anchor grounding, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
-- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools.
+- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, and audited two-tool fixture proof.
-- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, and `evals/reports/fixture-proof-audit.json` to compare both fixture evals, machine-check the proof invariants, and record limitations.
+- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, and `evals/reports/fixture-proof-audit.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, and record limitations.
 
 what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 36 tests, 36 pass, 0 fail.
+- latest test suite passed: 38 tests, 38 pass, 0 fail.
 
 completion rate:
 
@@ -287,7 +295,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- add a shareable-evidence path audit that checks every frame path referenced by generated flows, normalized manifests, reports, and reviewer evidence exists under allowed redacted/eval locations and never points at raw, unsafe, or temporary capture paths.
+- add a full-goal proof status audit that explicitly separates fixture proof from the missing native/real odoo and notion proof requirements, so no report can accidentally imply the overall goal is complete before real target-tool evidence exists.
 
 at completion, record:
 
@@ -834,6 +842,33 @@ latest results on 2026-06-21:
 - forbidden secret scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+shareable evidence path audit command:
+
+```sh
+pnpm --filter @onboardai/eval-harness test
+pnpm --filter @onboardai/cli test
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+pnpm proof:fixtures
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures/normalized captures/redacted --glob "!**/*.mp4" -i
+rg -n "captures/(raw|unsafe|tmp)/" flows evals captures/normalized captures/redacted --glob "!**/*.mp4"
+```
+
+latest results on 2026-06-21:
+
+- `pnpm --filter @onboardai/eval-harness test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 2 tests, 2 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 38 tests, 38 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `evals/reports/fixture-proof-audit.json`: `shareableEvidence.passed` true, 60 references audited, zero missing references, zero unsafe references, and zero disallowed references.
+- forbidden secret scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -887,3 +922,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-21: normalized manifest business-sensitive tagging added: redacted frame paths now pass through shareable tagging before persistence, with tests covering absolute local paths and business record ids.
 - 2026-06-21: shareable fixture frame materialization added: fixture proof now writes referenced redacted capture frame and held-out eval frame PNG markers so committed flow/eval evidence paths resolve to concrete files.
 - 2026-06-21: flow anchor grounding added: `flow.md` validation now rejects instruction highlights and user-action target anchors that are not present in the same step's captured screen-region hints.
+- 2026-06-21: shareable evidence path audit added: `proof fixtures` now fails if referenced flow, manifest, redacted frame, held-out frame, eval run, report, or reviewer checklist paths are missing, unsafe, absolute, or outside allowed evidence directories.

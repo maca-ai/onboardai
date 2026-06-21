@@ -3,11 +3,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getDeterministicFixture } from "@onboardai/fixtures";
 import { parseFlowMarkdown } from "@onboardai/flow";
-import { auditEvalProofResults, matchScreenState, runDeterministicEval } from "../dist/index.js";
+import { auditEvalProofResults, auditShareableEvidencePaths, matchScreenState, runDeterministicEval } from "../dist/index.js";
+
+const workspaceRoot = new URL("../../..", import.meta.url);
 
 test("odoo-like fixture eval reaches the terminal business state without privileged access", () => {
   const fixture = getDeterministicFixture("odoo");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const result = runDeterministicEval(flow, fixture);
 
   assert.equal(result.passed, true);
@@ -25,7 +27,7 @@ test("odoo-like fixture eval reaches the terminal business state without privile
 
 test("notion-like fixture eval reaches the terminal business state without privileged access", () => {
   const fixture = getDeterministicFixture("notion");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const result = runDeterministicEval(flow, fixture);
 
   assert.equal(result.passed, true);
@@ -43,7 +45,7 @@ test("notion-like fixture eval reaches the terminal business state without privi
 
 test("screen-state matcher reports below-threshold confidence from visible text only", () => {
   const fixture = getDeterministicFixture("odoo");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const match = matchScreenState(flow.steps[0], {
     stateId: "wrong-screen",
     frame: "captures/redacted/wrong/frame-0001.png",
@@ -57,7 +59,7 @@ test("screen-state matcher reports below-threshold confidence from visible text 
 
 test("ambiguous fixture transitions fail instead of guessing", () => {
   const fixture = getDeterministicFixture("odoo");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const ambiguousFixture = {
     ...fixture,
     transitions: [...fixture.transitions, fixture.transitions[0]]
@@ -71,7 +73,7 @@ test("ambiguous fixture transitions fail instead of guessing", () => {
 
 test("terminal business state fails when held-out final screen misses required terminal text", () => {
   const fixture = getDeterministicFixture("odoo");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const brokenFixture = {
     ...fixture,
     observations: fixture.observations.map((observation) =>
@@ -91,8 +93,8 @@ test("terminal business state fails when held-out final screen misses required t
 test("proof audit accepts only complete held-out two-tool eval evidence", () => {
   const odooFixture = getDeterministicFixture("odoo");
   const notionFixture = getDeterministicFixture("notion");
-  const odooFlow = parseFlowMarkdown(readFileSync(odooFixture.flowPath, "utf8"));
-  const notionFlow = parseFlowMarkdown(readFileSync(notionFixture.flowPath, "utf8"));
+  const odooFlow = readFixtureFlow(odooFixture.flowPath);
+  const notionFlow = readFixtureFlow(notionFixture.flowPath);
   const audit = auditEvalProofResults([
     runDeterministicEval(odooFlow, odooFixture),
     runDeterministicEval(notionFlow, notionFixture)
@@ -108,13 +110,56 @@ test("proof audit accepts only complete held-out two-tool eval evidence", () => 
 
 test("proof audit fails if a required eval invariant is missing", () => {
   const fixture = getDeterministicFixture("odoo");
-  const flow = parseFlowMarkdown(readFileSync(fixture.flowPath, "utf8"));
+  const flow = readFixtureFlow(fixture.flowPath);
   const result = runDeterministicEval(flow, fixture);
   const audit = auditEvalProofResults([
     { ...result, heldOutFromCapture: false },
-    runDeterministicEval(parseFlowMarkdown(readFileSync(getDeterministicFixture("notion").flowPath, "utf8")), getDeterministicFixture("notion"))
+    runDeterministicEval(readFixtureFlow(getDeterministicFixture("notion").flowPath), getDeterministicFixture("notion"))
   ]);
 
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("held out")), true);
 });
+
+test("shareable evidence path audit accepts existing allowed artifact paths", () => {
+  const audit = auditShareableEvidencePaths(
+    [
+      { tool: "odoo", label: "flow", path: "flows/odoo/qualify-opportunity.flow.md" },
+      { tool: "odoo", label: "capture frame", path: "captures/redacted/odoo-qualify-opportunity/frame-0001.png" },
+      { tool: "odoo", label: "held-out frame", path: "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0001.png" },
+      { tool: "odoo", label: "step trace", path: "evals/runs/odoo/fixture-odoo-qualify-001/step-trace.json" }
+    ],
+    (path) => path.endsWith(".md") || path.endsWith(".png") || path.endsWith(".json")
+  );
+
+  assert.equal(audit.passed, true);
+  assert.equal(audit.referencesAudited, 4);
+  assert.equal(audit.summary.missingReferences, 0);
+  assert.equal(audit.summary.unsafeReferences, 0);
+  assert.equal(audit.summary.disallowedReferences, 0);
+});
+
+test("shareable evidence path audit rejects missing, unsafe, absolute, and disallowed paths", () => {
+  const audit = auditShareableEvidencePaths(
+    [
+      { tool: "odoo", label: "missing frame", path: "captures/redacted/odoo-qualify-opportunity/missing.png" },
+      { tool: "odoo", label: "raw frame", path: "captures/raw/odoo-qualify-opportunity/frame-0001.png" },
+      { tool: "notion", label: "absolute frame", path: "/Users/mc/Desktop/onboardai/evals/fixtures/notion/frame.png" },
+      { tool: "notion", label: "untracked note", path: "docs/proof-note.md" }
+    ],
+    (path) => !path.includes("missing")
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.summary.missingReferences, 1);
+  assert.equal(audit.summary.unsafeReferences, 1);
+  assert.equal(audit.summary.disallowedReferences, 4);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("missing")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("project-relative")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("allowed shareable evidence location")), true);
+});
+
+function readFixtureFlow(path) {
+  return parseFlowMarkdown(readFileSync(new URL(path, workspaceRoot), "utf8"));
+}

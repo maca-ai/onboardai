@@ -88,6 +88,7 @@ export interface EvalProofAuditResult {
   readonly requiredTools: readonly string[];
   readonly toolsAudited: readonly string[];
   readonly findings: readonly EvalProofAuditFinding[];
+  readonly shareableEvidence: ShareableEvidencePathAuditResult;
   readonly summary: {
     readonly toolsPassed: number;
     readonly toolsRequired: number;
@@ -97,8 +98,46 @@ export interface EvalProofAuditResult {
     readonly humanHelpIncidents: number;
     readonly inventedStepIncidents: number;
     readonly privilegedAccessViolations: number;
+    readonly evidenceReferencesAudited: number;
+    readonly missingEvidenceReferences: number;
+    readonly unsafeEvidenceReferences: number;
+    readonly disallowedEvidenceReferences: number;
   };
 }
+
+export interface ShareableEvidencePathReference {
+  readonly tool: string;
+  readonly label: string;
+  readonly path: string;
+}
+
+export interface ShareableEvidencePathFinding {
+  readonly tool: string;
+  readonly label: string;
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface ShareableEvidencePathAuditResult {
+  readonly passed: boolean;
+  readonly referencesAudited: number;
+  readonly findings: readonly ShareableEvidencePathFinding[];
+  readonly summary: {
+    readonly missingReferences: number;
+    readonly unsafeReferences: number;
+    readonly disallowedReferences: number;
+  };
+}
+
+const allowedShareableEvidencePrefixes = [
+  "flows/",
+  "captures/normalized/",
+  "captures/redacted/",
+  "evals/fixtures/",
+  "evals/reports/",
+  "evals/reviewer-checklists/",
+  "evals/runs/"
+] as const;
 
 export function matchScreenState(step: FlowStep, observation: ScreenObservation): ScreenStateMatch {
   const expectedVisibleText = step["expected-state"]["visible-text"] ?? [];
@@ -116,7 +155,8 @@ export function matchScreenState(step: FlowStep, observation: ScreenObservation)
 
 export function auditEvalProofResults(
   results: readonly EvalRunResult[],
-  requiredTools: readonly string[] = ["odoo", "notion"]
+  requiredTools: readonly string[] = ["odoo", "notion"],
+  shareableEvidence: ShareableEvidencePathAuditResult = emptyShareableEvidencePathAudit()
 ): EvalProofAuditResult {
   const findings: EvalProofAuditFinding[] = [];
   const resultsByTool = new Map<string, EvalRunResult[]>();
@@ -146,6 +186,13 @@ export function auditEvalProofResults(
     }
   }
 
+  for (const finding of shareableEvidence.findings) {
+    findings.push({
+      tool: finding.tool,
+      message: `shareable evidence ${finding.label} ${finding.path}: ${finding.message}`
+    });
+  }
+
   const requiredResults = requiredTools.flatMap((tool) => resultsByTool.get(tool)?.slice(0, 1) ?? []);
   const summary = {
     toolsPassed: requiredResults.filter((result) => result.passed).length,
@@ -155,7 +202,11 @@ export function auditEvalProofResults(
     belowThresholdEvents: requiredResults.reduce((sum, result) => sum + result.belowThresholdEvents, 0),
     humanHelpIncidents: requiredResults.reduce((sum, result) => sum + result.humanHelpIncidents, 0),
     inventedStepIncidents: requiredResults.reduce((sum, result) => sum + result.inventedStepIncidents, 0),
-    privilegedAccessViolations: requiredResults.reduce((sum, result) => sum + result.privilegedAccessViolations.length, 0)
+    privilegedAccessViolations: requiredResults.reduce((sum, result) => sum + result.privilegedAccessViolations.length, 0),
+    evidenceReferencesAudited: shareableEvidence.referencesAudited,
+    missingEvidenceReferences: shareableEvidence.summary.missingReferences,
+    unsafeEvidenceReferences: shareableEvidence.summary.unsafeReferences,
+    disallowedEvidenceReferences: shareableEvidence.summary.disallowedReferences
   };
 
   return {
@@ -163,7 +214,51 @@ export function auditEvalProofResults(
     requiredTools,
     toolsAudited: requiredResults.map((result) => result.tool),
     findings,
+    shareableEvidence,
     summary
+  };
+}
+
+export function auditShareableEvidencePaths(
+  references: readonly ShareableEvidencePathReference[],
+  existsPath: (path: string) => boolean = () => true
+): ShareableEvidencePathAuditResult {
+  const findings: ShareableEvidencePathFinding[] = [];
+
+  for (const reference of references) {
+    const path = reference.path.trim();
+
+    if (!path) {
+      findings.push({ ...reference, path, message: "path is empty" });
+      continue;
+    }
+
+    if (isAbsolutePath(path) || path.includes("..")) {
+      findings.push({ ...reference, path, message: "path must be project-relative and must not traverse directories" });
+    }
+
+    if (isUnsafeEvidencePath(path)) {
+      findings.push({ ...reference, path, message: "path points to unsafe capture evidence" });
+    }
+
+    if (!isAllowedShareableEvidencePath(path)) {
+      findings.push({ ...reference, path, message: "path is outside allowed shareable evidence locations" });
+    }
+
+    if (!existsPath(path)) {
+      findings.push({ ...reference, path, message: "path is missing on disk" });
+    }
+  }
+
+  return {
+    passed: findings.length === 0,
+    referencesAudited: references.length,
+    findings,
+    summary: {
+      missingReferences: findings.filter((finding) => finding.message.includes("missing")).length,
+      unsafeReferences: findings.filter((finding) => finding.message.includes("unsafe")).length,
+      disallowedReferences: findings.filter((finding) => finding.message.includes("outside") || finding.message.includes("project-relative")).length
+    }
   };
 }
 
@@ -339,6 +434,31 @@ function auditSingleEvalResult(result: EvalRunResult, findings: EvalProofAuditFi
       findings.push({ tool: result.tool, message: `${stepLabel} used unsafe capture frame evidence` });
     }
   });
+}
+
+function emptyShareableEvidencePathAudit(): ShareableEvidencePathAuditResult {
+  return {
+    passed: true,
+    referencesAudited: 0,
+    findings: [],
+    summary: {
+      missingReferences: 0,
+      unsafeReferences: 0,
+      disallowedReferences: 0
+    }
+  };
+}
+
+function isAllowedShareableEvidencePath(path: string): boolean {
+  return allowedShareableEvidencePrefixes.some((prefix) => path.startsWith(prefix));
+}
+
+function isUnsafeEvidencePath(path: string): boolean {
+  return path.startsWith("captures/raw/") || path.startsWith("captures/unsafe/") || path.startsWith("captures/tmp/");
+}
+
+function isAbsolutePath(path: string): boolean {
+  return path.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(path);
 }
 
 function findTransition(

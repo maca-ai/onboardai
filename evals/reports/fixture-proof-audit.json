@@ -9,6 +9,16 @@
     "notion"
   ],
   "findings": [],
+  "shareableEvidence": {
+    "passed": true,
+    "referencesAudited": 60,
+    "findings": [],
+    "summary": {
+      "missingReferences": 0,
+      "unsafeReferences": 0,
+      "disallowedReferences": 0
+    }
+  },
   "summary": {
     "toolsPassed": 2,
     "toolsRequired": 2,
@@ -17,6 +27,10 @@
     "belowThresholdEvents": 0,
     "humanHelpIncidents": 0,
     "inventedStepIncidents": 0,
-    "privilegedAccessViolations": 0
+    "privilegedAccessViolations": 0,
+    "evidenceReferencesAudited": 60,
+    "missingEvidenceReferences": 0,
+    "unsafeEvidenceReferences": 0,
+    "disallowedEvidenceReferences": 0
   }
 }

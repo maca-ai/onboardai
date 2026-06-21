@@ -2,7 +2,14 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, writeLocalCaptureBundle } from "@onboardai/capture";
-import { auditEvalProofResults, runDeterministicEval, type EvalProofAuditResult, type EvalRunResult } from "@onboardai/eval-harness";
+import {
+  auditEvalProofResults,
+  auditShareableEvidencePaths,
+  runDeterministicEval,
+  type EvalProofAuditResult,
+  type EvalRunResult,
+  type ShareableEvidencePathReference
+} from "@onboardai/eval-harness";
 import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
 import { parseFlowMarkdown, searchFlowDocuments, validateFlowMarkdown } from "@onboardai/flow";
 
@@ -65,7 +72,8 @@ if (args[0] === "flow" && args[1] === "validate") {
   for (const result of results) {
     writeEvalEvidence(result);
   }
-  const audit = auditEvalProofResults(results);
+  const evidenceAudit = auditShareableEvidencePaths(collectShareableEvidenceReferences(results), (path) => existsSync(resolveWorkspacePath(path)));
+  const audit = auditEvalProofResults(results, ["odoo", "notion"], evidenceAudit);
   writeTwoToolFixtureProof(results, audit);
   writeFixtureProofAudit(audit);
   console.log(`fixture proof ${audit.passed ? "passed" : "failed"}: ${audit.summary.toolsPassed}/${audit.summary.toolsRequired} tools`);
@@ -187,6 +195,84 @@ function writeFixtureProofAudit(audit: EvalProofAuditResult): void {
   writeFileSync(join(reportDir, "fixture-proof-audit.json"), `${JSON.stringify(audit, null, 2)}\n`);
 }
 
+function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): readonly ShareableEvidencePathReference[] {
+  const references: ShareableEvidencePathReference[] = [];
+
+  for (const result of results) {
+    const tool = asToolName(result.tool);
+    const fixture = getDeterministicFixture(tool);
+    const flowPath = fixture.flowPath;
+    const manifestPath = join("captures", "normalized", captureIdForResult(result), "manifest.json");
+    const runDir = join("evals", "runs", result.tool, result.runId);
+    const reportPath = join("evals", "reports", `${result.tool}-${result.runId}.md`);
+    const checklistPath = join("evals", "reviewer-checklists", `${result.tool}-${result.runId}.md`);
+
+    references.push({ tool: result.tool, label: "flow", path: flowPath });
+    references.push({ tool: result.tool, label: "normalized capture manifest", path: manifestPath });
+    references.push({ tool: result.tool, label: "step trace", path: join(runDir, "step-trace.json") });
+    references.push({ tool: result.tool, label: "final screen", path: join(runDir, "final-screen.png") });
+    references.push({ tool: result.tool, label: "eval recording marker", path: join(runDir, "eval-recording.mp4") });
+    references.push({ tool: result.tool, label: "failure log", path: join(runDir, "failure-log.md") });
+    references.push({ tool: result.tool, label: "eval report", path: reportPath });
+    references.push({ tool: result.tool, label: "reviewer checklist", path: checklistPath });
+
+    const flow = parseFlowMarkdown(readFileSync(resolveWorkspacePath(flowPath), "utf8"));
+    for (const step of flow.steps) {
+      for (const hint of step["expected-state"]["screen-region-hints"] ?? []) {
+        references.push({ tool: result.tool, label: `flow ${step["step-id"]} source frame`, path: hint["source-frame"] });
+      }
+    }
+
+    const manifest = JSON.parse(readFileSync(resolveWorkspacePath(manifestPath), "utf8")) as NormalizedManifestEvidence;
+    if (typeof manifest.flowPath === "string") {
+      references.push({ tool: result.tool, label: "manifest flow path", path: manifest.flowPath });
+    }
+    for (const frame of manifest.redactedFrames ?? []) {
+      if (typeof frame.path === "string") {
+        references.push({ tool: result.tool, label: `manifest redacted frame ${String(frame.frameId ?? "unknown")}`, path: frame.path });
+      }
+    }
+
+    for (const entry of result.trace) {
+      references.push({ tool: result.tool, label: `trace ${entry.stepId} held-out frame`, path: entry.currentFrame });
+    }
+
+    references.push(...extractEvidencePathsFromArtifact(result.tool, "eval report reference", reportPath));
+    references.push(...extractEvidencePathsFromArtifact(result.tool, "reviewer checklist reference", checklistPath));
+  }
+
+  return uniqueEvidenceReferences(references);
+}
+
+interface NormalizedManifestEvidence {
+  readonly flowPath?: unknown;
+  readonly redactedFrames?: readonly { readonly frameId?: unknown; readonly path?: unknown }[];
+}
+
+function extractEvidencePathsFromArtifact(tool: string, label: string, artifactPath: string): readonly ShareableEvidencePathReference[] {
+  const content = readFileSync(resolveWorkspacePath(artifactPath), "utf8");
+  const paths = content.match(/\b(?:flows|captures|evals)\/[A-Za-z0-9._/-]+/g) ?? [];
+
+  return paths.map((path) => ({ tool, label, path }));
+}
+
+function uniqueEvidenceReferences(references: readonly ShareableEvidencePathReference[]): readonly ShareableEvidencePathReference[] {
+  const seen = new Set<string>();
+  const unique: ShareableEvidencePathReference[] = [];
+
+  for (const reference of references) {
+    const key = `${reference.tool}\0${reference.label}\0${reference.path}`;
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    unique.push(reference);
+  }
+
+  return unique;
+}
+
 function renderReport(result: EvalRunResult): string {
   return `# eval report
 
@@ -297,6 +383,10 @@ function renderTwoToolFixtureProof(results: readonly EvalRunResult[], audit: Eva
 - fixture proof result: ${passedCount === results.length ? "passed" : "failed"}
 - machine audit result: ${audit.passed ? "passed" : "failed"}
 - machine audit findings: ${audit.findings.length === 0 ? "none" : audit.findings.map((finding) => `${finding.tool}: ${finding.message}`).join("; ")}
+- shareable evidence references audited: ${audit.summary.evidenceReferencesAudited}
+- missing shareable evidence references: ${audit.summary.missingEvidenceReferences}
+- unsafe shareable evidence references: ${audit.summary.unsafeEvidenceReferences}
+- disallowed shareable evidence references: ${audit.summary.disallowedEvidenceReferences}
 - real-tool proof result: not run
 
 ## confirmed fixture capability
@@ -330,6 +420,7 @@ ${results.map(renderToolProofSection).join("\n")}
 - fixture user action is matched against explicit manual transition data
 - reviewer checklist accepts only completed evals with terminal visible business state and no violations
 - machine audit requires both odoo and notion results to pass all no-help, no-invention, no-privileged-access, held-out-frame, terminal-text, and reviewer-signoff gates
+- machine audit requires referenced shareable evidence paths to exist under allowed flow, redacted capture, eval fixture, eval run, report, reviewer checklist, or normalized manifest locations
 
 ## tool-specific fixture differences
 
@@ -435,6 +526,14 @@ function fixtureRecordingMarker(result: EvalRunResult): string {
 
 function captureIdForResult(result: EvalRunResult): string {
   return result.tool === "odoo" ? "capture-fixture-odoo-qualify-001" : "capture-fixture-notion-ready-review-001";
+}
+
+function asToolName(tool: string): ToolName {
+  if (tool === "odoo" || tool === "notion") {
+    return tool;
+  }
+
+  throw new Error(`unsupported tool in fixture proof: ${tool}`);
 }
 
 function resolveWorkspacePath(path: string): string {
