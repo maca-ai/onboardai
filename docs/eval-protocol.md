@@ -172,9 +172,54 @@ each file must contain one proof object:
 }
 ```
 
-the `evidencePath` must exist on disk under `evals/runs/`. the proof object is only a summary pointer; it
-does not replace the required run artifacts, native screen-plus-input capture evidence, reviewer checklist,
-or no-privileged-access audit evidence.
+the `evidencePath` must exist on disk under `evals/runs/<tool>/<run-id>/step-trace.json`. the proof object is
+only a summary pointer; it does not replace the required run artifacts, native screen-plus-input capture
+evidence, reviewer checklist, or no-privileged-access audit evidence.
+
+proof summary templates live under:
+
+```text
+/evals/templates/reports/real-tool-proof-odoo.json
+/evals/templates/reports/real-tool-proof-notion.json
+```
+
+do not copy those templates into `/evals/reports/real-tool-proof-*.json` until the real run artifacts exist
+and the senior reviewer has accepted every taught step.
+
+## real target-tool run preparation
+
+the detailed runbook is `docs/real-eval-runbook.md`.
+
+real held-out evals must use only clean seeded demo data or sanitized duplicate data. do not run real evals
+against live customer data.
+
+real run templates live under:
+
+```text
+/evals/templates/runs/tool-run-id/step-trace.json
+/evals/templates/runs/tool-run-id/failure-log.md
+/evals/templates/runs/tool-run-id/reviewer-checklist.md
+```
+
+for a real run, copy the templates into:
+
+```text
+/evals/runs/<tool>/<run-id>/step-trace.json
+/evals/runs/<tool>/<run-id>/failure-log.md
+/evals/runs/<tool>/<run-id>/reviewer-checklist.md
+```
+
+the real run must also preserve or reference:
+
+- native screen recording evidence from the senior demonstration
+- keyboard event log evidence from the senior demonstration
+- mouse event log evidence from the senior demonstration
+- redacted capture frames and normalized capture manifest
+- held-out eval screen recording or redacted frame sequence
+- no-privileged-access statement
+- eval report under `/evals/reports/`
+
+raw capture evidence must remain local, unsafe-to-share, and excluded from git.
 
 ## failure log template
 

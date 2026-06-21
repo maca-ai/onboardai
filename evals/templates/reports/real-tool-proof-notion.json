@@ -1,0 +1,12 @@
+{
+  "tool": "notion",
+  "substrate": "real-tool",
+  "heldOutTeachingEvalPassed": true,
+  "nativeScreenPlusInputCaptureVerified": true,
+  "terminalBusinessStateReached": true,
+  "zeroHumanHelp": true,
+  "noInventedSteps": true,
+  "noPrivilegedAccess": true,
+  "seniorReviewerSignoff": true,
+  "evidencePath": "evals/runs/notion/replace-with-run-id/step-trace.json"
+}

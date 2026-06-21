@@ -182,6 +182,62 @@ test("real proof evidence file parser rejects malformed proof contracts", () => 
   assert.equal(parsed.findings.some((finding) => finding.message.includes("nativeScreenPlusInputCaptureVerified")), true);
 });
 
+test("real proof evidence file parser rejects incomplete summaries and misplaced evidence paths", () => {
+  const parsed = parseRealToolProofEvidenceFile(
+    {
+      tool: "odoo",
+      substrate: "real-tool",
+      heldOutTeachingEvalPassed: true,
+      nativeScreenPlusInputCaptureVerified: true,
+      terminalBusinessStateReached: true,
+      zeroHumanHelp: true,
+      noInventedSteps: true,
+      noPrivilegedAccess: true,
+      evidencePath: "evals/reports/odoo-run.md"
+    },
+    "evals/reports/real-tool-proof-odoo.json"
+  );
+
+  assert.equal(parsed.proofs.length, 0);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("seniorReviewerSignoff")), true);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("evals/runs/odoo")), true);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("step-trace.json")), true);
+});
+
+test("real proof evidence file parser rejects a summary pointing at the wrong target tool run", () => {
+  const parsed = parseRealToolProofEvidenceFile(
+    {
+      ...realToolProof("odoo"),
+      evidencePath: "evals/runs/notion/real-proof/step-trace.json"
+    },
+    "evals/reports/real-tool-proof-odoo.json"
+  );
+
+  assert.equal(parsed.proofs.length, 0);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("evals/runs/odoo")), true);
+});
+
+test("full goal status rejects incomplete real proof summaries without weakening fixture proof", () => {
+  const status = auditCaptureTeachGoalStatus({
+    fixtureAudit: passingFixtureAudit(),
+    realToolProofs: [
+      {
+        ...realToolProof("odoo"),
+        zeroHumanHelp: false,
+        evidencePath: "captures/raw/odoo/step-trace.json"
+      },
+      realToolProof("notion")
+    ]
+  });
+
+  assert.equal(status.fullGoalProven, false);
+  assert.equal(status.fixtureProofPassed, true);
+  assert.equal(status.realToolProofPassed, false);
+  assert.equal(status.summary.realToolsPassed, 1);
+  assert.equal(status.findings.some((finding) => finding.tool === "odoo" && finding.message.includes("human help")), true);
+  assert.equal(status.findings.some((finding) => finding.tool === "odoo" && finding.message.includes("evals/runs")), true);
+});
+
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
   const audit = auditShareableEvidencePaths(
     [

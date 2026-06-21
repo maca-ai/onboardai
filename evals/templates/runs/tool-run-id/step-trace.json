@@ -1,0 +1,26 @@
+[
+  {
+    "stepId": "step-001",
+    "title": "replace with taught step title",
+    "fromStateId": "replace-with-start-state",
+    "toStateId": "replace-with-next-state",
+    "currentFrame": "evals/runs/tool/replace-with-run-id/redacted-frame-0001.png",
+    "expectedVisibleText": [
+      "replace with visible text from flow.md"
+    ],
+    "matchedVisibleText": [
+      "replace with visible text observed on screen"
+    ],
+    "missingVisibleText": [],
+    "overlayConfidence": 1,
+    "overlayKind": "instruction",
+    "overlayMessage": "replace with flow.md grounded overlay text",
+    "highlightedAnchorId": "replace-with-flow-anchor-id",
+    "actionPrimitive": {
+      "kind": "click",
+      "targetAnchorId": "replace-with-flow-anchor-id",
+      "manualOnly": true
+    },
+    "success": true
+  }
+]

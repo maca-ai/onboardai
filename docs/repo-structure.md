@@ -32,6 +32,7 @@ onboardai/
     repo-structure.md
     context7-policy.md
     eval-fixtures.md
+    real-eval-runbook.md
   flows/
     odoo/
     notion/
@@ -39,6 +40,7 @@ onboardai/
     runs/
     reports/
     reviewer-checklists/
+    templates/
   captures/
     raw/
     redacted/

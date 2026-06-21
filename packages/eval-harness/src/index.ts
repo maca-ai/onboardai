@@ -397,10 +397,24 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
 
   if (typeof input.tool !== "string" || input.tool.length === 0) {
     findings.push({ tool, message: `${sourcePath} tool must be a non-empty string` });
+  } else if (input.tool !== "odoo" && input.tool !== "notion") {
+    findings.push({ tool, message: `${sourcePath} tool must be odoo or notion` });
   }
 
   if (typeof input.evidencePath !== "string" || input.evidencePath.length === 0) {
     findings.push({ tool, message: `${sourcePath} evidencePath must be a non-empty string` });
+  } else {
+    if (isAbsolutePath(input.evidencePath) || input.evidencePath.includes("..")) {
+      findings.push({ tool, message: `${sourcePath} evidencePath must be project-relative and must not traverse directories` });
+    }
+
+    if (!input.evidencePath.startsWith(`evals/runs/${tool}/`)) {
+      findings.push({ tool, message: `${sourcePath} evidencePath must live under evals/runs/${tool}/` });
+    }
+
+    if (!input.evidencePath.endsWith("/step-trace.json")) {
+      findings.push({ tool, message: `${sourcePath} evidencePath must point to a step-trace.json artifact` });
+    }
   }
 
   if (findings.length > 0) {
