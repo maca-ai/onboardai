@@ -185,6 +185,7 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
+/evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```
 
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
@@ -197,6 +198,10 @@ instruction guidance, overlay confidence at or above `0.75`, a non-empty highlig
 user action, and a current frame path under the same run directory.
 
 `reviewer-checklist.md` must contain `- accepted: true` and must not contain `- rejected: true`.
+
+`outcome-evidence.json` must show completion rate `1`, all taught steps completed, terminal business state
+reached, empty terminal missing visible text, zero human-help incidents, zero invented-step incidents, no
+privileged access violations, held-out eval evidence, and senior reviewer signoff.
 
 validate a filled real run directory before creating the live proof summary:
 
@@ -231,6 +236,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
 /evals/templates/runs/tool-run-id/screen-input-evidence.json
+/evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
 
 for a real run, copy the templates into:
@@ -240,6 +246,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
+/evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```
 
 the real run must also preserve or reference:

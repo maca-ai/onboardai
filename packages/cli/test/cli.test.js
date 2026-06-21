@@ -102,6 +102,35 @@ test("proof real-run validates complete real target-tool run artifacts without c
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
     writeFileSync(new URL("reviewer-checklist.md", runDir), "# reviewer checklist\n\n- accepted: true\n");
+    writeFileSync(
+      new URL("outcome-evidence.json", runDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          tool: "odoo",
+          substrate: "real-tool",
+          completionRate: 1,
+          stepCount: 1,
+          stepsCompleted: 1,
+          terminalBusinessStateReached: true,
+          terminalMissingVisibleText: [],
+          zeroHumanHelp: true,
+          noInventedSteps: true,
+          noPrivilegedAccess: true,
+          heldOutFromCapture: true,
+          seniorReviewerSignoff: true,
+          belowThresholdEvents: 0,
+          humanHelpIncidents: 0,
+          inventedStepIncidents: 0,
+          privilegedAccessViolations: [],
+          overlayMisreads: [],
+          finalScreenEvidencePath: `evals/runs/odoo/${runId}/final-screen.png`,
+          stepTraceEvidencePath: `evals/runs/odoo/${runId}/step-trace.json`
+        },
+        null,
+        2
+      )}\n`
+    );
     writeFileSync(new URL("manifest.json", normalizedDir), "{}\n");
     writeFileSync(new URL("frame-0001.png", redactedDir), "redacted frame marker\n");
     writeFileSync(
@@ -133,7 +162,7 @@ test("proof real-run validates complete real target-tool run artifacts without c
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 6\/6 required artifacts/);
+    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 7\/7 required artifacts/);
     assert.equal(existsSync(summaryPath), summaryExistedBefore);
   } finally {
     rmSync(runDir, { recursive: true, force: true });

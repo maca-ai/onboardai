@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "substrate": "real-tool",
+  "completionRate": 1,
+  "stepCount": 3,
+  "stepsCompleted": 3,
+  "terminalBusinessStateReached": true,
+  "terminalMissingVisibleText": [],
+  "zeroHumanHelp": true,
+  "noInventedSteps": true,
+  "noPrivilegedAccess": true,
+  "heldOutFromCapture": true,
+  "seniorReviewerSignoff": true,
+  "belowThresholdEvents": 0,
+  "humanHelpIncidents": 0,
+  "inventedStepIncidents": 0,
+  "privilegedAccessViolations": [],
+  "overlayMisreads": [],
+  "finalScreenEvidencePath": "evals/runs/tool/replace-with-run-id/final-screen.png",
+  "stepTraceEvidencePath": "evals/runs/tool/replace-with-run-id/step-trace.json"
+}

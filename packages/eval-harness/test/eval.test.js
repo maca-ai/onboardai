@@ -248,6 +248,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
     "evals/runs/odoo/real-proof/redacted-frame-0001.png",
     "captures/normalized/capture-real-odoo-001/manifest.json",
     "captures/redacted/capture-real-odoo-001/frame-0001.png"
@@ -260,7 +261,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
 
   assert.equal(audit.passed, true);
   assert.equal(audit.runDir, "evals/runs/odoo/real-proof");
-  assert.equal(audit.summary.requiredArtifacts, 6);
+  assert.equal(audit.summary.requiredArtifacts, 7);
   assert.equal(audit.summary.missingArtifacts, 0);
   assert.equal(audit.findings.length, 0);
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
@@ -274,8 +275,8 @@ test("real target-tool run artifact audit rejects missing required run artifacts
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.summary.requiredArtifacts, 6);
-  assert.equal(audit.summary.missingArtifacts, 5);
+  assert.equal(audit.summary.requiredArtifacts, 7);
+  assert.equal(audit.summary.missingArtifacts, 6);
   assert.equal(audit.findings.some((finding) => finding.message.includes("final-screen.png")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json")), true);
 });
@@ -288,7 +289,8 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
     "evals/runs/odoo/real-proof/eval-recording.mp4",
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
-    "evals/runs/odoo/real-proof/screen-input-evidence.json"
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json"
   ]);
   const audit = auditRealToolRunArtifacts(
     proof,
@@ -318,6 +320,7 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
     "evals/runs/notion/real-proof/failure-log.md",
     "evals/runs/notion/real-proof/reviewer-checklist.md",
     "evals/runs/notion/real-proof/screen-input-evidence.json",
+    "evals/runs/notion/real-proof/outcome-evidence.json",
     "evals/runs/notion/real-proof/redacted-frame-0001.png",
     "captures/normalized/capture-real-notion-001/manifest.json",
     "captures/redacted/capture-real-notion-001/frame-0001.png"
@@ -355,6 +358,65 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
   assert.equal(audit.findings.some((finding) => finding.message.includes("manualOnly")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("accepted: true")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
+});
+
+test("real target-tool run artifact audit rejects failed outcome evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("outcome-evidence.json")) {
+        return JSON.stringify({
+          ...outcomeEvidence("odoo"),
+          tool: "jira",
+          terminalBusinessStateReached: false,
+          zeroHumanHelp: false,
+          noInventedSteps: false,
+          noPrivilegedAccess: false,
+          heldOutFromCapture: false,
+          seniorReviewerSignoff: false,
+          completionRate: 0.5,
+          stepsCompleted: 1,
+          belowThresholdEvents: 1,
+          humanHelpIncidents: 1,
+          inventedStepIncidents: 1,
+          terminalMissingVisibleText: ["qualified"],
+          privilegedAccessViolations: ["api-access"],
+          overlayMisreads: ["guessed step"],
+          finalScreenEvidencePath: "captures/raw/odoo/final-screen.png",
+          stepTraceEvidencePath: "/tmp/step-trace.json"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("tool must be odoo or notion")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("tool must match odoo")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("terminalBusinessStateReached")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("zeroHumanHelp")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("completionRate")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("terminalMissingVisibleText")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("privilegedAccessViolations")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlayMisreads")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("project-relative")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evals/runs/odoo/real-proof/step-trace.json")), true);
 });
 
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
@@ -473,5 +535,34 @@ function realRunArtifactContent(path, tool) {
     return "# reviewer checklist\n\n- accepted: true\n- rejected: false\n";
   }
 
+  if (path.endsWith("outcome-evidence.json")) {
+    return JSON.stringify(outcomeEvidence(tool));
+  }
+
   return JSON.stringify(screenInputEvidence(tool));
+}
+
+function outcomeEvidence(tool) {
+  return {
+    schemaVersion: 1,
+    tool,
+    substrate: "real-tool",
+    completionRate: 1,
+    stepCount: 1,
+    stepsCompleted: 1,
+    terminalBusinessStateReached: true,
+    terminalMissingVisibleText: [],
+    zeroHumanHelp: true,
+    noInventedSteps: true,
+    noPrivilegedAccess: true,
+    heldOutFromCapture: true,
+    seniorReviewerSignoff: true,
+    belowThresholdEvents: 0,
+    humanHelpIncidents: 0,
+    inventedStepIncidents: 0,
+    privilegedAccessViolations: [],
+    overlayMisreads: [],
+    finalScreenEvidencePath: `evals/runs/${tool}/real-proof/final-screen.png`,
+    stepTraceEvidencePath: `evals/runs/${tool}/real-proof/step-trace.json`
+  };
 }

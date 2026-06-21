@@ -484,7 +484,8 @@ export function auditRealToolRunArtifacts(
     { label: "eval recording", path: `${runDir}/eval-recording.mp4` },
     { label: "failure log", path: `${runDir}/failure-log.md` },
     { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
-    { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` }
+    { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` },
+    { label: "outcome evidence", path: `${runDir}/outcome-evidence.json` }
   ] as const;
 
   for (const artifact of requiredArtifacts) {
@@ -527,6 +528,15 @@ export function auditRealToolRunArtifacts(
       findings.push({ tool: proof.tool, message: `${reviewerChecklistPath} cannot be validated without file contents` });
     } else {
       auditReviewerChecklist(proof, reviewerChecklistPath, readText(reviewerChecklistPath), findings);
+    }
+  }
+
+  const outcomeEvidencePath = `${runDir}/outcome-evidence.json`;
+  if (existsPath(outcomeEvidencePath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${outcomeEvidencePath} cannot be validated without file contents` });
+    } else {
+      auditOutcomeEvidence(proof, runDir, outcomeEvidencePath, readText(outcomeEvidencePath), existsPath, references, findings);
     }
   }
 
@@ -772,6 +782,10 @@ function auditScreenInputEvidence(
     findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
   }
 
+  if (parsed.tool !== "odoo" && parsed.tool !== "notion") {
+    findings.push({ tool: proof.tool, message: `${path} tool must be odoo or notion` });
+  }
+
   if (parsed.tool !== proof.tool) {
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
@@ -923,6 +937,105 @@ function auditReviewerChecklist(
   if (content.includes("- rejected: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
   }
+}
+
+function auditOutcomeEvidence(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== "odoo" && parsed.tool !== "notion") {
+    findings.push({ tool: proof.tool, message: `${path} tool must be odoo or notion` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  for (const field of [
+    "terminalBusinessStateReached",
+    "zeroHumanHelp",
+    "noInventedSteps",
+    "noPrivilegedAccess",
+    "heldOutFromCapture",
+    "seniorReviewerSignoff"
+  ] as const) {
+    if (parsed[field] !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${field} must be true` });
+    }
+  }
+
+  for (const field of ["belowThresholdEvents", "humanHelpIncidents", "inventedStepIncidents"] as const) {
+    if (parsed[field] !== 0) {
+      findings.push({ tool: proof.tool, message: `${path} ${field} must be 0` });
+    }
+  }
+
+  if (parsed.completionRate !== 1) {
+    findings.push({ tool: proof.tool, message: `${path} completionRate must be 1` });
+  }
+
+  if (typeof parsed.stepCount !== "number" || parsed.stepCount <= 0) {
+    findings.push({ tool: proof.tool, message: `${path} stepCount must be greater than 0` });
+  }
+
+  if (typeof parsed.stepsCompleted !== "number" || parsed.stepsCompleted !== parsed.stepCount) {
+    findings.push({ tool: proof.tool, message: `${path} stepsCompleted must equal stepCount` });
+  }
+
+  if (!Array.isArray(parsed.terminalMissingVisibleText) || parsed.terminalMissingVisibleText.length !== 0) {
+    findings.push({ tool: proof.tool, message: `${path} terminalMissingVisibleText must be empty` });
+  }
+
+  if (!Array.isArray(parsed.privilegedAccessViolations) || parsed.privilegedAccessViolations.length !== 0) {
+    findings.push({ tool: proof.tool, message: `${path} privilegedAccessViolations must be empty` });
+  }
+
+  if (!Array.isArray(parsed.overlayMisreads) || parsed.overlayMisreads.length !== 0) {
+    findings.push({ tool: proof.tool, message: `${path} overlayMisreads must be empty` });
+  }
+
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "finalScreenEvidencePath",
+    parsed.finalScreenEvidencePath,
+    `${runDir}/final-screen.png`,
+    existsPath,
+    references,
+    findings
+  );
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "stepTraceEvidencePath",
+    parsed.stepTraceEvidencePath,
+    `${runDir}/step-trace.json`,
+    existsPath,
+    references,
+    findings
+  );
 }
 
 function traceStepLabel(entry: unknown, index: number): string {

@@ -124,6 +124,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
+- [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.
 - [ ] write a report under `evals/reports/`.
 - [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.
 - [ ] only create the real-tool proof summary if the eval reached the terminal business state with zero human help, zero invented steps, no privileged access, and reviewer acceptance.
@@ -165,6 +166,7 @@ evals/templates/runs/tool-run-id/step-trace.json
 evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
 evals/templates/runs/tool-run-id/screen-input-evidence.json
+evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
 
 do not copy the proof summary template into `evals/reports/real-tool-proof-*.json` until the real run artifacts exist and the reviewer has accepted every taught step.
