@@ -65,6 +65,66 @@ test("proof status reports fixture proof separately from missing real target-too
   assert.equal(goalStatus.realToolProofs.length, 0);
 });
 
+test("proof real-run init creates a non-passing real target-tool run skeleton", () => {
+  const runId = "real-init-validation-001";
+  const runDir = new URL(`evals/runs/notion/${runId}/`, workspaceRoot);
+  const summaryPath = new URL("evals/reports/real-tool-proof-notion.json", workspaceRoot);
+  const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;
+
+  rmSync(runDir, { recursive: true, force: true });
+
+  try {
+    const initResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "init", "notion", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(initResult.status, 0);
+    assert.match(initResult.stdout, /initialized real run notion\/real-init-validation-001/);
+    assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
+    assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
+    assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
+    assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"tool": "notion"/);
+    assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);
+
+    const validationResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "notion", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(validationResult.status, 1);
+    assert.match(validationResult.stderr, /final-screen\.png/);
+    assert.match(validationResult.stderr, /eval-recording\.mp4/);
+    assert.match(validationResult.stderr, /reviewer checklist must contain accepted: true/);
+    assert.equal(existsSync(summaryPath), summaryBefore !== null);
+
+    const secondInitResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "init", "notion", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+    assert.equal(secondInitResult.status, 1);
+    assert.match(secondInitResult.stderr, /refusing to overwrite run evidence/);
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+    if (summaryBefore === null) {
+      rmSync(summaryPath, { force: true });
+    } else {
+      writeFileSync(summaryPath, summaryBefore);
+    }
+  }
+});
+
+test("proof real-run init rejects unsafe run ids", () => {
+  const result = spawnSync("node", ["dist/index.js", "proof", "real-run", "init", "odoo", "../bad"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /usage: onboardai proof real-run init/);
+  assert.equal(existsSync(new URL("evals/runs/bad/", workspaceRoot)), false);
+});
+
 test("proof real-run fails closed for a missing real target-tool run directory", () => {
   const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
   const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;

@@ -112,6 +112,21 @@ if (args[0] === "flow" && args[1] === "validate") {
     }
     process.exitCode = goalStatus.fullGoalProven ? 0 : 1;
   }
+} else if (args[0] === "proof" && args[1] === "real-run" && args[2] === "init") {
+  const tool = args[3];
+  const runId = args[4];
+  if ((tool !== "odoo" && tool !== "notion") || !runId || !isSafeRunId(runId)) {
+    console.error("usage: onboardai proof real-run init <odoo|notion> <run-id>");
+    process.exitCode = 1;
+  } else {
+    try {
+      const created = initializeRealToolRun(tool, runId);
+      console.log(`initialized real run ${tool}/${runId}: ${created.join(", ")}`);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    }
+  }
 } else if (args[0] === "proof" && args[1] === "real-run") {
   const tool = args[2];
   const runId = args[3];
@@ -134,7 +149,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof status | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -267,6 +282,49 @@ function loadFixtureProofAudit(): EvalProofAuditResult | null {
   } catch {
     return null;
   }
+}
+
+function initializeRealToolRun(tool: ToolName, runId: string): readonly string[] {
+  const runDir = resolveWorkspacePath(join("evals", "runs", tool, runId));
+  if (existsSync(runDir) && safeReadDir(runDir).length > 0) {
+    throw new Error(`real run ${tool}/${runId} already exists; refusing to overwrite run evidence`);
+  }
+
+  mkdirSync(runDir, { recursive: true });
+
+  const replacements: readonly [RegExp, string][] = [
+    [/\breplace-with-odoo-or-notion\b/g, tool],
+    [/\bevals\/runs\/tool\/replace-with-run-id\b/g, `evals/runs/${tool}/${runId}`],
+    [/\breplace-with-run-id\b/g, runId],
+    [/\breplace-with-capture-id\b/g, `capture-real-${tool}-${runId}`],
+    [/^- tool:\s*$/gm, `- tool: ${tool}`],
+    [/^- run id:\s*$/gm, `- run id: ${runId}`]
+  ];
+  const templateFiles = [
+    "step-trace.json",
+    "failure-log.md",
+    "reviewer-checklist.md",
+    "screen-input-evidence.json",
+    "outcome-evidence.json"
+  ] as const;
+  const created: string[] = [];
+
+  for (const file of templateFiles) {
+    const templatePath = resolveWorkspacePath(join("evals", "templates", "runs", "tool-run-id", file));
+    let content = readFileSync(templatePath, "utf8");
+    for (const [pattern, replacement] of replacements) {
+      content = content.replace(pattern, replacement);
+    }
+
+    writeFileSync(join(runDir, file), content);
+    created.push(join("evals", "runs", tool, runId, file));
+  }
+
+  return created;
+}
+
+function isSafeRunId(runId: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(runId);
 }
 
 function auditRealToolRun(tool: ToolName, runId: string): ReturnType<typeof auditRealToolRunArtifacts> {

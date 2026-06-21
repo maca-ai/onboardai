@@ -29,6 +29,15 @@ write real run artifacts under:
 evals/runs/<tool>/<run-id>/
 ```
 
+initialize editable run templates with:
+
+```sh
+pnpm --filter @onboardai/cli onboardai proof real-run init <tool> <run-id>
+```
+
+this creates the JSON and Markdown skeleton files only. it must still fail `proof real-run` until the real held-out
+screen-plus-input evidence, redacted frames, reviewer acceptance, and outcome evidence are filled in.
+
 the proof summary `evidencePath` must point at:
 
 ```text
