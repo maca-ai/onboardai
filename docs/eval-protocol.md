@@ -206,6 +206,7 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/flow-evidence.json
+/evals/runs/<tool>/<run-id>/capture-readiness.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```
@@ -222,7 +223,11 @@ redacted frame evidence, normalized capture manifest, live proof summary, or pas
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
 redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
-temporary capture paths.
+temporary capture paths. it must also point to the exact same-run `capture-readiness.json` artifact.
+
+`capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs
+verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output redacted
+frames, and protected by raw-artifact git ignore. its blockers list must be empty.
 
 `step-trace.json` must contain at least one taught step. every real proof step must show successful
 instruction guidance, overlay confidence at or above `0.75`, a non-empty highlighted anchor id, a manual-only
@@ -280,6 +285,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
 /evals/templates/runs/tool-run-id/flow-evidence.json
+/evals/templates/runs/tool-run-id/capture-readiness.json
 /evals/templates/runs/tool-run-id/screen-input-evidence.json
 /evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
@@ -291,6 +297,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/flow-evidence.json
+/evals/runs/<tool>/<run-id>/capture-readiness.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```

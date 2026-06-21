@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "substrate": "real-tool",
+  "adapterKind": "native",
+  "platform": "replace-with-macos-or-windows",
+  "docsVerified": true,
+  "screenRecording": true,
+  "keyboardEventLog": true,
+  "mouseEventLog": true,
+  "redactedFrameOutput": true,
+  "rawArtifactsIgnored": true,
+  "blockers": []
+}

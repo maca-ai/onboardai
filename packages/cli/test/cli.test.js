@@ -122,10 +122,12 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.match(initResult.stdout, /initialized real run notion\/real-init-validation-001/);
     assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
     assert.equal(existsSync(new URL("flow-evidence.json", runDir)), true);
+    assert.equal(existsSync(new URL("capture-readiness.json", runDir)), true);
     assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
     assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /flows\/notion\/update-task-status\.flow\.md/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"tool": "notion"/);
+    assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/capture-readiness\.json/);
     assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);
 
     const validationResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "notion", runId], {
@@ -334,6 +336,27 @@ test("proof real-run validates complete real target-tool run artifacts and write
         2
       )}\n`
     );
+    writeFileSync(
+      new URL("capture-readiness.json", runDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          tool: "odoo",
+          substrate: "real-tool",
+          adapterKind: "native",
+          platform: "macos",
+          docsVerified: true,
+          screenRecording: true,
+          keyboardEventLog: true,
+          mouseEventLog: true,
+          redactedFrameOutput: true,
+          rawArtifactsIgnored: true,
+          blockers: []
+        },
+        null,
+        2
+      )}\n`
+    );
     writeFileSync(new URL("manifest.json", normalizedDir), "{}\n");
     writeFileSync(new URL("frame-0001.png", redactedDir), "redacted frame marker\n");
     writeFileSync(
@@ -350,6 +373,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
           mouseEventLogCaptured: true,
           hardRedactionCompleted: true,
           noPrivilegedAccessUsed: true,
+          captureReadinessEvidencePath: `evals/runs/odoo/${runId}/capture-readiness.json`,
           screenRecordingEvidencePath: `evals/runs/odoo/${runId}/eval-recording.mp4`,
           normalizedCaptureManifestPath: `captures/normalized/${captureId}/manifest.json`,
           redactedFrameEvidencePaths: [`captures/redacted/${captureId}/frame-0001.png`]
@@ -365,7 +389,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 8\/8 required artifacts/);
+    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 9\/9 required artifacts/);
     assert.equal(existsSync(summaryPath), summaryExistedBefore);
 
     const writeResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId, "--write-summary"], {
@@ -375,7 +399,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     const summary = JSON.parse(readFileSync(summaryPath, "utf8"));
 
     assert.equal(writeResult.status, 0);
-    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 8\/8 required artifacts/);
+    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 9\/9 required artifacts/);
     assert.match(writeResult.stdout, /wrote evals\/reports\/real-tool-proof-odoo\.json/);
     assert.equal(summary.tool, "odoo");
     assert.equal(summary.substrate, "real-tool");

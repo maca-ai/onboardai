@@ -485,6 +485,7 @@ export function auditRealToolRunArtifacts(
     { label: "failure log", path: `${runDir}/failure-log.md` },
     { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
     { label: "flow evidence", path: `${runDir}/flow-evidence.json` },
+    { label: "capture readiness evidence", path: `${runDir}/capture-readiness.json` },
     { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` },
     { label: "outcome evidence", path: `${runDir}/outcome-evidence.json` }
   ] as const;
@@ -511,6 +512,15 @@ export function auditRealToolRunArtifacts(
       findings.push({ tool: proof.tool, message: `${screenInputEvidencePath} cannot be validated without file contents` });
     } else {
       auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, readText(screenInputEvidencePath), existsPath, references, findings);
+    }
+  }
+
+  const captureReadinessPath = `${runDir}/capture-readiness.json`;
+  if (existsPath(captureReadinessPath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${captureReadinessPath} cannot be validated without file contents` });
+    } else {
+      auditCaptureReadinessEvidence(proof, captureReadinessPath, readText(captureReadinessPath), findings);
     }
   }
 
@@ -808,6 +818,17 @@ function auditScreenInputEvidence(
     findings.push({ tool: proof.tool, message: `${path} rawCapturePolicy must be unsafe-to-share-local-only-git-ignored` });
   }
 
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "captureReadinessEvidencePath",
+    parsed.captureReadinessEvidencePath,
+    `${runDir}/capture-readiness.json`,
+    existsPath,
+    references,
+    findings
+  );
+
   for (const field of [
     "nativeScreenRecordingCaptured",
     "keyboardEventLogCaptured",
@@ -856,6 +877,63 @@ function auditScreenInputEvidence(
         findings
       );
     });
+  }
+}
+
+function auditCaptureReadinessEvidence(
+  proof: RealToolProofEvidence,
+  path: string,
+  content: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== "odoo" && parsed.tool !== "notion") {
+    findings.push({ tool: proof.tool, message: `${path} tool must be odoo or notion` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  if (parsed.adapterKind !== "native") {
+    findings.push({ tool: proof.tool, message: `${path} adapterKind must be native` });
+  }
+
+  if (parsed.platform !== "macos" && parsed.platform !== "windows") {
+    findings.push({ tool: proof.tool, message: `${path} platform must be macos or windows` });
+  }
+
+  for (const field of [
+    "docsVerified",
+    "screenRecording",
+    "keyboardEventLog",
+    "mouseEventLog",
+    "redactedFrameOutput",
+    "rawArtifactsIgnored"
+  ] as const) {
+    if (parsed[field] !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${field} must be true` });
+    }
+  }
+
+  if (!Array.isArray(parsed.blockers) || parsed.blockers.length !== 0) {
+    findings.push({ tool: proof.tool, message: `${path} blockers must be empty` });
   }
 }
 
