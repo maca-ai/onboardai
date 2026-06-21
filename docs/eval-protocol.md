@@ -142,6 +142,17 @@ normalized manifest, redacted capture frame, held-out eval frame, eval run artif
 checklist path must be project-relative, exist on disk, avoid raw/unsafe/tmp capture locations, and live under
 an allowed shareable evidence directory.
 
+scan all shareable text artifacts before sharing or reviewing proof:
+
+```sh
+pnpm proof:scan
+```
+
+this checks `flows`, `evals`, `captures/normalized`, and `captures/redacted` for forbidden email addresses,
+password assignments, token assignments, api keys, session secrets, and raw/unsafe/tmp capture path references.
+binary evidence such as png frames and mp4 recordings is skipped by this text scan and must still come from
+the redaction pipeline or native run evidence process.
+
 fixture proof is not the full project goal. fixture proof runs must also write
 `evals/reports/full-goal-proof-status.json`, and that status must remain `fullGoalProven: false` until both
 real odoo and real notion held-out evals pass using native screen-plus-input capture evidence.

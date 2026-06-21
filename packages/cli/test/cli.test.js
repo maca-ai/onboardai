@@ -65,6 +65,45 @@ test("proof status reports fixture proof separately from missing real target-too
   assert.equal(goalStatus.realToolProofs.length, 0);
 });
 
+test("proof scan-shareable passes current redacted shareable artifacts", () => {
+  execFileSync("node", ["dist/index.js", "proof", "fixtures"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  const result = spawnSync("node", ["dist/index.js", "proof", "scan-shareable"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /shareable artifact scan passed: \d+ file\(s\) scanned/);
+});
+
+test("proof scan-shareable rejects forbidden secrets and unsafe capture paths", () => {
+  const badArtifact = new URL("evals/reports/shareable-scan-validation.md", workspaceRoot);
+  writeFileSync(
+    badArtifact,
+    "email: reviewer@example.com\npassword: hunter2\ntoken: sk-live-1234567890\nraw: captures/raw/demo/frame-0001.png\n"
+  );
+
+  try {
+    const result = spawnSync("node", ["dist/index.js", "proof", "scan-shareable"], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /shareable artifact scan failed/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: email address/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: password/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: token/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: unsafe capture path/);
+  } finally {
+    rmSync(badArtifact, { force: true });
+  }
+});
+
 test("proof real-run init creates a non-passing real target-tool run skeleton", () => {
   const runId = "real-init-validation-001";
   const runDir = new URL(`evals/runs/notion/${runId}/`, workspaceRoot);

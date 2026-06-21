@@ -18,7 +18,8 @@
     "eval:odoo": "pnpm build && pnpm --filter @onboardai/cli onboardai eval run odoo",
     "eval:notion": "pnpm build && pnpm --filter @onboardai/cli onboardai eval run notion",
     "proof:fixtures": "pnpm build && pnpm --filter @onboardai/cli onboardai proof fixtures",
-    "proof:status": "pnpm build && pnpm --filter @onboardai/cli onboardai proof status"
+    "proof:status": "pnpm build && pnpm --filter @onboardai/cli onboardai proof status",
+    "proof:scan": "pnpm build && pnpm --filter @onboardai/cli onboardai proof scan-shareable"
   },
   "devDependencies": {
     "@types/node": "20.19.24",

@@ -121,6 +121,7 @@ do not weaken any constraint to make an eval pass.
 - [x] add guarded CLI summary creation for validated real run directories
 - [x] add full-goal proof status command that fails until real odoo and notion proofs exist
 - [x] add guarded CLI initialization for editable real-run skeletons
+- [x] add reproducible shareable artifact safety scan command
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -228,6 +229,9 @@ record observations here.
 
 - observation: real run directories can now be initialized without creating proof.
   evidence: `onboardai proof real-run init <tool> <run-id>` copies the editable JSON/Markdown templates into `evals/runs/<tool>/<run-id>/`, refuses unsafe or traversal run ids, refuses to overwrite existing run evidence, and still fails `proof real-run` until real final-screen, eval-recording, reviewer acceptance, and other native evidence are supplied; targeted CLI tests passed 7/7.
+
+- observation: shareable artifact safety scans are now reproducible through the CLI.
+  evidence: `pnpm proof:scan` runs `onboardai proof scan-shareable` over `flows`, `evals`, `captures/normalized`, and `captures/redacted`, skips binary evidence, and fails on forbidden emails, password assignments, token assignments, api keys, session secrets, or raw/unsafe/tmp capture paths; targeted CLI tests passed 9/9 and current scan passed 22 text files.
 
 ## decision-log
 
@@ -359,6 +363,10 @@ record observations here.
   rationale: setup should be easy for a future held-out odoo/notion run, but final-screen frames, eval recordings, redacted evidence, and accepted reviewer/outcome data must come from the actual run and remain validated by `proof real-run`.
   date-author: 2026-06-21, codex real-run init command.
 
+- decision: keep the shareable safety scan text-only and explicit about skipped binary evidence.
+  rationale: committed text artifacts can be reliably scanned for forbidden secret strings and unsafe path leaks in TypeScript without new dependencies; screenshots and recordings still need the redaction/native evidence pipeline because text scanning binary media would be misleading.
+  date-author: 2026-06-21, codex shareable scan command.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -372,23 +380,22 @@ current evidence:
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`.
 - real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories, guarded `--write-summary` creation for accepted real runs, and `proof real-run init` skeleton setup that remains non-passing until evidence is filled.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
-- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, full-goal proof status, and real-run skeleton initialization.
-- proof changes: added `pnpm proof:fixtures`, `pnpm proof:status`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
+- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, full-goal proof status, real-run skeleton initialization, and shareable artifact safety scanning.
+- proof changes: added `pnpm proof:fixtures`, `pnpm proof:status`, `pnpm proof:scan`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, scan shareable text artifacts for safety leaks, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
 
 what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - latest targeted eval-harness test suite passed: 22 tests, 22 pass, 0 fail.
-- latest targeted cli test suite passed: 7 tests, 7 pass, 0 fail.
-- latest full test suite passed: 55 tests, 55 pass, 0 fail.
+- latest targeted cli test suite passed: 9 tests, 9 pass, 0 fail.
+- latest full test suite passed: 57 tests, 57 pass, 0 fail.
 - latest flow validation passed: 2 flow files validated.
 - latest fixture proof passed: 2/2 tool-like fixture evals.
 - latest proof status command exited 1 as expected because the full goal is not proven: real-tool proof failed 0/2 tools with missing real held-out teaching eval evidence and missing native screen-plus-input capture evidence for both odoo and notion.
 - latest full-goal status remains unproven: `fullGoalProven: false`, `fixtureProofPassed: true`, `realToolProofPassed: false`, `realToolProofs: 0`, `missingRealToolProofs: 2`.
 - latest live real-proof summary check found `evals/reports/real-tool-proof-odoo.json` absent and `evals/reports/real-tool-proof-notion.json` absent.
-- latest shareable artifact secret/email scan found no matches.
-- latest shareable artifact raw/unsafe/tmp path scan found no matches.
+- latest shareable artifact safety scan passed: 22 text files scanned with no forbidden secret/email or raw/unsafe/tmp path findings.
 - latest git-ignore check confirmed `captures/raw/example/screen-recording.mp4`, `captures/unsafe/example.txt`, and `captures/tmp/example.txt` are ignored.
 - real-eval preparation does not add real target-tool evidence. It does not prove native screen recording, native keyboard logging, native mouse logging, real overlay behavior, real first-time-user completion, or real senior signoff on odoo or notion.
 

@@ -91,6 +91,14 @@ if (args[0] === "flow" && args[1] === "validate") {
   writeFullGoalProofStatus(goalStatus);
   console.log(`fixture proof ${audit.passed ? "passed" : "failed"}: ${audit.summary.toolsPassed}/${audit.summary.toolsRequired} tools`);
   process.exitCode = audit.passed ? 0 : 1;
+} else if (args[0] === "proof" && args[1] === "scan-shareable") {
+  const scan = scanShareableArtifacts();
+  if (scan.passed) {
+    console.log(`shareable artifact scan passed: ${scan.filesScanned} file(s) scanned`);
+  } else {
+    console.error(`shareable artifact scan failed: ${scan.findings.join("; ")}`);
+  }
+  process.exitCode = scan.passed ? 0 : 1;
 } else if (args[0] === "proof" && args[1] === "status") {
   const fixtureAudit = loadFixtureProofAudit();
   if (!fixtureAudit) {
@@ -149,7 +157,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -269,6 +277,55 @@ function writeFullGoalProofStatus(status: CaptureTeachGoalStatusResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
   writeFileSync(join(reportDir, "full-goal-proof-status.json"), `${JSON.stringify(status, null, 2)}\n`);
+}
+
+function scanShareableArtifacts(): { readonly passed: boolean; readonly filesScanned: number; readonly findings: readonly string[] } {
+  const roots = ["flows", "evals", "captures/normalized", "captures/redacted"] as const;
+  const rules = [
+    { label: "email address", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
+    { label: "password", pattern: /\b(?:password|passwd|pwd)\s*[:=]/i },
+    { label: "token", pattern: /\b(?:token|access_token|refresh_token|bearer)\s*[:=]/i },
+    { label: "api key", pattern: /\bapi[_-]?key\s*[:=]/i },
+    { label: "session secret", pattern: /\bsession[_-]?secret\s*[:=]/i },
+    { label: "unsafe capture path", pattern: /\bcaptures\/(?:raw|unsafe|tmp)\//i }
+  ] as const;
+  const findings: string[] = [];
+  let filesScanned = 0;
+
+  for (const path of roots.flatMap((root) => listShareableTextFiles(root)).sort()) {
+    filesScanned += 1;
+    const content = readFileSync(resolveWorkspacePath(path), "utf8");
+    for (const rule of rules) {
+      if (rule.pattern.test(content)) {
+        findings.push(`${path}: ${rule.label}`);
+      }
+    }
+  }
+
+  return { passed: findings.length === 0, filesScanned, findings };
+}
+
+function listShareableTextFiles(root: string): string[] {
+  const absoluteRoot = resolveWorkspacePath(root);
+  const entries = safeReadDir(absoluteRoot);
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const path = join(root, entry);
+    const absolutePath = resolveWorkspacePath(path);
+    const stat = statSync(absolutePath);
+    if (stat.isDirectory()) {
+      files.push(...listShareableTextFiles(path));
+    } else if (!isBinaryEvidencePath(path)) {
+      files.push(path);
+    }
+  }
+
+  return files;
+}
+
+function isBinaryEvidencePath(path: string): boolean {
+  return /\.(?:png|jpe?g|gif|webp|mp4|mov|webm)$/i.test(path);
 }
 
 function loadFixtureProofAudit(): EvalProofAuditResult | null {
