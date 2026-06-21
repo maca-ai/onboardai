@@ -1207,6 +1207,14 @@ function auditRealStepTrace(
       references,
       findings
     );
+
+    if (typeof entry.currentFrame === "string" && !entry.currentFrame.startsWith(`${runDir}/redacted-frame-`)) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a same-run redacted-frame PNG` });
+    }
+
+    if (typeof entry.currentFrame === "string" && !entry.currentFrame.endsWith(".png")) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a PNG frame artifact` });
+    }
   });
 }
 

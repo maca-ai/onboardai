@@ -126,7 +126,7 @@ during eval:
 after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
-- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current frame under the run directory.
+- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.

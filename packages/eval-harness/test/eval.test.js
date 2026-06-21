@@ -272,6 +272,43 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
 });
 
+test("real target-tool run artifact audit rejects same-run non-frame step evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = flowGroundedTrace("odoo");
+        trace[0].currentFrame = "evals/runs/odoo/real-proof/failure-log.md";
+        return JSON.stringify(trace);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a same-run redacted-frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a PNG frame artifact")), true);
+});
+
 test("real target-tool run artifact audit rejects missing required run artifacts", () => {
   const proof = realToolProof("notion");
   const audit = auditRealToolRunArtifacts(
