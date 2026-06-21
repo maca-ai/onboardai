@@ -902,6 +902,12 @@ function auditScreenInputEvidence(
           message: `${path} redactedFrameEvidencePaths[${index}] must be listed in ${manifestAudit.manifestPath}`
         });
       }
+      if (typeof framePath === "string" && !isRedactedCaptureFramePath(framePath)) {
+        findings.push({
+          tool: proof.tool,
+          message: `${path} redactedFrameEvidencePaths[${index}] must point to a captures/redacted frame PNG`
+        });
+      }
     });
   }
 }
@@ -1017,6 +1023,9 @@ function auditNormalizedCaptureManifest(
       );
       if (typeof frame.path === "string") {
         result.redactedFramePaths.add(frame.path);
+        if (!isRedactedCaptureFramePath(frame.path)) {
+          findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}].path must point to a captures/redacted frame PNG` });
+        }
       }
     });
   }
@@ -1588,6 +1597,10 @@ function isAllowedShareableEvidencePath(path: string): boolean {
 
 function isUnsafeEvidencePath(path: string): boolean {
   return path.startsWith("captures/raw/") || path.startsWith("captures/unsafe/") || path.startsWith("captures/tmp/");
+}
+
+function isRedactedCaptureFramePath(path: string): boolean {
+  return /^captures\/redacted\/[^/]+\/frame-[^/]+\.png$/.test(path);
 }
 
 function isAbsolutePath(path: string): boolean {

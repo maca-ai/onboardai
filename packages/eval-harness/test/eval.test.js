@@ -473,6 +473,53 @@ test("real target-tool run artifact audit rejects screen-input frames not listed
   assert.equal(audit.findings.some((finding) => finding.message.includes("must be listed in captures/normalized/capture-real-odoo-001/manifest.json")), true);
 });
 
+test("real target-tool run artifact audit rejects non-PNG redacted frame evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.json"
+  ]);
+  const nonPngFramePath = "captures/redacted/capture-real-odoo-001/frame-0001.json";
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          redactedFrameEvidencePaths: [nonPngFramePath]
+        });
+      }
+
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          redactedFrames: [{ frameId: "frame-0001", path: nonPngFramePath, visibleText: ["demo"] }]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("redactedFrames[0].path must point to a captures/redacted frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("redactedFrameEvidencePaths[0] must point to a captures/redacted frame PNG")), true);
+});
+
 test("real target-tool run artifact audit rejects unverified native capture readiness evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

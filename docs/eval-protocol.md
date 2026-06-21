@@ -223,14 +223,15 @@ redacted frame evidence, normalized capture manifest, live proof summary, or pas
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
 redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
-temporary capture paths. it must also point to the exact same-run `capture-readiness.json` artifact.
+temporary capture paths. redacted frame evidence paths must point to `captures/redacted/<capture-id>/frame-*.png`.
+it must also point to the exact same-run `capture-readiness.json` artifact.
 
 the referenced normalized capture manifest must be valid JSON and must show the same tool, local-only raw
 capture policy, hard-secret-redaction policy, captured screen recording, keyboard event log, mouse event log,
 sanitized raw artifact summaries for all three required raw inputs without raw file paths, at least one
-redacted frame under `captures/redacted/`, and per-step input evidence for every step id in the real
-`step-trace.json`. every `redactedFrameEvidencePaths` entry in `screen-input-evidence.json` must also be
-listed in that normalized manifest.
+redacted frame under `captures/redacted/<capture-id>/frame-*.png`, and per-step input evidence for every step
+id in the real `step-trace.json`. every `redactedFrameEvidencePaths` entry in `screen-input-evidence.json`
+must also be listed in that normalized manifest.
 
 `capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs
 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output redacted
