@@ -393,6 +393,59 @@ test("real target-tool run artifact audit rejects empty normalized capture manif
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvidence must contain")), true);
 });
 
+test("real target-tool run artifact audit rejects raw artifact path leaks in normalized manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          rawArtifacts: [
+            {
+              kind: "screen-recording",
+              safety: "unsafe-to-share-local-only",
+              gitPolicy: "excluded-from-git",
+              rawPath: "captures/raw/real-odoo-001/screen-recording.mp4"
+            },
+            {
+              kind: "keyboard-event-log",
+              safety: "unsafe-to-share-local-only",
+              gitPolicy: "excluded-from-git",
+              localPath: "/Users/demo/captures/raw/real-odoo-001/keyboard.jsonl"
+            },
+            { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[0] must not include raw artifact path field rawPath")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[1] must not include raw artifact path field localPath")), true);
+});
+
 test("real target-tool run artifact audit rejects manifests missing per-step input evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

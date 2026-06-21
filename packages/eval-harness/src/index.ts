@@ -978,8 +978,10 @@ function auditNormalizedCaptureManifest(
         return;
       }
 
-      if (typeof artifact.path === "string") {
-        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must not include raw artifact paths` });
+      for (const [field, value] of Object.entries(artifact)) {
+        if (typeof value === "string" && isRawArtifactPathLeak(field, value)) {
+          findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must not include raw artifact path field ${field}` });
+        }
       }
 
       if (typeof artifact.kind === "string") {
@@ -1601,6 +1603,10 @@ function isUnsafeEvidencePath(path: string): boolean {
 
 function isRedactedCaptureFramePath(path: string): boolean {
   return /^captures\/redacted\/[^/]+\/frame-[^/]+\.png$/.test(path);
+}
+
+function isRawArtifactPathLeak(field: string, value: string): boolean {
+  return field.toLowerCase().includes("path") || isAbsolutePath(value) || value.startsWith("file://") || isUnsafeEvidencePath(value);
 }
 
 function isAbsolutePath(path: string): boolean {
