@@ -149,6 +149,10 @@ the flow library is a directory of files, not a database.
 
 search is filesystem search plus optional llm ranking.
 
+the implemented local search ranks parsed flow files using path, frontmatter, step titles, instructions, expected visible text, and success visible text.
+
+search results must be derived from local `flow.md` file contents.
+
 do not use embeddings or a vector database.
 
 ## invalid flow examples

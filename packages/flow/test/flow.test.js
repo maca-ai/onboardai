@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateFlowMarkdown } from "../dist/index.js";
+import { searchFlowDocumentDetails, searchFlowDocuments, validateFlowMarkdown } from "../dist/index.js";
 
 const validFlow = `---
 flow-id: odoo-qualify-opportunity
@@ -75,4 +75,33 @@ test("an invalid flow.md fails validation", () => {
 
   assert.equal(result.valid, false);
   assert.equal(result.errors.some((error) => error.includes("success-condition")), true);
+});
+
+test("flow search ranks local flow files by parsed flow evidence", () => {
+  const files = [
+    { path: "flows/odoo/qualify-opportunity.flow.md", content: validFlow },
+    {
+      path: "flows/notion/update-task-status.flow.md",
+      content: validFlow
+        .replace("flow-id: odoo-qualify-opportunity", "flow-id: notion-update-task-status")
+        .replace("tool: odoo", "tool: notion")
+        .replace("opportunity-visible-as-qualified", "demo task visible with status ready for review")
+        .replace("# qualify opportunity", "# update task status")
+        .replace("open the opportunity", "choose ready for review")
+        .replace("select the opportunity card named demo opportunity.", "select ready for review on the demo task.")
+    }
+  ];
+
+  const results = searchFlowDocumentDetails(files, "ready review task");
+
+  assert.equal(results[0].path, "flows/notion/update-task-status.flow.md");
+  assert.equal(results.length, 1);
+  assert.equal(results[0].matches.some((match) => match.field === "terminal-business-state"), true);
+  assert.deepEqual(searchFlowDocuments(files, "ready review task"), ["flows/notion/update-task-status.flow.md"]);
+});
+
+test("flow search returns no results for unrelated local queries", () => {
+  const results = searchFlowDocumentDetails([{ path: "flows/odoo/qualify-opportunity.flow.md", content: validFlow }], "invoice refund");
+
+  assert.deepEqual(results, []);
 });

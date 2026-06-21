@@ -88,6 +88,7 @@ do not weaken any constraint to make an eval pass.
 - [x] decide fork, adapt ideas only, or ignore
 - [x] define first `flow.md` parser and validator
 - [x] build local flow library search as library function
+- [x] rank local flow library search by parsed flow evidence
 - [x] expose flow search as cli command
 - [x] build capture artifact model
 - [x] build senior-demonstration to normalized `flow.md` generation
@@ -160,6 +161,9 @@ record observations here.
 - observation: the two-tool fixture proof now has a machine-readable audit gate.
   evidence: `pnpm proof:fixtures` writes `evals/reports/fixture-proof-audit.json` with `passed: true`, required tools `odoo` and `notion`, 6/6 steps completed, zero human-help incidents, zero invented-step incidents, zero privileged-access violations, and no findings.
 
+- observation: flow-library search now ranks local files by structured flow evidence instead of plain substring filtering.
+  evidence: `searchFlowDocumentDetails` scores path, frontmatter, step titles, instructions, expected visible text, and success visible text; targeted flow tests passed 4/4, `pnpm flow:search ready review` returned the Notion flow, and `pnpm flow:search qualify opportunity` returned the Odoo flow.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -218,6 +222,10 @@ record observations here.
   rationale: a single audit object makes the proof contract explicit across both tools and catches missing held-out evidence, terminal visible text, reviewer signoff, human-help, invented-step, or privileged-access invariants before the Markdown report can claim success.
   date-author: 2026-06-20, codex fixture proof audit.
 
+- decision: keep flow-library search local and parser-backed, with no embeddings or vector database.
+  rationale: the proof needs flow retrieval from local `flow.md` files while preserving the explicit no-embedding/no-vector constraint; scoring parsed flow fields gives deterministic ranking without adding infrastructure.
+  date-author: 2026-06-21, codex flow search ranking.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -226,7 +234,7 @@ current evidence:
 
 - capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage; added local fixture capture materialization for raw screen/input marker artifacts; added native capture readiness checks that fail closed until docs and all capture inputs are verified.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
-- flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets.
+- flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
@@ -237,7 +245,7 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 29 tests, 29 pass, 0 fail.
+- latest test suite passed: 31 tests, 31 pass, 0 fail.
 
 completion rate:
 
@@ -710,6 +718,29 @@ latest results on 2026-06-20:
 - forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+ranked local flow search command:
+
+```sh
+pnpm build
+node --test packages/flow
+pnpm flow:search ready review
+pnpm flow:search qualify opportunity
+```
+
+latest results on 2026-06-21:
+
+- first targeted `node --test packages/flow`: failed because it raced a parallel build and loaded stale `dist` output; no code change was made for that failure.
+- second targeted `node --test packages/flow`: passed; 4 tests, 4 pass, 0 fail.
+- `pnpm flow:search ready review`: passed; returned `/Users/mc/Desktop/onboardai/flows/notion/update-task-status.flow.md`.
+- `pnpm flow:search qualify opportunity`: passed; returned `/Users/mc/Desktop/onboardai/flows/odoo/qualify-opportunity.flow.md`.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 31 tests, 31 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -759,3 +790,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: native capture readiness gate added: fixture readiness remains explicit, native readiness fails closed without verified docs and every required screen/input artifact path, and `docs/native-capture-adapter-spike.md` records the Tauri evidence gap.
 - 2026-06-20: held-out fixture proof strengthened: senior capture observations now feed normalized flows while eval observations use separate held-out frame paths, and terminal business state requires explicit final visible text.
 - 2026-06-20: machine-readable fixture proof audit added: `proof fixtures` now writes `evals/reports/fixture-proof-audit.json` and fails unless both required tools satisfy the no-help, no-invention, no-privileged-access, held-out, terminal-text, and reviewer-signoff gates.
+- 2026-06-21: ranked local flow search added: `searchFlowDocumentDetails` now scores local `flow.md` files by parsed path, frontmatter, step title, instruction, expected visible text, and success visible text without embeddings or a vector database.

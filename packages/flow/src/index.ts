@@ -49,6 +49,18 @@ export interface FlowValidationResult {
   readonly document?: FlowDocument;
 }
 
+export interface FlowSearchMatch {
+  readonly field: string;
+  readonly value: string;
+  readonly tokens: readonly string[];
+}
+
+export interface FlowSearchResult {
+  readonly path: string;
+  readonly score: number;
+  readonly matches: readonly FlowSearchMatch[];
+}
+
 const requiredFrontmatter = [
   "flow-id",
   "flow-version",
@@ -128,14 +140,23 @@ export function validateFlowMarkdown(markdown: string): FlowValidationResult {
 }
 
 export function searchFlowDocuments(files: ReadonlyArray<{ readonly path: string; readonly content: string }>, query: string): readonly string[] {
+  return searchFlowDocumentDetails(files, query).map((result) => result.path);
+}
+
+export function searchFlowDocumentDetails(
+  files: ReadonlyArray<{ readonly path: string; readonly content: string }>,
+  query: string
+): readonly FlowSearchResult[] {
   const normalizedQuery = query.trim().toLowerCase();
-  if (normalizedQuery.length === 0) {
+  const queryTokens = tokenize(normalizedQuery);
+  if (queryTokens.length === 0) {
     return [];
   }
 
   return files
-    .filter((file) => file.content.toLowerCase().includes(normalizedQuery) || file.path.toLowerCase().includes(normalizedQuery))
-    .map((file) => file.path);
+    .map((file) => scoreFlowFile(file, queryTokens, normalizedQuery))
+    .filter((result) => result.score > 0)
+    .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path));
 }
 
 function parseSimpleYaml(input: string): Record<string, string | number | boolean> {
@@ -231,4 +252,60 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
       errors.push(`step ${index + 1} anchor ${hint["anchor-id"]} points to unsafe capture`);
     }
   }
+}
+
+function scoreFlowFile(
+  file: { readonly path: string; readonly content: string },
+  queryTokens: readonly string[],
+  normalizedQuery: string
+): FlowSearchResult {
+  const fields = searchableFields(file);
+  const matches: FlowSearchMatch[] = [];
+  let score = 0;
+
+  for (const field of fields) {
+    const normalizedValue = field.value.toLowerCase();
+    const matchedTokens = queryTokens.filter((token) => normalizedValue.includes(token));
+    if (matchedTokens.length === 0 && !normalizedValue.includes(normalizedQuery)) {
+      continue;
+    }
+
+    const exactPhraseBonus = normalizedValue.includes(normalizedQuery) ? field.weight * 3 : 0;
+    const tokenScore = matchedTokens.reduce((sum) => sum + field.weight, 0);
+    score += exactPhraseBonus + tokenScore;
+    matches.push({ field: field.name, value: field.value, tokens: matchedTokens });
+  }
+
+  return { path: file.path, score, matches };
+}
+
+function searchableFields(file: { readonly path: string; readonly content: string }): readonly { readonly name: string; readonly value: string; readonly weight: number }[] {
+  const fields: { readonly name: string; readonly value: string; readonly weight: number }[] = [
+    { name: "path", value: file.path, weight: 10 }
+  ];
+
+  try {
+    const document = parseFlowMarkdown(file.content);
+    for (const key of ["flow-id", "tool", "terminal-business-state"] as const) {
+      const value = document.frontmatter[key];
+      if (value !== undefined) {
+        fields.push({ name: key, value: String(value), weight: key === "tool" ? 8 : 12 });
+      }
+    }
+
+    for (const step of document.steps) {
+      fields.push({ name: "step-title", value: step.title, weight: 8 });
+      fields.push({ name: "instruction", value: step.instruction.text, weight: 8 });
+      fields.push({ name: "expected-visible-text", value: (step["expected-state"]["visible-text"] ?? []).join(" "), weight: 5 });
+      fields.push({ name: "success-visible-text", value: (step["success-condition"]["visible-text"] ?? []).join(" "), weight: 5 });
+    }
+  } catch {
+    fields.push({ name: "content", value: file.content, weight: 1 });
+  }
+
+  return fields;
+}
+
+function tokenize(input: string): readonly string[] {
+  return [...new Set(input.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length > 1))];
 }
