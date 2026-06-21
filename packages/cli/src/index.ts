@@ -94,20 +94,26 @@ if (args[0] === "flow" && args[1] === "validate") {
 } else if (args[0] === "proof" && args[1] === "real-run") {
   const tool = args[2];
   const runId = args[3];
-  if ((tool !== "odoo" && tool !== "notion") || !runId) {
-    console.error("usage: onboardai proof real-run <odoo|notion> <run-id>");
+  const writeSummary = args[4] === "--write-summary";
+  const hasUnsupportedFlag = args.length > 4 && !writeSummary;
+  if ((tool !== "odoo" && tool !== "notion") || !runId || hasUnsupportedFlag) {
+    console.error("usage: onboardai proof real-run <odoo|notion> <run-id> [--write-summary]");
     process.exitCode = 1;
   } else {
     const audit = auditRealToolRun(tool, runId);
     if (audit.passed) {
       console.log(`real run ${tool}/${runId} valid: ${audit.summary.requiredArtifacts}/${audit.summary.requiredArtifacts} required artifacts`);
+      if (writeSummary) {
+        const proofPath = writeRealToolProofSummary(tool, runId);
+        console.log(`wrote ${proofPath}`);
+      }
     } else {
       console.error(`real run ${tool}/${runId} failed: ${audit.findings.map((finding) => finding.message).join("; ")}`);
     }
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof real-run <odoo|notion> <run-id>");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -230,7 +236,25 @@ function writeFullGoalProofStatus(status: CaptureTeachGoalStatusResult): void {
 }
 
 function auditRealToolRun(tool: ToolName, runId: string): ReturnType<typeof auditRealToolRunArtifacts> {
-  const proof: RealToolProofEvidence = {
+  const proof = realToolProofForRun(tool, runId);
+
+  return auditRealToolRunArtifacts(
+    proof,
+    (path) => existsSync(resolveWorkspacePath(path)),
+    (path) => readFileSync(resolveWorkspacePath(path), "utf8")
+  );
+}
+
+function writeRealToolProofSummary(tool: ToolName, runId: string): string {
+  const proofPath = join("evals", "reports", `real-tool-proof-${tool}.json`);
+  const absoluteProofPath = resolveWorkspacePath(proofPath);
+  mkdirSync(dirname(absoluteProofPath), { recursive: true });
+  writeFileSync(absoluteProofPath, `${JSON.stringify(realToolProofForRun(tool, runId), null, 2)}\n`);
+  return proofPath;
+}
+
+function realToolProofForRun(tool: ToolName, runId: string): RealToolProofEvidence {
+  return {
     tool,
     substrate: "real-tool",
     heldOutTeachingEvalPassed: true,
@@ -242,12 +266,6 @@ function auditRealToolRun(tool: ToolName, runId: string): ReturnType<typeof audi
     seniorReviewerSignoff: true,
     evidencePath: join("evals", "runs", tool, runId, "step-trace.json")
   };
-
-  return auditRealToolRunArtifacts(
-    proof,
-    (path) => existsSync(resolveWorkspacePath(path)),
-    (path) => readFileSync(resolveWorkspacePath(path), "utf8")
-  );
 }
 
 function loadRealToolProofEvidence(requiredTools: readonly ToolName[]): {

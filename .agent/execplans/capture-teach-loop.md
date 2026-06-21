@@ -118,6 +118,7 @@ do not weaken any constraint to make an eval pass.
 - [x] add CLI dry-run validation for filled real run directories
 - [x] validate real run step-trace and reviewer-checklist contents before proof ingestion
 - [x] validate real run outcome evidence before proof ingestion
+- [x] add guarded CLI summary creation for validated real run directories
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -216,6 +217,9 @@ record observations here.
 
 - observation: real run outcome evidence now fails if it names the wrong tool or points outside the matching run directory.
   evidence: `auditRealToolRunArtifacts` rejects unsupported outcome tools, summary/run tool mismatches, raw capture references, absolute paths, missing paths, and paths that do not exactly match `evals/runs/<tool>/<run-id>/final-screen.png` and `evals/runs/<tool>/<run-id>/step-trace.json`; targeted eval-harness tests passed 22/22.
+
+- observation: live real-proof summaries can now be written from the CLI only after a run directory passes the evidence gate.
+  evidence: `onboardai proof real-run <tool> <run-id> --write-summary` writes `evals/reports/real-tool-proof-<tool>.json` only after the same 7-artifact real-run audit passes; CLI tests prove missing runs fail without writing or changing the summary, valid temporary runs can write the summary, and the test restores the repo to no live real-tool summaries.
 
 ## decision-log
 
@@ -335,6 +339,10 @@ record observations here.
   rationale: the outcome artifact should ground the summary in the run directory that produced it; allowing raw, absolute, temporary, traversal, or other-run evidence paths would let a summary claim success from evidence outside the held-out eval.
   date-author: 2026-06-21, codex real-run outcome validation.
 
+- decision: keep `proof real-run` read-only by default and require `--write-summary` to create live real-proof summary files.
+  rationale: operators need a safe dry run while preparing real odoo/notion evidence; summary creation should be explicit and still blocked by the same local filesystem evidence gate.
+  date-author: 2026-06-21, codex real-proof summary writer.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -346,7 +354,7 @@ current evidence:
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, per-step anchor grounding, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`.
-- real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories.
+- real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories and guarded `--write-summary` creation for accepted real runs.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, and audited two-tool fixture proof.
 - proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
@@ -361,6 +369,7 @@ what the eval showed:
 - latest flow validation passed: 2 flow files validated.
 - latest fixture proof passed: 2/2 tool-like fixture evals.
 - latest full-goal status remains unproven: `fullGoalProven: false`, `fixtureProofPassed: true`, `realToolProofPassed: false`, `realToolProofs: 0`, `missingRealToolProofs: 2`.
+- latest live real-proof summary check found `evals/reports/real-tool-proof-odoo.json` absent and `evals/reports/real-tool-proof-notion.json` absent.
 - latest shareable artifact secret/email scan found no matches.
 - latest shareable artifact raw/unsafe/tmp path scan found no matches.
 - latest git-ignore check confirmed `captures/raw/example/screen-recording.mp4`, `captures/unsafe/example.txt`, and `captures/tmp/example.txt` are ignored.
@@ -383,7 +392,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- run the real-eval runbook once against a clean seeded odoo sandbox or a clean seeded notion workspace using native screen-plus-input capture, fill the run directory, run `proof real-run`, then create `evals/reports/real-tool-proof-*.json` only after the dry run passes and senior signoff is complete.
+- run the real-eval runbook once against a clean seeded odoo sandbox or a clean seeded notion workspace using native screen-plus-input capture, fill the run directory, run `proof real-run`, then run `proof real-run --write-summary` only after the dry run passes and senior signoff is complete.
 
 at completion, record:
 

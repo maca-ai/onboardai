@@ -212,6 +212,15 @@ pnpm --filter @onboardai/cli onboardai proof real-run <odoo|notion> <run-id>
 this validation command reads only local filesystem artifacts. it does not create
 `evals/reports/real-tool-proof-*.json` and does not access the target tool.
 
+after the real run directory passes and the reviewer has accepted the run, create the live proof summary with:
+
+```sh
+pnpm --filter @onboardai/cli onboardai proof real-run <odoo|notion> <run-id> --write-summary
+```
+
+the summary write still reads only local filesystem artifacts and is blocked by the same run-directory evidence
+gate. it must not be used for fixture runs or placeholder templates.
+
 proof summary templates live under:
 
 ```text

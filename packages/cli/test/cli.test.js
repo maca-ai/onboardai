@@ -40,6 +40,8 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
 });
 
 test("proof real-run fails closed for a missing real target-tool run directory", () => {
+  const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
+  const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;
   const result = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", "missing-real-run"], {
     cwd: packageRoot,
     encoding: "utf8"
@@ -49,9 +51,21 @@ test("proof real-run fails closed for a missing real target-tool run directory",
   assert.match(result.stderr, /real run odoo\/missing-real-run failed/);
   assert.match(result.stderr, /final-screen\.png/);
   assert.match(result.stderr, /screen-input-evidence\.json/);
+
+  const writeResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", "missing-real-run", "--write-summary"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  assert.equal(writeResult.status, 1);
+  assert.match(writeResult.stderr, /real run odoo\/missing-real-run failed/);
+  assert.equal(existsSync(summaryPath), summaryBefore !== null);
+  if (summaryBefore !== null) {
+    assert.equal(readFileSync(summaryPath, "utf8"), summaryBefore);
+  }
 });
 
-test("proof real-run validates complete real target-tool run artifacts without creating a summary", () => {
+test("proof real-run validates complete real target-tool run artifacts and writes summary only when requested", () => {
   const runId = "real-cli-validation-001";
   const captureId = "capture-real-cli-validation-001";
   const runDir = new URL(`evals/runs/odoo/${runId}/`, workspaceRoot);
@@ -59,10 +73,14 @@ test("proof real-run validates complete real target-tool run artifacts without c
   const redactedDir = new URL(`captures/redacted/${captureId}/`, workspaceRoot);
   const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
   const summaryExistedBefore = existsSync(summaryPath);
+  const summaryBefore = summaryExistedBefore ? readFileSync(summaryPath, "utf8") : null;
 
   rmSync(runDir, { recursive: true, force: true });
   rmSync(normalizedDir, { recursive: true, force: true });
   rmSync(redactedDir, { recursive: true, force: true });
+  if (!summaryExistedBefore) {
+    rmSync(summaryPath, { force: true });
+  }
   mkdirSync(runDir, { recursive: true });
   mkdirSync(normalizedDir, { recursive: true });
   mkdirSync(redactedDir, { recursive: true });
@@ -164,9 +182,29 @@ test("proof real-run validates complete real target-tool run artifacts without c
     assert.equal(result.status, 0);
     assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 7\/7 required artifacts/);
     assert.equal(existsSync(summaryPath), summaryExistedBefore);
+
+    const writeResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId, "--write-summary"], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+    const summary = JSON.parse(readFileSync(summaryPath, "utf8"));
+
+    assert.equal(writeResult.status, 0);
+    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 7\/7 required artifacts/);
+    assert.match(writeResult.stdout, /wrote evals\/reports\/real-tool-proof-odoo\.json/);
+    assert.equal(summary.tool, "odoo");
+    assert.equal(summary.substrate, "real-tool");
+    assert.equal(summary.evidencePath, `evals/runs/odoo/${runId}/step-trace.json`);
+    assert.equal(summary.heldOutTeachingEvalPassed, true);
+    assert.equal(summary.nativeScreenPlusInputCaptureVerified, true);
   } finally {
     rmSync(runDir, { recursive: true, force: true });
     rmSync(normalizedDir, { recursive: true, force: true });
     rmSync(redactedDir, { recursive: true, force: true });
+    if (summaryBefore === null) {
+      rmSync(summaryPath, { force: true });
+    } else {
+      writeFileSync(summaryPath, summaryBefore);
+    }
   }
 });
