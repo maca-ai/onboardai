@@ -192,6 +192,15 @@ redaction, clean seeded data, local-only raw capture, and no privileged proof ac
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
 temporary capture paths.
 
+validate a filled real run directory before creating the live proof summary:
+
+```sh
+pnpm --filter @onboardai/cli onboardai proof real-run <odoo|notion> <run-id>
+```
+
+this validation command reads only local filesystem artifacts. it does not create
+`evals/reports/real-tool-proof-*.json` and does not access the target tool.
+
 proof summary templates live under:
 
 ```text

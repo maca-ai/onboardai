@@ -1,5 +1,5 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
@@ -13,6 +13,7 @@ test("cli prints usage for empty invocation", () => {
   });
 
   assert.match(output, /onboardai flow validate/);
+  assert.match(output, /proof real-run <odoo\|notion> <run-id>/);
 });
 
 test("proof fixtures materializes referenced shareable frame artifacts", () => {
@@ -36,4 +37,78 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
   assert.equal(goalStatus.realToolProofPassed, false);
   assert.equal(goalStatus.realToolProofs.length, 0);
   assert.equal(goalStatus.summary.missingRealToolProofs, 2);
+});
+
+test("proof real-run fails closed for a missing real target-tool run directory", () => {
+  const result = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", "missing-real-run"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /real run odoo\/missing-real-run failed/);
+  assert.match(result.stderr, /final-screen\.png/);
+  assert.match(result.stderr, /screen-input-evidence\.json/);
+});
+
+test("proof real-run validates complete real target-tool run artifacts without creating a summary", () => {
+  const runId = "real-cli-validation-001";
+  const captureId = "capture-real-cli-validation-001";
+  const runDir = new URL(`evals/runs/odoo/${runId}/`, workspaceRoot);
+  const normalizedDir = new URL(`captures/normalized/${captureId}/`, workspaceRoot);
+  const redactedDir = new URL(`captures/redacted/${captureId}/`, workspaceRoot);
+  const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
+  const summaryExistedBefore = existsSync(summaryPath);
+
+  rmSync(runDir, { recursive: true, force: true });
+  rmSync(normalizedDir, { recursive: true, force: true });
+  rmSync(redactedDir, { recursive: true, force: true });
+  mkdirSync(runDir, { recursive: true });
+  mkdirSync(normalizedDir, { recursive: true });
+  mkdirSync(redactedDir, { recursive: true });
+
+  try {
+    writeFileSync(new URL("step-trace.json", runDir), "[]\n");
+    writeFileSync(new URL("final-screen.png", runDir), "redacted final screen marker\n");
+    writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
+    writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
+    writeFileSync(new URL("reviewer-checklist.md", runDir), "# reviewer checklist\n\n- accepted: true\n");
+    writeFileSync(new URL("manifest.json", normalizedDir), "{}\n");
+    writeFileSync(new URL("frame-0001.png", redactedDir), "redacted frame marker\n");
+    writeFileSync(
+      new URL("screen-input-evidence.json", runDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          tool: "odoo",
+          substrate: "real-tool",
+          dataSource: "clean-seeded-demo-data",
+          rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
+          nativeScreenRecordingCaptured: true,
+          keyboardEventLogCaptured: true,
+          mouseEventLogCaptured: true,
+          hardRedactionCompleted: true,
+          noPrivilegedAccessUsed: true,
+          screenRecordingEvidencePath: `evals/runs/odoo/${runId}/eval-recording.mp4`,
+          normalizedCaptureManifestPath: `captures/normalized/${captureId}/manifest.json`,
+          redactedFrameEvidencePaths: [`captures/redacted/${captureId}/frame-0001.png`]
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    const result = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 6\/6 required artifacts/);
+    assert.equal(existsSync(summaryPath), summaryExistedBefore);
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+    rmSync(normalizedDir, { recursive: true, force: true });
+    rmSync(redactedDir, { recursive: true, force: true });
+  }
 });

@@ -123,6 +123,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] write a report under `evals/reports/`.
+- [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.
 - [ ] only create the real-tool proof summary if the eval reached the terminal business state with zero human help, zero invented steps, no privileged access, and reviewer acceptance.
 
 ## reviewer signoff checklist
