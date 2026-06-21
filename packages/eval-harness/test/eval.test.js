@@ -248,13 +248,14 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
     "captures/normalized/capture-real-odoo-001/manifest.json",
     "captures/redacted/capture-real-odoo-001/frame-0001.png"
   ]);
   const audit = auditRealToolRunArtifacts(
     proof,
     (path) => existing.has(path),
-    () => JSON.stringify(screenInputEvidence("odoo"))
+    (path) => realRunArtifactContent(path, "odoo")
   );
 
   assert.equal(audit.passed, true);
@@ -306,6 +307,54 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
   assert.equal(audit.findings.some((finding) => finding.message.includes("keyboardEventLogCaptured")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("rawCapturePolicy")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
+});
+
+test("real target-tool run artifact audit rejects incomplete step trace and reviewer signoff evidence", () => {
+  const proof = realToolProof("notion");
+  const existing = new Set([
+    "evals/runs/notion/real-proof/step-trace.json",
+    "evals/runs/notion/real-proof/final-screen.png",
+    "evals/runs/notion/real-proof/eval-recording.mp4",
+    "evals/runs/notion/real-proof/failure-log.md",
+    "evals/runs/notion/real-proof/reviewer-checklist.md",
+    "evals/runs/notion/real-proof/screen-input-evidence.json",
+    "evals/runs/notion/real-proof/redacted-frame-0001.png",
+    "captures/normalized/capture-real-notion-001/manifest.json",
+    "captures/redacted/capture-real-notion-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        return JSON.stringify([
+          {
+            stepId: "step-001",
+            success: false,
+            overlayKind: "fail-closed",
+            overlayMessage: "",
+            overlayConfidence: 0.5,
+            highlightedAnchorId: null,
+            actionPrimitive: { kind: "click", manualOnly: false },
+            currentFrame: "evals/runs/notion/real-proof/redacted-frame-0001.png"
+          }
+        ]);
+      }
+
+      if (path.endsWith("reviewer-checklist.md")) {
+        return "# reviewer checklist\n\n- accepted: false\n- rejected: true\n";
+      }
+
+      return realRunArtifactContent(path, "notion");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must be successful")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlayConfidence")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("manualOnly")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("accepted: true")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
 });
 
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
@@ -392,4 +441,37 @@ function screenInputEvidence(tool) {
     normalizedCaptureManifestPath: `captures/normalized/capture-real-${tool}-001/manifest.json`,
     redactedFrameEvidencePaths: [`captures/redacted/capture-real-${tool}-001/frame-0001.png`]
   };
+}
+
+function realRunArtifactContent(path, tool) {
+  if (path.endsWith("step-trace.json")) {
+    return JSON.stringify([
+      {
+        stepId: "step-001",
+        title: "complete taught step",
+        fromStateId: "state-001",
+        toStateId: "state-002",
+        currentFrame: `evals/runs/${tool}/real-proof/redacted-frame-0001.png`,
+        expectedVisibleText: ["demo"],
+        matchedVisibleText: ["demo"],
+        missingVisibleText: [],
+        overlayConfidence: 0.9,
+        overlayKind: "instruction",
+        overlayMessage: "Use the visible control shown in the flow.",
+        highlightedAnchorId: "anchor-001",
+        actionPrimitive: {
+          kind: "click",
+          targetAnchorId: "anchor-001",
+          manualOnly: true
+        },
+        success: true
+      }
+    ]);
+  }
+
+  if (path.endsWith("reviewer-checklist.md")) {
+    return "# reviewer checklist\n\n- accepted: true\n- rejected: false\n";
+  }
+
+  return JSON.stringify(screenInputEvidence(tool));
 }

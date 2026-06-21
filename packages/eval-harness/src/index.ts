@@ -512,6 +512,24 @@ export function auditRealToolRunArtifacts(
     }
   }
 
+  const stepTracePath = `${runDir}/step-trace.json`;
+  if (existsPath(stepTracePath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} cannot be validated without file contents` });
+    } else {
+      auditRealStepTrace(proof, runDir, stepTracePath, readText(stepTracePath), existsPath, references, findings);
+    }
+  }
+
+  const reviewerChecklistPath = `${runDir}/reviewer-checklist.md`;
+  if (existsPath(reviewerChecklistPath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${reviewerChecklistPath} cannot be validated without file contents` });
+    } else {
+      auditReviewerChecklist(proof, reviewerChecklistPath, readText(reviewerChecklistPath), findings);
+    }
+  }
+
   return artifactAuditResult(runDir, references, findings, requiredArtifacts.length);
 }
 
@@ -815,6 +833,104 @@ function auditScreenInputEvidence(
       );
     });
   }
+}
+
+function auditRealStepTrace(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!Array.isArray(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain a step trace array` });
+    return;
+  }
+
+  if (parsed.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} must contain at least one taught step` });
+    return;
+  }
+
+  parsed.forEach((entry, index) => {
+    const stepLabel = traceStepLabel(entry, index);
+    if (!isRecord(entry)) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} must be an object` });
+      return;
+    }
+
+    if (typeof entry.stepId !== "string" || entry.stepId.length === 0) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} stepId must be a non-empty string` });
+    }
+
+    if (entry.success !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} must be successful` });
+    }
+
+    if (entry.overlayKind !== "instruction") {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayKind must be instruction` });
+    }
+
+    if (typeof entry.overlayMessage !== "string" || entry.overlayMessage.length === 0) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayMessage must be a non-empty flow-grounded instruction` });
+    }
+
+    if (typeof entry.overlayConfidence !== "number" || entry.overlayConfidence < 0.75) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayConfidence must be at least 0.75` });
+    }
+
+    if (typeof entry.highlightedAnchorId !== "string" || entry.highlightedAnchorId.length === 0) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} highlightedAnchorId must be present` });
+    }
+
+    if (!isRecord(entry.actionPrimitive) || entry.actionPrimitive.manualOnly !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} actionPrimitive.manualOnly must be true` });
+    }
+
+    auditEvidencePathField(
+      proof.tool,
+      path,
+      `${stepLabel} currentFrame`,
+      entry.currentFrame,
+      `${runDir}/`,
+      existsPath,
+      references,
+      findings
+    );
+  });
+}
+
+function auditReviewerChecklist(
+  proof: RealToolProofEvidence,
+  path: string,
+  content: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (!content.includes("- accepted: true")) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist must contain accepted: true` });
+  }
+
+  if (content.includes("- rejected: true")) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
+  }
+}
+
+function traceStepLabel(entry: unknown, index: number): string {
+  if (isRecord(entry) && typeof entry.stepId === "string" && entry.stepId.length > 0) {
+    return entry.stepId;
+  }
+
+  return `step-${index + 1}`;
 }
 
 function auditEvidencePathField(

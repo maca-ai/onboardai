@@ -117,10 +117,12 @@ during eval:
 after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
+- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current frame under the run directory.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
+- [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] write a report under `evals/reports/`.
 - [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.

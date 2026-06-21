@@ -192,6 +192,12 @@ redaction, clean seeded data, local-only raw capture, and no privileged proof ac
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
 temporary capture paths.
 
+`step-trace.json` must contain at least one taught step. every real proof step must show successful
+instruction guidance, overlay confidence at or above `0.75`, a non-empty highlighted anchor id, a manual-only
+user action, and a current frame path under the same run directory.
+
+`reviewer-checklist.md` must contain `- accepted: true` and must not contain `- rejected: true`.
+
 validate a filled real run directory before creating the live proof summary:
 
 ```sh

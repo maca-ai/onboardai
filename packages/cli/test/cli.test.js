@@ -68,8 +68,37 @@ test("proof real-run validates complete real target-tool run artifacts without c
   mkdirSync(redactedDir, { recursive: true });
 
   try {
-    writeFileSync(new URL("step-trace.json", runDir), "[]\n");
+    writeFileSync(
+      new URL("step-trace.json", runDir),
+      `${JSON.stringify(
+        [
+          {
+            stepId: "step-001",
+            title: "complete taught step",
+            fromStateId: "state-001",
+            toStateId: "state-002",
+            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
+            expectedVisibleText: ["demo"],
+            matchedVisibleText: ["demo"],
+            missingVisibleText: [],
+            overlayConfidence: 0.9,
+            overlayKind: "instruction",
+            overlayMessage: "Use the visible control shown in the flow.",
+            highlightedAnchorId: "anchor-001",
+            actionPrimitive: {
+              kind: "click",
+              targetAnchorId: "anchor-001",
+              manualOnly: true
+            },
+            success: true
+          }
+        ],
+        null,
+        2
+      )}\n`
+    );
     writeFileSync(new URL("final-screen.png", runDir), "redacted final screen marker\n");
+    writeFileSync(new URL("redacted-frame-0001.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
     writeFileSync(new URL("reviewer-checklist.md", runDir), "# reviewer checklist\n\n- accepted: true\n");
