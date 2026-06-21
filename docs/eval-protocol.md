@@ -71,6 +71,8 @@ each run should write:
 /evals/reviewer-checklists/<tool>-<run-id>.md
 /evals/reports/<tool>-<run-id>.md
 /evals/reports/fixture-proof-audit.json
+/evals/fixtures/<flow-id>/held-out-frame-*.png
+/captures/redacted/<flow-id>/frame-*.png
 ```
 
 ## required metrics

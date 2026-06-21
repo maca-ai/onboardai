@@ -23,6 +23,8 @@ Each fixture eval used only:
 
 - generated `flow.md`
 - normalized capture manifest
+- materialized redacted capture frame artifacts
+- materialized held-out eval frame artifacts
 - redacted frame references
 - held-out visible screen-observation text
 - explicit simulated low-level fixture input transitions

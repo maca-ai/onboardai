@@ -103,6 +103,7 @@ function runEval(tool: ToolName): EvalRunResult {
   const fixture = getDeterministicFixture(tool);
   materializeFixtureCapture(tool);
   normalizeFixtureCapture(tool);
+  materializeShareableFixtureFrames(tool);
   const markdown = readFileSync(resolveWorkspacePath(fixture.flowPath), "utf8");
   const validation = validateFlowMarkdown(markdown);
 
@@ -136,6 +137,25 @@ function normalizeFixtureCapture(tool: ToolName): { readonly path: string; reado
   writeFileSync(manifestPath, manifest.json);
 
   return { path: artifact.path, markdown: artifact.markdown };
+}
+
+function materializeShareableFixtureFrames(tool: ToolName): void {
+  const fixture = getDeterministicFixture(tool);
+  const demonstration = getSeniorDemonstration(tool);
+  const framePaths = new Set([
+    ...demonstration.frames.map((frame) => frame.redactedFramePath),
+    ...fixture.observations.map((observation) => observation.frame)
+  ]);
+
+  for (const framePath of framePaths) {
+    if (framePath.startsWith("captures/raw/") || framePath.startsWith("captures/unsafe/") || framePath.startsWith("captures/tmp/")) {
+      throw new Error(`shareable fixture frame cannot use unsafe path: ${framePath}`);
+    }
+
+    const absolutePath = resolveWorkspacePath(framePath);
+    mkdirSync(dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, fixturePng());
+  }
 }
 
 function writeEvalEvidence(result: EvalRunResult): void {
@@ -287,6 +307,8 @@ Each fixture eval used only:
 
 - generated \`flow.md\`
 - normalized capture manifest
+- materialized redacted capture frame artifacts
+- materialized held-out eval frame artifacts
 - redacted frame references
 - held-out visible screen-observation text
 - explicit simulated low-level fixture input transitions
