@@ -129,6 +129,41 @@ export interface ShareableEvidencePathAuditResult {
   };
 }
 
+export interface RealToolProofEvidence {
+  readonly tool: string;
+  readonly substrate: "real-tool";
+  readonly heldOutTeachingEvalPassed: boolean;
+  readonly nativeScreenPlusInputCaptureVerified: boolean;
+  readonly terminalBusinessStateReached: boolean;
+  readonly zeroHumanHelp: boolean;
+  readonly noInventedSteps: boolean;
+  readonly noPrivilegedAccess: boolean;
+  readonly seniorReviewerSignoff: boolean;
+  readonly evidencePath: string;
+}
+
+export interface CaptureTeachGoalStatusFinding {
+  readonly tool: string;
+  readonly message: string;
+}
+
+export interface CaptureTeachGoalStatusResult {
+  readonly fullGoalProven: boolean;
+  readonly fixtureProofPassed: boolean;
+  readonly realToolProofPassed: boolean;
+  readonly requiredTools: readonly string[];
+  readonly findings: readonly CaptureTeachGoalStatusFinding[];
+  readonly realToolProofs: readonly RealToolProofEvidence[];
+  readonly summary: {
+    readonly fixtureToolsPassed: number;
+    readonly fixtureToolsRequired: number;
+    readonly realToolsPassed: number;
+    readonly realToolsRequired: number;
+    readonly nativeCaptureVerifiedTools: number;
+    readonly missingRealToolProofs: number;
+  };
+}
+
 const allowedShareableEvidencePrefixes = [
   "flows/",
   "captures/normalized/",
@@ -258,6 +293,69 @@ export function auditShareableEvidencePaths(
       missingReferences: findings.filter((finding) => finding.message.includes("missing")).length,
       unsafeReferences: findings.filter((finding) => finding.message.includes("unsafe")).length,
       disallowedReferences: findings.filter((finding) => finding.message.includes("outside") || finding.message.includes("project-relative")).length
+    }
+  };
+}
+
+export function auditCaptureTeachGoalStatus(input: {
+  readonly fixtureAudit: EvalProofAuditResult;
+  readonly realToolProofs?: readonly RealToolProofEvidence[];
+  readonly requiredTools?: readonly string[];
+}): CaptureTeachGoalStatusResult {
+  const requiredTools = input.requiredTools ?? ["odoo", "notion"];
+  const realToolProofs = input.realToolProofs ?? [];
+  const findings: CaptureTeachGoalStatusFinding[] = [];
+  const realProofsByTool = new Map<string, RealToolProofEvidence[]>();
+
+  if (!input.fixtureAudit.passed) {
+    findings.push({ tool: "fixture", message: "fixture proof audit did not pass" });
+  }
+
+  for (const proof of realToolProofs) {
+    const existing = realProofsByTool.get(proof.tool) ?? [];
+    realProofsByTool.set(proof.tool, [...existing, proof]);
+  }
+
+  for (const requiredTool of requiredTools) {
+    const toolProofs = realProofsByTool.get(requiredTool) ?? [];
+
+    if (toolProofs.length === 0) {
+      findings.push({ tool: requiredTool, message: "missing real target-tool held-out teaching eval evidence" });
+      findings.push({ tool: requiredTool, message: "missing native screen-plus-input capture evidence" });
+      continue;
+    }
+
+    if (toolProofs.length > 1) {
+      findings.push({ tool: requiredTool, message: "duplicate real target-tool proof evidence" });
+    }
+
+    auditSingleRealToolProof(toolProofs[0], findings);
+  }
+
+  for (const proof of realToolProofs) {
+    if (!requiredTools.includes(proof.tool)) {
+      findings.push({ tool: proof.tool, message: "unexpected real target-tool proof evidence" });
+    }
+  }
+
+  const requiredRealProofs = requiredTools.flatMap((tool) => realProofsByTool.get(tool)?.slice(0, 1) ?? []);
+  const realToolsPassed = requiredRealProofs.filter(isPassingRealToolProof).length;
+  const realToolProofPassed = realToolsPassed === requiredTools.length;
+
+  return {
+    fullGoalProven: input.fixtureAudit.passed && realToolProofPassed && findings.length === 0,
+    fixtureProofPassed: input.fixtureAudit.passed,
+    realToolProofPassed,
+    requiredTools,
+    findings,
+    realToolProofs,
+    summary: {
+      fixtureToolsPassed: input.fixtureAudit.summary.toolsPassed,
+      fixtureToolsRequired: input.fixtureAudit.summary.toolsRequired,
+      realToolsPassed,
+      realToolsRequired: requiredTools.length,
+      nativeCaptureVerifiedTools: requiredRealProofs.filter((proof) => proof.nativeScreenPlusInputCaptureVerified).length,
+      missingRealToolProofs: requiredTools.length - requiredRealProofs.length
     }
   };
 }
@@ -447,6 +545,32 @@ function emptyShareableEvidencePathAudit(): ShareableEvidencePathAuditResult {
       disallowedReferences: 0
     }
   };
+}
+
+function auditSingleRealToolProof(proof: RealToolProofEvidence, findings: CaptureTeachGoalStatusFinding[]): void {
+  if (proof.substrate !== "real-tool") findings.push({ tool: proof.tool, message: "proof substrate was not real-tool" });
+  if (!proof.heldOutTeachingEvalPassed) findings.push({ tool: proof.tool, message: "real target-tool held-out teaching eval did not pass" });
+  if (!proof.nativeScreenPlusInputCaptureVerified) findings.push({ tool: proof.tool, message: "native screen-plus-input capture was not verified" });
+  if (!proof.terminalBusinessStateReached) findings.push({ tool: proof.tool, message: "terminal business state was not reached" });
+  if (!proof.zeroHumanHelp) findings.push({ tool: proof.tool, message: "human help was used during real target-tool eval" });
+  if (!proof.noInventedSteps) findings.push({ tool: proof.tool, message: "overlay invented steps during real target-tool eval" });
+  if (!proof.noPrivilegedAccess) findings.push({ tool: proof.tool, message: "privileged access was used during real target-tool eval" });
+  if (!proof.seniorReviewerSignoff) findings.push({ tool: proof.tool, message: "senior reviewer did not sign off real target-tool steps" });
+  if (!proof.evidencePath.startsWith("evals/runs/")) findings.push({ tool: proof.tool, message: "real target-tool evidence path must live under evals/runs" });
+}
+
+function isPassingRealToolProof(proof: RealToolProofEvidence): boolean {
+  return (
+    proof.substrate === "real-tool" &&
+    proof.heldOutTeachingEvalPassed &&
+    proof.nativeScreenPlusInputCaptureVerified &&
+    proof.terminalBusinessStateReached &&
+    proof.zeroHumanHelp &&
+    proof.noInventedSteps &&
+    proof.noPrivilegedAccess &&
+    proof.seniorReviewerSignoff &&
+    proof.evidencePath.startsWith("evals/runs/")
+  );
 }
 
 function isAllowedShareableEvidencePath(path: string): boolean {

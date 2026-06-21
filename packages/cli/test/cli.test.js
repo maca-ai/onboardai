@@ -21,6 +21,7 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
     encoding: "utf8"
   });
   const audit = JSON.parse(readFileSync(new URL("evals/reports/fixture-proof-audit.json", workspaceRoot), "utf8"));
+  const goalStatus = JSON.parse(readFileSync(new URL("evals/reports/full-goal-proof-status.json", workspaceRoot), "utf8"));
 
   assert.match(output, /fixture proof passed: 2\/2 tools/);
   assert.equal(existsSync(new URL("captures/redacted/odoo-qualify-opportunity/frame-0001.png", workspaceRoot)), true);
@@ -30,4 +31,8 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
   assert.equal(audit.summary.unsafeEvidenceReferences, 0);
   assert.equal(audit.summary.disallowedEvidenceReferences, 0);
   assert.ok(audit.summary.evidenceReferencesAudited > 20);
+  assert.equal(goalStatus.fullGoalProven, false);
+  assert.equal(goalStatus.fixtureProofPassed, true);
+  assert.equal(goalStatus.realToolProofPassed, false);
+  assert.equal(goalStatus.summary.missingRealToolProofs, 2);
 });

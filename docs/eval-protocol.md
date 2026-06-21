@@ -71,6 +71,7 @@ each run should write:
 /evals/reviewer-checklists/<tool>-<run-id>.md
 /evals/reports/<tool>-<run-id>.md
 /evals/reports/fixture-proof-audit.json
+/evals/reports/full-goal-proof-status.json
 /evals/fixtures/<flow-id>/held-out-frame-*.png
 /captures/redacted/<flow-id>/frame-*.png
 ```
@@ -140,6 +141,10 @@ the machine-readable proof audit must also verify shareable evidence path integr
 normalized manifest, redacted capture frame, held-out eval frame, eval run artifact, report, and reviewer
 checklist path must be project-relative, exist on disk, avoid raw/unsafe/tmp capture locations, and live under
 an allowed shareable evidence directory.
+
+fixture proof is not the full project goal. fixture proof runs must also write
+`evals/reports/full-goal-proof-status.json`, and that status must remain `fullGoalProven: false` until both
+real odoo and real notion held-out evals pass using native screen-plus-input capture evidence.
 
 ## failure log template
 

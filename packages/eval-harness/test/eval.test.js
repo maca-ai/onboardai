@@ -3,7 +3,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { getDeterministicFixture } from "@onboardai/fixtures";
 import { parseFlowMarkdown } from "@onboardai/flow";
-import { auditEvalProofResults, auditShareableEvidencePaths, matchScreenState, runDeterministicEval } from "../dist/index.js";
+import {
+  auditCaptureTeachGoalStatus,
+  auditEvalProofResults,
+  auditShareableEvidencePaths,
+  matchScreenState,
+  runDeterministicEval
+} from "../dist/index.js";
 
 const workspaceRoot = new URL("../../..", import.meta.url);
 
@@ -121,6 +127,35 @@ test("proof audit fails if a required eval invariant is missing", () => {
   assert.equal(audit.findings.some((finding) => finding.message.includes("held out")), true);
 });
 
+test("full goal status remains unproven when only fixture proof passes", () => {
+  const fixtureAudit = passingFixtureAudit();
+  const status = auditCaptureTeachGoalStatus({ fixtureAudit });
+
+  assert.equal(status.fullGoalProven, false);
+  assert.equal(status.fixtureProofPassed, true);
+  assert.equal(status.realToolProofPassed, false);
+  assert.equal(status.summary.realToolsPassed, 0);
+  assert.equal(status.findings.some((finding) => finding.tool === "odoo" && finding.message.includes("missing real target-tool")), true);
+  assert.equal(status.findings.some((finding) => finding.tool === "notion" && finding.message.includes("missing native screen-plus-input")), true);
+});
+
+test("full goal status passes only with real proof for both required tools", () => {
+  const status = auditCaptureTeachGoalStatus({
+    fixtureAudit: passingFixtureAudit(),
+    realToolProofs: [
+      realToolProof("odoo"),
+      realToolProof("notion")
+    ]
+  });
+
+  assert.equal(status.fullGoalProven, true);
+  assert.equal(status.fixtureProofPassed, true);
+  assert.equal(status.realToolProofPassed, true);
+  assert.equal(status.findings.length, 0);
+  assert.equal(status.summary.realToolsPassed, 2);
+  assert.equal(status.summary.nativeCaptureVerifiedTools, 2);
+});
+
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
   const audit = auditShareableEvidencePaths(
     [
@@ -162,4 +197,29 @@ test("shareable evidence path audit rejects missing, unsafe, absolute, and disal
 
 function readFixtureFlow(path) {
   return parseFlowMarkdown(readFileSync(new URL(path, workspaceRoot), "utf8"));
+}
+
+function passingFixtureAudit() {
+  const odooFixture = getDeterministicFixture("odoo");
+  const notionFixture = getDeterministicFixture("notion");
+
+  return auditEvalProofResults([
+    runDeterministicEval(readFixtureFlow(odooFixture.flowPath), odooFixture),
+    runDeterministicEval(readFixtureFlow(notionFixture.flowPath), notionFixture)
+  ]);
+}
+
+function realToolProof(tool) {
+  return {
+    tool,
+    substrate: "real-tool",
+    heldOutTeachingEvalPassed: true,
+    nativeScreenPlusInputCaptureVerified: true,
+    terminalBusinessStateReached: true,
+    zeroHumanHelp: true,
+    noInventedSteps: true,
+    noPrivilegedAccess: true,
+    seniorReviewerSignoff: true,
+    evidencePath: `evals/runs/${tool}/real-proof/step-trace.json`
+  };
 }

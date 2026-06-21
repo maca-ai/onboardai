@@ -18,6 +18,9 @@
 - unsafe shareable evidence references: 0
 - disallowed shareable evidence references: 0
 - real-tool proof result: not run
+- full-goal proof result: not proven
+- real tools passed for full goal: 0/2
+- missing real-tool proofs: 2
 
 ## confirmed fixture capability
 
@@ -105,7 +108,8 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - Native screen recording, frame extraction, keyboard event capture, mouse event capture, and desktop overlay behavior are not implemented yet.
 - The raw screen recording and `.mp4` eval recording files in fixture runs are local ignored markers, not native target-tool recordings.
 - Fixture proof is not full production reliability and is not full PII compliance.
+- Full-goal status remains not proven until real odoo and notion target-tool held-out evals pass from native screen-plus-input capture evidence.
 
 ## next experiment
 
-Implement a real local capture adapter spike that writes raw screen recording, keyboard log, mouse log, redacted frame metadata, and a normalized capture manifest using the same artifact contracts, then rerun this proof against the adapter output.
+Collect or implement real target-tool proof evidence for odoo and notion using native screen-plus-input capture, then rerun the full-goal proof status audit.

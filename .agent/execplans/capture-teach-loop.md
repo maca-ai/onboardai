@@ -111,6 +111,7 @@ do not weaken any constraint to make an eval pass.
 - [x] add machine-readable two-tool fixture proof audit
 - [x] reject ungrounded instruction highlights and user-action target anchors in `flow.md`
 - [x] audit shareable evidence paths for existence, allowed location, and unsafe capture leaks
+- [x] write explicit full-goal status showing fixture proof is not real odoo/notion proof
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -179,6 +180,9 @@ record observations here.
 
 - observation: fixture proof now machine-checks referenced shareable evidence paths instead of relying on report text.
   evidence: `pnpm proof:fixtures` writes `evals/reports/fixture-proof-audit.json` with `shareableEvidence.passed: true`, 60 references audited, zero missing references, zero unsafe references, and zero disallowed references.
+
+- observation: fixture proof now writes a separate full-goal status artifact that prevents overclaiming.
+  evidence: `evals/reports/full-goal-proof-status.json` reports `fullGoalProven: false`, `fixtureProofPassed: true`, `realToolProofPassed: false`, `missingRealToolProofs: 2`, and missing real target-tool plus native screen-plus-input evidence for both odoo and notion.
 
 ## decision-log
 
@@ -258,6 +262,10 @@ record observations here.
   rationale: the command that claims fixture proof should fail if any referenced flow, manifest, redacted frame, held-out frame, eval artifact, report, or reviewer checklist path is missing, absolute, outside allowed evidence locations, or points at raw/unsafe/tmp capture material.
   date-author: 2026-06-21, codex evidence path audit.
 
+- decision: write full-goal status separately from fixture proof status.
+  rationale: fixture proof is useful v0 evidence but cannot satisfy the objective; a separate machine-readable status keeps the missing real odoo/notion held-out eval and native screen-plus-input capture requirements visible even when fixture proof passes.
+  date-author: 2026-06-21, codex full-goal status audit.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -268,16 +276,16 @@ current evidence:
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, per-step anchor grounding, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
-- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references.
+- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing that remains false until real odoo and notion proof evidence exists.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, and audited two-tool fixture proof.
-- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, and `evals/reports/fixture-proof-audit.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, and record limitations.
+- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, separate fixture proof from full-goal proof, and record limitations.
 
 what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 38 tests, 38 pass, 0 fail.
+- latest test suite passed: 40 tests, 40 pass, 0 fail.
 
 completion rate:
 
@@ -295,7 +303,7 @@ which step the overlay misread:
 
 next best experiment:
 
-- add a full-goal proof status audit that explicitly separates fixture proof from the missing native/real odoo and notion proof requirements, so no report can accidentally imply the overall goal is complete before real target-tool evidence exists.
+- add a real-proof evidence ingestion contract for native screen-plus-input odoo/notion runs, then keep it failing until actual target-tool artifacts exist under `/evals`.
 
 at completion, record:
 
@@ -869,6 +877,33 @@ latest results on 2026-06-21:
 - forbidden secret scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+full-goal proof status command:
+
+```sh
+pnpm --filter @onboardai/eval-harness test
+pnpm --filter @onboardai/cli test
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm flow:validate
+pnpm proof:fixtures
+rg -n "[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}|password\\s*[:=]|token\\s*[:=]|api[_-]?key\\s*[:=]|session[_-]?secret\\s*[:=]" flows evals captures/normalized captures/redacted --glob "!**/*.mp4" -i
+rg -n "captures/(raw|unsafe|tmp)/" flows evals captures/normalized captures/redacted --glob "!**/*.mp4"
+```
+
+latest results on 2026-06-21:
+
+- `pnpm --filter @onboardai/eval-harness test`: passed; 12 tests, 12 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 2 tests, 2 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 40 tests, 40 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `evals/reports/full-goal-proof-status.json`: `fullGoalProven` false, `fixtureProofPassed` true, `realToolProofPassed` false, `realToolsPassed` 0/2, `missingRealToolProofs` 2.
+- forbidden secret scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -923,3 +958,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-21: shareable fixture frame materialization added: fixture proof now writes referenced redacted capture frame and held-out eval frame PNG markers so committed flow/eval evidence paths resolve to concrete files.
 - 2026-06-21: flow anchor grounding added: `flow.md` validation now rejects instruction highlights and user-action target anchors that are not present in the same step's captured screen-region hints.
 - 2026-06-21: shareable evidence path audit added: `proof fixtures` now fails if referenced flow, manifest, redacted frame, held-out frame, eval run, report, or reviewer checklist paths are missing, unsafe, absolute, or outside allowed evidence directories.
+- 2026-06-21: full-goal proof status added: `proof fixtures` now writes `evals/reports/full-goal-proof-status.json`, which remains not proven until real odoo and notion held-out target-tool evals pass from native screen-plus-input capture evidence.

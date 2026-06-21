@@ -3,9 +3,11 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { dirname, join, resolve } from "node:path";
 import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, writeLocalCaptureBundle } from "@onboardai/capture";
 import {
+  auditCaptureTeachGoalStatus,
   auditEvalProofResults,
   auditShareableEvidencePaths,
   runDeterministicEval,
+  type CaptureTeachGoalStatusResult,
   type EvalProofAuditResult,
   type EvalRunResult,
   type ShareableEvidencePathReference
@@ -74,8 +76,10 @@ if (args[0] === "flow" && args[1] === "validate") {
   }
   const evidenceAudit = auditShareableEvidencePaths(collectShareableEvidenceReferences(results), (path) => existsSync(resolveWorkspacePath(path)));
   const audit = auditEvalProofResults(results, ["odoo", "notion"], evidenceAudit);
-  writeTwoToolFixtureProof(results, audit);
+  const goalStatus = auditCaptureTeachGoalStatus({ fixtureAudit: audit });
+  writeTwoToolFixtureProof(results, audit, goalStatus);
   writeFixtureProofAudit(audit);
+  writeFullGoalProofStatus(goalStatus);
   console.log(`fixture proof ${audit.passed ? "passed" : "failed"}: ${audit.summary.toolsPassed}/${audit.summary.toolsRequired} tools`);
   process.exitCode = audit.passed ? 0 : 1;
 } else {
@@ -183,16 +187,22 @@ function writeEvalEvidence(result: EvalRunResult): void {
   writeFileSync(join(checklistDir, `${result.tool}-${result.runId}.md`), renderReviewerChecklist(result));
 }
 
-function writeTwoToolFixtureProof(results: readonly EvalRunResult[], audit: EvalProofAuditResult): void {
+function writeTwoToolFixtureProof(results: readonly EvalRunResult[], audit: EvalProofAuditResult, goalStatus: CaptureTeachGoalStatusResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
-  writeFileSync(join(reportDir, "two-tool-fixture-proof.md"), renderTwoToolFixtureProof(results, audit));
+  writeFileSync(join(reportDir, "two-tool-fixture-proof.md"), renderTwoToolFixtureProof(results, audit, goalStatus));
 }
 
 function writeFixtureProofAudit(audit: EvalProofAuditResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
   writeFileSync(join(reportDir, "fixture-proof-audit.json"), `${JSON.stringify(audit, null, 2)}\n`);
+}
+
+function writeFullGoalProofStatus(status: CaptureTeachGoalStatusResult): void {
+  const reportDir = resolveWorkspacePath(join("evals", "reports"));
+  mkdirSync(reportDir, { recursive: true });
+  writeFileSync(join(reportDir, "full-goal-proof-status.json"), `${JSON.stringify(status, null, 2)}\n`);
 }
 
 function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): readonly ShareableEvidencePathReference[] {
@@ -358,7 +368,11 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 `;
 }
 
-function renderTwoToolFixtureProof(results: readonly EvalRunResult[], audit: EvalProofAuditResult): string {
+function renderTwoToolFixtureProof(
+  results: readonly EvalRunResult[],
+  audit: EvalProofAuditResult,
+  goalStatus: CaptureTeachGoalStatusResult
+): string {
   const passedCount = results.filter((result) => result.passed).length;
   const totalSteps = results.reduce((sum, result) => sum + result.stepCount, 0);
   const completedSteps = results.reduce((sum, result) => sum + result.stepsCompleted, 0);
@@ -388,6 +402,9 @@ function renderTwoToolFixtureProof(results: readonly EvalRunResult[], audit: Eva
 - unsafe shareable evidence references: ${audit.summary.unsafeEvidenceReferences}
 - disallowed shareable evidence references: ${audit.summary.disallowedEvidenceReferences}
 - real-tool proof result: not run
+- full-goal proof result: ${goalStatus.fullGoalProven ? "proven" : "not proven"}
+- real tools passed for full goal: ${goalStatus.summary.realToolsPassed}/${goalStatus.summary.realToolsRequired}
+- missing real-tool proofs: ${goalStatus.summary.missingRealToolProofs}
 
 ## confirmed fixture capability
 
@@ -434,10 +451,11 @@ ${results.map(renderToolProofSection).join("\n")}
 - Native screen recording, frame extraction, keyboard event capture, mouse event capture, and desktop overlay behavior are not implemented yet.
 - The raw screen recording and \`.mp4\` eval recording files in fixture runs are local ignored markers, not native target-tool recordings.
 - Fixture proof is not full production reliability and is not full PII compliance.
+- Full-goal status remains not proven until real odoo and notion target-tool held-out evals pass from native screen-plus-input capture evidence.
 
 ## next experiment
 
-Implement a real local capture adapter spike that writes raw screen recording, keyboard log, mouse log, redacted frame metadata, and a normalized capture manifest using the same artifact contracts, then rerun this proof against the adapter output.
+Collect or implement real target-tool proof evidence for odoo and notion using native screen-plus-input capture, then rerun the full-goal proof status audit.
 `;
 }
 

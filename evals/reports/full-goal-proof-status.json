@@ -1,0 +1,36 @@
+{
+  "fullGoalProven": false,
+  "fixtureProofPassed": true,
+  "realToolProofPassed": false,
+  "requiredTools": [
+    "odoo",
+    "notion"
+  ],
+  "findings": [
+    {
+      "tool": "odoo",
+      "message": "missing real target-tool held-out teaching eval evidence"
+    },
+    {
+      "tool": "odoo",
+      "message": "missing native screen-plus-input capture evidence"
+    },
+    {
+      "tool": "notion",
+      "message": "missing real target-tool held-out teaching eval evidence"
+    },
+    {
+      "tool": "notion",
+      "message": "missing native screen-plus-input capture evidence"
+    }
+  ],
+  "realToolProofs": [],
+  "summary": {
+    "fixtureToolsPassed": 2,
+    "fixtureToolsRequired": 2,
+    "realToolsPassed": 0,
+    "realToolsRequired": 2,
+    "nativeCaptureVerifiedTools": 0,
+    "missingRealToolProofs": 2
+  }
+}
