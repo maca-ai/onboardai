@@ -369,7 +369,53 @@ test("proof real-run validates complete real target-tool run artifacts and write
         2
       )}\n`
     );
-    writeFileSync(new URL("manifest.json", normalizedDir), "{}\n");
+    writeFileSync(
+      new URL("manifest.json", normalizedDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          captureId,
+          flowId: "odoo-qualify-opportunity",
+          flowPath: "flows/odoo/qualify-opportunity.flow.md",
+          tool: "odoo",
+          generatedAt: "2026-06-21T00:00:00.000Z",
+          dataClass: "clean-demo",
+          rawCapturePolicy: "unsafe-to-share-local-only",
+          redactionPolicy: "hard-secret-redaction-v0",
+          rawCaptureSummary: {
+            screenRecordingCaptured: true,
+            keyboardEventLogCaptured: true,
+            mouseEventLogCaptured: true,
+            humanNotesCaptured: true
+          },
+          rawArtifacts: [
+            { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+          ],
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: `captures/redacted/${captureId}/frame-0001.png`,
+              visibleText: ["demo opportunity", "qualified"]
+            }
+          ],
+          anchors: [],
+          inputEvidence: [
+            { stepId: "step-001", inputEvents: [{ kind: "mouse", event: "click", anchorId: "opportunity-card" }] },
+            { stepId: "step-002", inputEvents: [{ kind: "mouse", event: "click", anchorId: "qualified-stage" }] },
+            { stepId: "step-003", inputEvents: [{ kind: "mouse", event: "click", anchorId: "save-button" }] }
+          ],
+          redaction: {
+            replacements: [],
+            businessSensitiveTags: []
+          }
+        },
+        null,
+        2
+      )}\n`
+    );
     writeFileSync(new URL("frame-0001.png", redactedDir), "redacted frame marker\n");
     writeFileSync(
       new URL("screen-input-evidence.json", runDir),

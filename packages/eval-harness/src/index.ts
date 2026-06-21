@@ -511,7 +511,7 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${screenInputEvidencePath} cannot be validated without file contents` });
     } else {
-      auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, readText(screenInputEvidencePath), existsPath, references, findings);
+      auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, readText(screenInputEvidencePath), existsPath, readText, references, findings);
     }
   }
 
@@ -786,6 +786,7 @@ function auditScreenInputEvidence(
   path: string,
   content: string,
   existsPath: (path: string) => boolean,
+  readText: (path: string) => string,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
@@ -865,6 +866,17 @@ function auditScreenInputEvidence(
     references,
     findings
   );
+  if (typeof parsed.normalizedCaptureManifestPath === "string" && existsPath(parsed.normalizedCaptureManifestPath)) {
+    auditNormalizedCaptureManifest(
+      proof,
+      path,
+      parsed.normalizedCaptureManifestPath,
+      existsPath,
+      readText,
+      references,
+      findings
+    );
+  }
 
   if (!Array.isArray(parsed.redactedFrameEvidencePaths) || parsed.redactedFrameEvidencePaths.length === 0) {
     findings.push({ tool: proof.tool, message: `${path} redactedFrameEvidencePaths must contain at least one redacted frame path` });
@@ -881,6 +893,115 @@ function auditScreenInputEvidence(
         findings
       );
     });
+  }
+}
+
+function auditNormalizedCaptureManifest(
+  proof: RealToolProofEvidence,
+  sourcePath: string,
+  manifestPath: string,
+  existsPath: (path: string) => boolean,
+  readText: (path: string) => string,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readText(manifestPath));
+  } catch {
+    findings.push({ tool: proof.tool, message: `${manifestPath} referenced by ${sourcePath} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} referenced by ${sourcePath} must contain an object` });
+    return;
+  }
+
+  if (parsed.schemaVersion !== 1) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} schemaVersion must be 1` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} tool must match ${proof.tool}` });
+  }
+
+  if (parsed.rawCapturePolicy !== "unsafe-to-share-local-only") {
+    findings.push({ tool: proof.tool, message: `${manifestPath} rawCapturePolicy must be unsafe-to-share-local-only` });
+  }
+
+  if (parsed.redactionPolicy !== "hard-secret-redaction-v0") {
+    findings.push({ tool: proof.tool, message: `${manifestPath} redactionPolicy must be hard-secret-redaction-v0` });
+  }
+
+  if (!isRecord(parsed.rawCaptureSummary)) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} rawCaptureSummary must be present` });
+  } else {
+    for (const field of ["screenRecordingCaptured", "keyboardEventLogCaptured", "mouseEventLogCaptured"] as const) {
+      if (parsed.rawCaptureSummary[field] !== true) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawCaptureSummary.${field} must be true` });
+      }
+    }
+  }
+
+  if (!Array.isArray(parsed.rawArtifacts) || parsed.rawArtifacts.length === 0) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts must contain sanitized raw artifact summaries` });
+  } else {
+    const artifactKinds = new Set<string>();
+    parsed.rawArtifacts.forEach((artifact, index) => {
+      if (!isRecord(artifact)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must be an object` });
+        return;
+      }
+
+      if (typeof artifact.path === "string") {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must not include raw artifact paths` });
+      }
+
+      if (typeof artifact.kind === "string") {
+        artifactKinds.add(artifact.kind);
+      }
+
+      if (artifact.safety !== "unsafe-to-share-local-only") {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}].safety must be unsafe-to-share-local-only` });
+      }
+
+      if (artifact.gitPolicy !== "excluded-from-git") {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}].gitPolicy must be excluded-from-git` });
+      }
+    });
+
+    for (const required of ["screen-recording", "keyboard-event-log", "mouse-event-log"] as const) {
+      if (!artifactKinds.has(required)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts must include ${required}` });
+      }
+    }
+  }
+
+  if (!Array.isArray(parsed.redactedFrames) || parsed.redactedFrames.length === 0) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames must contain at least one redacted frame` });
+  } else {
+    parsed.redactedFrames.forEach((frame, index) => {
+      if (!isRecord(frame)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}] must be an object` });
+        return;
+      }
+
+      auditEvidencePathField(
+        proof.tool,
+        manifestPath,
+        `redactedFrames[${index}].path`,
+        frame.path,
+        "captures/redacted/",
+        existsPath,
+        references,
+        findings
+      );
+    });
+  }
+
+  if (!Array.isArray(parsed.inputEvidence) || parsed.inputEvidence.length === 0) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must contain per-step input evidence` });
   }
 }
 

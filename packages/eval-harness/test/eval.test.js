@@ -318,6 +318,44 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
 });
 
+test("real target-tool run artifact audit rejects empty normalized capture manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return "{}";
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawCaptureSummary must be present")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts must contain")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("redactedFrames must contain")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvidence must contain")), true);
+});
+
 test("real target-tool run artifact audit rejects unverified native capture readiness evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -698,6 +736,10 @@ function realRunArtifactContent(path, tool) {
     return JSON.stringify(outcomeEvidence(tool));
   }
 
+  if (path.endsWith("manifest.json")) {
+    return JSON.stringify(normalizedCaptureManifest(tool));
+  }
+
   if (path.endsWith(".flow.md")) {
     return readFileSync(new URL(path, workspaceRoot), "utf8");
   }
@@ -791,6 +833,48 @@ function flowEvidence(tool) {
     terminalBusinessState:
       tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review",
     stepIds: ["step-001", "step-002", "step-003"]
+  };
+}
+
+function normalizedCaptureManifest(tool) {
+  return {
+    schemaVersion: 1,
+    captureId: `capture-real-${tool}-001`,
+    flowId: tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status",
+    flowPath: `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
+    tool,
+    generatedAt: "2026-06-21T00:00:00.000Z",
+    dataClass: "clean-demo",
+    rawCapturePolicy: "unsafe-to-share-local-only",
+    redactionPolicy: "hard-secret-redaction-v0",
+    rawCaptureSummary: {
+      screenRecordingCaptured: true,
+      keyboardEventLogCaptured: true,
+      mouseEventLogCaptured: true,
+      humanNotesCaptured: true
+    },
+    rawArtifacts: [
+      { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+    ],
+    redactedFrames: [
+      {
+        frameId: "frame-0001",
+        path: `captures/redacted/capture-real-${tool}-001/frame-0001.png`,
+        visibleText: ["demo"]
+      }
+    ],
+    anchors: [],
+    inputEvidence: flowStepDefinitions(tool).map((step) => ({
+      stepId: step.stepId,
+      inputEvents: [{ kind: "mouse", event: "click", anchorId: step.anchorId }]
+    })),
+    redaction: {
+      replacements: [],
+      businessSensitiveTags: []
+    }
   };
 }
 

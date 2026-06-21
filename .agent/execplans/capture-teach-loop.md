@@ -125,6 +125,7 @@ do not weaken any constraint to make an eval pass.
 - [x] require real-run step traces to be grounded in referenced `flow.md`
 - [x] require native capture readiness evidence before real-run proof can pass
 - [x] require senior reviewer signoff for every real-run step id
+- [x] require normalized capture manifest contents before real-run proof can pass
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -244,6 +245,9 @@ record observations here.
 
 - observation: real run validation now requires reviewer signoff for each taught step, not just a run-level approval.
   evidence: `reviewer-checklist.md` must still contain `- accepted: true` and no `- rejected: true`, and it must now include `- <step-id>: accepted` for every step id in `step-trace.json`; targeted eval-harness tests passed 25/25 and CLI tests passed 9/9.
+
+- observation: real run validation now rejects empty normalized capture manifests.
+  evidence: `screen-input-evidence.json` still points to a manifest under `captures/normalized/`, and the validator now parses that manifest to require matching tool, local-only raw capture policy, hard-secret-redaction policy, screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries without raw paths, redacted frame evidence under `captures/redacted/`, and per-step input evidence; targeted eval-harness tests passed 26/26 and CLI tests passed 9/9.
 
 ## decision-log
 
@@ -391,6 +395,10 @@ record observations here.
   rationale: the objective requires senior reviewer signoff for each taught step; a checklist with only a run-level `accepted: true` can hide an unreviewed or disputed step, so the artifact gate now compares reviewer acceptance lines to the actual step trace ids.
   date-author: 2026-06-21, codex per-step reviewer signoff.
 
+- decision: parse real-run normalized capture manifests instead of trusting their paths.
+  rationale: a real proof run must demonstrate screen-plus-input capture evidence, not merely reference a file named `manifest.json`; requiring sanitized raw artifact summaries, redacted frames, and per-step input evidence closes the gap where an empty manifest could satisfy the path gate.
+  date-author: 2026-06-21, codex normalized manifest evidence.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -401,7 +409,7 @@ current evidence:
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, per-step anchor grounding, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
-- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `capture-readiness.json`, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`; added per-step reviewer signoff checks against the actual real-run trace ids.
+- eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `capture-readiness.json`, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`; added per-step reviewer signoff checks against the actual real-run trace ids; added normalized capture manifest content validation for real runs.
 - real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, flow evidence, native capture readiness evidence, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories, guarded `--write-summary` creation for accepted real runs, and `proof real-run init` skeleton setup that remains non-passing until evidence is filled.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
 - cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, full-goal proof status, real-run skeleton initialization, and shareable artifact safety scanning.
@@ -411,9 +419,9 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest targeted eval-harness test suite passed: 25 tests, 25 pass, 0 fail.
+- latest targeted eval-harness test suite passed: 26 tests, 26 pass, 0 fail.
 - latest targeted cli test suite passed: 9 tests, 9 pass, 0 fail.
-- latest full test suite passed: 60 tests, 60 pass, 0 fail.
+- latest full test suite passed: 61 tests, 61 pass, 0 fail.
 - latest flow validation passed: 2 flow files validated.
 - latest fixture proof passed: 2/2 tool-like fixture evals.
 - latest proof status command exited 1 as expected because the full goal is not proven: real-tool proof failed 0/2 tools with missing real held-out teaching eval evidence and missing native screen-plus-input capture evidence for both odoo and notion.
