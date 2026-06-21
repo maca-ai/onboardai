@@ -77,6 +77,33 @@ test("an invalid flow.md fails validation", () => {
   assert.equal(result.errors.some((error) => error.includes("success-condition")), true);
 });
 
+test("a flow with an ungrounded highlight anchor fails validation", () => {
+  const invalidFlow = validFlow.replace('"highlight-anchor-id": "pipeline-card"', '"highlight-anchor-id": "missing-card"');
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("highlight anchor missing-card is not defined")), true);
+});
+
+test("a flow with an ungrounded user-action target anchor fails validation", () => {
+  const invalidFlow = validFlow.replace('"target-anchor-id": "pipeline-card"', '"target-anchor-id": "missing-card"');
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("target anchor missing-card is not defined")), true);
+});
+
+test("a flow with a missing anchor source frame fails validation without throwing", () => {
+  const invalidFlow = validFlow.replace(
+    ',\n        "source-frame": "captures/redacted/capture-2026-06-20-001/frame-0003.png"',
+    ""
+  );
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("anchor pipeline-card is missing source-frame")), true);
+});
+
 test("flow search ranks local flow files by parsed flow evidence", () => {
   const files = [
     { path: "flows/odoo/qualify-opportunity.flow.md", content: validFlow },

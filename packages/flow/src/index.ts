@@ -222,6 +222,9 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
     }
   }
 
+  const regionHints = step["expected-state"]?.["screen-region-hints"] ?? [];
+  const anchorIds = new Set<string>();
+
   if (step.instruction) {
     const instructionText = step.instruction.text.toLowerCase();
     if (/\bsystem\s+(click|type|submit|approve|delete|automate)\b/.test(instructionText)) {
@@ -243,14 +246,35 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
     errors.push(`step ${index + 1} fallback message must match fail-closed text exactly`);
   }
 
-  for (const hint of step["expected-state"]?.["screen-region-hints"] ?? []) {
+  for (const hint of regionHints) {
+    if (!hint["anchor-id"]) {
+      errors.push(`step ${index + 1} anchor is missing anchor-id`);
+      continue;
+    }
+
+    if (anchorIds.has(hint["anchor-id"])) {
+      errors.push(`step ${index + 1} anchor ${hint["anchor-id"]} is duplicated`);
+    }
+    anchorIds.add(hint["anchor-id"]);
+
     if (!hint["source-frame"]) {
       errors.push(`step ${index + 1} anchor ${hint["anchor-id"]} is missing source-frame`);
+      continue;
     }
 
     if (hint["source-frame"].startsWith("captures/raw/") || hint["source-frame"].startsWith("captures/unsafe/")) {
       errors.push(`step ${index + 1} anchor ${hint["anchor-id"]} points to unsafe capture`);
     }
+  }
+
+  const highlightAnchorId = step.instruction?.["highlight-anchor-id"];
+  if (highlightAnchorId && !anchorIds.has(highlightAnchorId)) {
+    errors.push(`step ${index + 1} highlight anchor ${highlightAnchorId} is not defined in screen-region-hints`);
+  }
+
+  const targetAnchorId = step["user-action"]?.["target-anchor-id"];
+  if (targetAnchorId && !anchorIds.has(targetAnchorId)) {
+    errors.push(`step ${index + 1} target anchor ${targetAnchorId} is not defined in screen-region-hints`);
   }
 }
 

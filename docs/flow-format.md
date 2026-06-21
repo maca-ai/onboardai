@@ -129,6 +129,10 @@ anchors must include:
 
 anchors must not contain hard-redacted secret values.
 
+`instruction.highlight-anchor-id` and `user-action.target-anchor-id`, when present, must match an
+anchor id in the same step's `expected-state.screen-region-hints`. The overlay and harness may not
+use an anchor that was not grounded in captured redacted frame evidence for that step.
+
 ## confidence behavior
 
 if the current screen state matches the expected state with confidence at or above `0.75`, the overlay may show the instruction and highlight.
@@ -163,6 +167,7 @@ a flow is invalid if:
 - a step has no fallback
 - a highlight has no source frame
 - a source frame points to raw capture
+- an instruction highlight or user-action target references an undefined anchor
 - instruction text asks the system to click or type
 - confidence threshold is missing
 - terminal business state is missing
