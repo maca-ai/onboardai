@@ -5,6 +5,7 @@ import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, 
 import {
   auditCaptureTeachGoalStatus,
   auditEvalProofResults,
+  auditRealToolRunArtifacts,
   auditShareableEvidencePaths,
   parseRealToolProofEvidenceFile,
   runDeterministicEval,
@@ -236,12 +237,19 @@ function loadRealToolProofEvidence(requiredTools: readonly ToolName[]): {
     }
 
     const parsed = parseRealToolProofEvidenceFile(parsedJson, proofPath);
-    proofs.push(...parsed.proofs);
     findings.push(...parsed.findings);
 
     for (const proof of parsed.proofs) {
-      if (!existsSync(resolveWorkspacePath(proof.evidencePath))) {
-        findings.push({ tool: proof.tool, message: `${proof.evidencePath} real target-tool evidence path is missing on disk` });
+      const artifactAudit = auditRealToolRunArtifacts(
+        proof,
+        (path) => existsSync(resolveWorkspacePath(path)),
+        (path) => readFileSync(resolveWorkspacePath(path), "utf8")
+      );
+
+      findings.push(...artifactAudit.findings);
+
+      if (artifactAudit.passed) {
+        proofs.push(proof);
       }
     }
   }

@@ -6,6 +6,7 @@ import { parseFlowMarkdown } from "@onboardai/flow";
 import {
   auditCaptureTeachGoalStatus,
   auditEvalProofResults,
+  auditRealToolRunArtifacts,
   auditShareableEvidencePaths,
   matchScreenState,
   parseRealToolProofEvidenceFile,
@@ -238,6 +239,75 @@ test("full goal status rejects incomplete real proof summaries without weakening
   assert.equal(status.findings.some((finding) => finding.tool === "odoo" && finding.message.includes("evals/runs")), true);
 });
 
+test("real target-tool run artifact audit accepts complete screen-plus-input evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    () => JSON.stringify(screenInputEvidence("odoo"))
+  );
+
+  assert.equal(audit.passed, true);
+  assert.equal(audit.runDir, "evals/runs/odoo/real-proof");
+  assert.equal(audit.summary.requiredArtifacts, 6);
+  assert.equal(audit.summary.missingArtifacts, 0);
+  assert.equal(audit.findings.length, 0);
+  assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
+});
+
+test("real target-tool run artifact audit rejects missing required run artifacts", () => {
+  const proof = realToolProof("notion");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => path === "evals/runs/notion/real-proof/step-trace.json"
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.summary.requiredArtifacts, 6);
+  assert.equal(audit.summary.missingArtifacts, 5);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("final-screen.png")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json")), true);
+});
+
+test("real target-tool run artifact audit rejects unsafe or incomplete screen-input evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    () =>
+      JSON.stringify({
+        ...screenInputEvidence("odoo"),
+        keyboardEventLogCaptured: false,
+        rawCapturePolicy: "shareable",
+        normalizedCaptureManifestPath: "captures/raw/odoo/manifest.json",
+        redactedFrameEvidencePaths: ["captures/raw/odoo/frame-0001.png"]
+      })
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("keyboardEventLogCaptured")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawCapturePolicy")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
+});
+
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
   const audit = auditShareableEvidencePaths(
     [
@@ -303,5 +373,23 @@ function realToolProof(tool) {
     noPrivilegedAccess: true,
     seniorReviewerSignoff: true,
     evidencePath: `evals/runs/${tool}/real-proof/step-trace.json`
+  };
+}
+
+function screenInputEvidence(tool) {
+  return {
+    schemaVersion: 1,
+    tool,
+    substrate: "real-tool",
+    dataSource: "clean-seeded-demo-data",
+    rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
+    nativeScreenRecordingCaptured: true,
+    keyboardEventLogCaptured: true,
+    mouseEventLogCaptured: true,
+    hardRedactionCompleted: true,
+    noPrivilegedAccessUsed: true,
+    screenRecordingEvidencePath: `evals/runs/${tool}/real-proof/eval-recording.mp4`,
+    normalizedCaptureManifestPath: `captures/normalized/capture-real-${tool}-001/manifest.json`,
+    redactedFrameEvidencePaths: [`captures/redacted/capture-real-${tool}-001/frame-0001.png`]
   };
 }

@@ -118,8 +118,10 @@ after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
+- [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
+- [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] write a report under `evals/reports/`.
 - [ ] only create the real-tool proof summary if the eval reached the terminal business state with zero human help, zero invented steps, no privileged access, and reviewer acceptance.
 
@@ -159,6 +161,7 @@ evals/templates/reports/real-tool-proof-notion.json
 evals/templates/runs/tool-run-id/step-trace.json
 evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
+evals/templates/runs/tool-run-id/screen-input-evidence.json
 ```
 
 do not copy the proof summary template into `evals/reports/real-tool-proof-*.json` until the real run artifacts exist and the reviewer has accepted every taught step.

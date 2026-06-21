@@ -176,6 +176,22 @@ the `evidencePath` must exist on disk under `evals/runs/<tool>/<run-id>/step-tra
 only a summary pointer; it does not replace the required run artifacts, native screen-plus-input capture
 evidence, reviewer checklist, or no-privileged-access audit evidence.
 
+before a real proof summary is accepted, the derived run directory must contain:
+
+```text
+/evals/runs/<tool>/<run-id>/step-trace.json
+/evals/runs/<tool>/<run-id>/final-screen.png
+/evals/runs/<tool>/<run-id>/eval-recording.mp4
+/evals/runs/<tool>/<run-id>/failure-log.md
+/evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/screen-input-evidence.json
+```
+
+`screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
+redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
+may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
+temporary capture paths.
+
 proof summary templates live under:
 
 ```text
@@ -199,6 +215,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/step-trace.json
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
+/evals/templates/runs/tool-run-id/screen-input-evidence.json
 ```
 
 for a real run, copy the templates into:
@@ -207,6 +224,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/step-trace.json
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/screen-input-evidence.json
 ```
 
 the real run must also preserve or reference:

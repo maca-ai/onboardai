@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "substrate": "real-tool",
+  "dataSource": "clean-seeded-demo-data",
+  "rawCapturePolicy": "unsafe-to-share-local-only-git-ignored",
+  "nativeScreenRecordingCaptured": true,
+  "keyboardEventLogCaptured": true,
+  "mouseEventLogCaptured": true,
+  "hardRedactionCompleted": true,
+  "noPrivilegedAccessUsed": true,
+  "screenRecordingEvidencePath": "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
+  "normalizedCaptureManifestPath": "captures/normalized/replace-with-capture-id/manifest.json",
+  "redactedFrameEvidencePaths": [
+    "captures/redacted/replace-with-capture-id/frame-0001.png"
+  ]
+}

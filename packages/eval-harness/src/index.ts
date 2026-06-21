@@ -169,6 +169,18 @@ export interface RealToolProofEvidenceParseResult {
   readonly findings: readonly CaptureTeachGoalStatusFinding[];
 }
 
+export interface RealToolRunArtifactAuditResult {
+  readonly passed: boolean;
+  readonly runDir: string | null;
+  readonly references: readonly ShareableEvidencePathReference[];
+  readonly findings: readonly CaptureTeachGoalStatusFinding[];
+  readonly summary: {
+    readonly requiredArtifacts: number;
+    readonly missingArtifacts: number;
+    readonly invalidArtifacts: number;
+  };
+}
+
 const allowedShareableEvidencePrefixes = [
   "flows/",
   "captures/normalized/",
@@ -452,6 +464,57 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
   };
 }
 
+export function auditRealToolRunArtifacts(
+  proof: RealToolProofEvidence,
+  existsPath: (path: string) => boolean = () => true,
+  readText?: (path: string) => string
+): RealToolRunArtifactAuditResult {
+  const findings: CaptureTeachGoalStatusFinding[] = [];
+  const references: ShareableEvidencePathReference[] = [];
+  const runDir = getRealToolRunDir(proof);
+
+  if (!runDir) {
+    findings.push({ tool: proof.tool, message: `${proof.evidencePath} must point to evals/runs/${proof.tool}/<run-id>/step-trace.json` });
+    return artifactAuditResult(null, references, findings, 0);
+  }
+
+  const requiredArtifacts = [
+    { label: "step trace", path: `${runDir}/step-trace.json` },
+    { label: "final screen", path: `${runDir}/final-screen.png` },
+    { label: "eval recording", path: `${runDir}/eval-recording.mp4` },
+    { label: "failure log", path: `${runDir}/failure-log.md` },
+    { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
+    { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` }
+  ] as const;
+
+  for (const artifact of requiredArtifacts) {
+    references.push({ tool: proof.tool, label: artifact.label, path: artifact.path });
+
+    if (isAbsolutePath(artifact.path) || artifact.path.includes("..")) {
+      findings.push({ tool: proof.tool, message: `${artifact.label} path must be project-relative and must not traverse directories` });
+    }
+
+    if (isUnsafeEvidencePath(artifact.path)) {
+      findings.push({ tool: proof.tool, message: `${artifact.label} path points to unsafe capture evidence` });
+    }
+
+    if (!existsPath(artifact.path)) {
+      findings.push({ tool: proof.tool, message: `${artifact.path} required real run artifact is missing on disk` });
+    }
+  }
+
+  const screenInputEvidencePath = `${runDir}/screen-input-evidence.json`;
+  if (existsPath(screenInputEvidencePath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${screenInputEvidencePath} cannot be validated without file contents` });
+    } else {
+      auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, readText(screenInputEvidencePath), existsPath, references, findings);
+    }
+  }
+
+  return artifactAuditResult(runDir, references, findings, requiredArtifacts.length);
+}
+
 export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicFixture): EvalRunResult {
   assertNoPrivilegedProofAccess(["screen-observation", "simulated-low-level-input"]);
 
@@ -663,6 +726,163 @@ function isPassingRealToolProof(proof: RealToolProofEvidence): boolean {
     proof.seniorReviewerSignoff &&
     proof.evidencePath.startsWith("evals/runs/")
   );
+}
+
+function auditScreenInputEvidence(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  if (parsed.dataSource !== "clean-seeded-demo-data") {
+    findings.push({ tool: proof.tool, message: `${path} dataSource must be clean-seeded-demo-data` });
+  }
+
+  if (parsed.rawCapturePolicy !== "unsafe-to-share-local-only-git-ignored") {
+    findings.push({ tool: proof.tool, message: `${path} rawCapturePolicy must be unsafe-to-share-local-only-git-ignored` });
+  }
+
+  for (const field of [
+    "nativeScreenRecordingCaptured",
+    "keyboardEventLogCaptured",
+    "mouseEventLogCaptured",
+    "hardRedactionCompleted",
+    "noPrivilegedAccessUsed"
+  ] as const) {
+    if (parsed[field] !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${field} must be true` });
+    }
+  }
+
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "screenRecordingEvidencePath",
+    parsed.screenRecordingEvidencePath,
+    `${runDir}/eval-recording.mp4`,
+    existsPath,
+    references,
+    findings
+  );
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "normalizedCaptureManifestPath",
+    parsed.normalizedCaptureManifestPath,
+    "captures/normalized/",
+    existsPath,
+    references,
+    findings
+  );
+
+  if (!Array.isArray(parsed.redactedFrameEvidencePaths) || parsed.redactedFrameEvidencePaths.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} redactedFrameEvidencePaths must contain at least one redacted frame path` });
+  } else {
+    parsed.redactedFrameEvidencePaths.forEach((framePath, index) => {
+      auditEvidencePathField(
+        proof.tool,
+        path,
+        `redactedFrameEvidencePaths[${index}]`,
+        framePath,
+        "captures/redacted/",
+        existsPath,
+        references,
+        findings
+      );
+    });
+  }
+}
+
+function auditEvidencePathField(
+  tool: string,
+  sourcePath: string,
+  field: string,
+  value: unknown,
+  expectedPrefixOrExactPath: string,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (typeof value !== "string" || value.length === 0) {
+    findings.push({ tool, message: `${sourcePath} ${field} must be a non-empty string` });
+    return;
+  }
+
+  references.push({ tool, label: field, path: value });
+
+  if (isAbsolutePath(value) || value.includes("..")) {
+    findings.push({ tool, message: `${sourcePath} ${field} must be project-relative and must not traverse directories` });
+  }
+
+  if (isUnsafeEvidencePath(value)) {
+    findings.push({ tool, message: `${sourcePath} ${field} points to unsafe capture evidence` });
+  }
+
+  const matchesExpected =
+    expectedPrefixOrExactPath.endsWith("/") ? value.startsWith(expectedPrefixOrExactPath) : value === expectedPrefixOrExactPath;
+  if (!matchesExpected) {
+    findings.push({ tool, message: `${sourcePath} ${field} must point to ${expectedPrefixOrExactPath}` });
+  }
+
+  if (!isAllowedShareableEvidencePath(value)) {
+    findings.push({ tool, message: `${sourcePath} ${field} is outside allowed shareable evidence locations` });
+  }
+
+  if (!existsPath(value)) {
+    findings.push({ tool, message: `${value} referenced by ${sourcePath} ${field} is missing on disk` });
+  }
+}
+
+function getRealToolRunDir(proof: RealToolProofEvidence): string | null {
+  const expectedPrefix = `evals/runs/${proof.tool}/`;
+  if (!proof.evidencePath.startsWith(expectedPrefix) || !proof.evidencePath.endsWith("/step-trace.json")) {
+    return null;
+  }
+
+  return proof.evidencePath.slice(0, -"/step-trace.json".length);
+}
+
+function artifactAuditResult(
+  runDir: string | null,
+  references: readonly ShareableEvidencePathReference[],
+  findings: readonly CaptureTeachGoalStatusFinding[],
+  requiredArtifacts: number
+): RealToolRunArtifactAuditResult {
+  return {
+    passed: findings.length === 0,
+    runDir,
+    references,
+    findings,
+    summary: {
+      requiredArtifacts,
+      missingArtifacts: findings.filter((finding) => finding.message.includes("missing")).length,
+      invalidArtifacts: findings.filter((finding) => !finding.message.includes("missing")).length
+    }
+  };
 }
 
 function isRecord(input: unknown): input is Record<string, unknown> {
