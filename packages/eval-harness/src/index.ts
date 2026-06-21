@@ -866,9 +866,10 @@ function auditScreenInputEvidence(
     references,
     findings
   );
+  let manifestAudit: NormalizedCaptureManifestAudit | null = null;
   if (typeof parsed.normalizedCaptureManifestPath === "string" && existsPath(parsed.normalizedCaptureManifestPath)) {
     const stepTracePath = `${runDir}/step-trace.json`;
-    auditNormalizedCaptureManifest(
+    manifestAudit = auditNormalizedCaptureManifest(
       proof,
       path,
       parsed.normalizedCaptureManifestPath,
@@ -895,8 +896,19 @@ function auditScreenInputEvidence(
         references,
         findings
       );
+      if (typeof framePath === "string" && manifestAudit && !manifestAudit.redactedFramePaths.has(framePath)) {
+        findings.push({
+          tool: proof.tool,
+          message: `${path} redactedFrameEvidencePaths[${index}] must be listed in ${manifestAudit.manifestPath}`
+        });
+      }
     });
   }
+}
+
+interface NormalizedCaptureManifestAudit {
+  readonly manifestPath: string;
+  readonly redactedFramePaths: Set<string>;
 }
 
 function auditNormalizedCaptureManifest(
@@ -909,18 +921,19 @@ function auditNormalizedCaptureManifest(
   readText: (path: string) => string,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
-): void {
+): NormalizedCaptureManifestAudit {
+  const result: NormalizedCaptureManifestAudit = { manifestPath, redactedFramePaths: new Set<string>() };
   let parsed: unknown;
   try {
     parsed = JSON.parse(readText(manifestPath));
   } catch {
     findings.push({ tool: proof.tool, message: `${manifestPath} referenced by ${sourcePath} must be valid JSON` });
-    return;
+    return result;
   }
 
   if (!isRecord(parsed)) {
     findings.push({ tool: proof.tool, message: `${manifestPath} referenced by ${sourcePath} must contain an object` });
-    return;
+    return result;
   }
 
   if (parsed.schemaVersion !== 1) {
@@ -1002,6 +1015,9 @@ function auditNormalizedCaptureManifest(
         references,
         findings
       );
+      if (typeof frame.path === "string") {
+        result.redactedFramePaths.add(frame.path);
+      }
     });
   }
 
@@ -1032,6 +1048,8 @@ function auditNormalizedCaptureManifest(
       }
     }
   }
+
+  return result;
 }
 
 function readStepTraceIds(
