@@ -138,7 +138,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json`.
-- [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence.
+- [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.
 - [ ] write a report under `evals/reports/`.
 - [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.

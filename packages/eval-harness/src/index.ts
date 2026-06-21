@@ -867,10 +867,13 @@ function auditScreenInputEvidence(
     findings
   );
   if (typeof parsed.normalizedCaptureManifestPath === "string" && existsPath(parsed.normalizedCaptureManifestPath)) {
+    const stepTracePath = `${runDir}/step-trace.json`;
     auditNormalizedCaptureManifest(
       proof,
       path,
       parsed.normalizedCaptureManifestPath,
+      stepTracePath,
+      existsPath(stepTracePath) ? readText(stepTracePath) : null,
       existsPath,
       readText,
       references,
@@ -900,6 +903,8 @@ function auditNormalizedCaptureManifest(
   proof: RealToolProofEvidence,
   sourcePath: string,
   manifestPath: string,
+  stepTracePath: string,
+  stepTraceContent: string | null,
   existsPath: (path: string) => boolean,
   readText: (path: string) => string,
   references: ShareableEvidencePathReference[],
@@ -1002,7 +1007,57 @@ function auditNormalizedCaptureManifest(
 
   if (!Array.isArray(parsed.inputEvidence) || parsed.inputEvidence.length === 0) {
     findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must contain per-step input evidence` });
+  } else {
+    const inputEvidenceStepIds = new Set<string>();
+    parsed.inputEvidence.forEach((entry, index) => {
+      if (!isRecord(entry)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}] must be an object` });
+        return;
+      }
+
+      if (typeof entry.stepId !== "string" || entry.stepId.length === 0) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}].stepId must be a non-empty string` });
+      } else {
+        inputEvidenceStepIds.add(entry.stepId);
+      }
+
+      if (!Array.isArray(entry.inputEvents) || entry.inputEvents.length === 0) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}].inputEvents must contain screen-plus-input events` });
+      }
+    });
+
+    for (const stepId of readStepTraceIds(proof, stepTracePath, stepTraceContent, findings)) {
+      if (!inputEvidenceStepIds.has(stepId)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must include real-run step ${stepId}` });
+      }
+    }
   }
+}
+
+function readStepTraceIds(
+  proof: RealToolProofEvidence,
+  stepTracePath: string,
+  stepTraceContent: string | null,
+  findings: CaptureTeachGoalStatusFinding[]
+): readonly string[] {
+  if (stepTraceContent === null) {
+    return [];
+  }
+
+  let parsedTrace: unknown;
+  try {
+    parsedTrace = JSON.parse(stepTraceContent);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for manifest input evidence grounding` });
+    return [];
+  }
+
+  if (!Array.isArray(parsedTrace)) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for manifest input evidence grounding` });
+    return [];
+  }
+
+  return parsedTrace.flatMap((entry) => (isRecord(entry) && typeof entry.stepId === "string" && entry.stepId.length > 0 ? [entry.stepId] : []));
 }
 
 function auditCaptureReadinessEvidence(
