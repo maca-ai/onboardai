@@ -244,8 +244,12 @@ export function createNormalizedCaptureManifest(
   const businessSensitiveTags = [...flowArtifact.businessSensitiveTags];
   const redactedFrames = demonstration.frames.map((frame) => ({
     frameId: frame.frameId,
-    path: frame.redactedFramePath,
+    path: redactManifestString(frame.redactedFramePath, replacements, businessSensitiveTags),
     visibleText: frame.visibleText.map((text) => redactManifestString(text, replacements, businessSensitiveTags))
+  }));
+  const anchors = demonstration.anchors.map((anchor) => ({
+    ...anchor,
+    frameId: redactManifestString(anchor.frameId, replacements, businessSensitiveTags)
   }));
   const inputEvidence = demonstration.steps.map((step) => ({
     stepId: step.stepId,
@@ -274,7 +278,7 @@ export function createNormalizedCaptureManifest(
       gitPolicy: artifact.gitPolicy
     })),
     redactedFrames,
-    anchors: demonstration.anchors,
+    anchors,
     inputEvidence,
     redaction: {
       replacements,

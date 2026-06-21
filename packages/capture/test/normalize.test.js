@@ -102,6 +102,28 @@ test("normalized capture manifest records redacted evidence without raw paths", 
   assert.doesNotThrow(() => JSON.parse(manifest.json));
 });
 
+test("normalized capture manifest tags business-sensitive frame paths", () => {
+  const sensitiveFrameDemonstration = {
+    ...demonstration,
+    frames: [
+      {
+        ...demonstration.frames[0],
+        redactedFramePath: "/Users/demo/internal/customer-work/opp-123/frame-0001.png"
+      }
+    ]
+  };
+  const flow = normalizeDemonstrationToFlowMarkdown(sensitiveFrameDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+  const manifest = createNormalizedCaptureManifest(
+    sensitiveFrameDemonstration,
+    flow,
+    "captures/normalized/capture-test-001/manifest.json"
+  );
+
+  assert.equal(manifest.manifest.redactedFrames[0].path, "/Users/demo/internal/customer-work/opp-123/frame-0001.png");
+  assert.equal(manifest.manifest.redaction.businessSensitiveTags.some((tag) => tag.kind === "file-path"), true);
+  assert.equal(manifest.manifest.redaction.businessSensitiveTags.some((tag) => tag.kind === "business-record-id"), true);
+});
+
 test("local capture adapter writes unsafe raw screen and input artifacts under raw capture paths", () => {
   const root = mkdtempSync(join(tmpdir(), "onboardai-capture-"));
 

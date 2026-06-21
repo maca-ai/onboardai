@@ -61,6 +61,8 @@ the following may remain in local artifacts but must be tagged as business-sensi
 
 these are not treated as hard-redaction targets in v0.
 
+normalized manifests must run shareable frame paths, visible text, and input evidence through business-sensitive tagging before persistence.
+
 ## explicit non-goal
 
 v0 does not attempt full pii classification.

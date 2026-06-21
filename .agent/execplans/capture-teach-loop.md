@@ -93,6 +93,7 @@ do not weaken any constraint to make an eval pass.
 - [x] build capture artifact model
 - [x] build senior-demonstration to normalized `flow.md` generation
 - [x] build normalized capture manifests for redacted frame and input evidence
+- [x] tag business-sensitive values in normalized capture manifests
 - [x] add native capture readiness gate so unverified adapters cannot be used as proof
 - [x] build redaction pipeline for forbidden persisted secrets
 - [x] build screen-state matcher with confidence output
@@ -164,6 +165,9 @@ record observations here.
 - observation: flow-library search now ranks local files by structured flow evidence instead of plain substring filtering.
   evidence: `searchFlowDocumentDetails` scores path, frontmatter, step titles, instructions, expected visible text, and success visible text; targeted flow tests passed 4/4, `pnpm flow:search ready review` returned the Notion flow, and `pnpm flow:search qualify opportunity` returned the Odoo flow.
 
+- observation: normalized capture manifests now tag business-sensitive frame paths before shareable persistence.
+  evidence: `createNormalizedCaptureManifest` routes redacted frame paths through the same redaction/tagging helper used for visible text and input evidence; targeted capture tests passed 10/10, including a local absolute frame path containing `opp-123` that produced `file-path` and `business-record-id` tags.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -226,13 +230,17 @@ record observations here.
   rationale: the proof needs flow retrieval from local `flow.md` files while preserving the explicit no-embedding/no-vector constraint; scoring parsed flow fields gives deterministic ranking without adding infrastructure.
   date-author: 2026-06-21, codex flow search ranking.
 
+- decision: tag manifest frame references as business-sensitive instead of hard-redacting them.
+  rationale: the project contract allows file paths and business record ids to remain local when tagged; redacted-frame references are useful evidence, but local absolute paths and embedded record ids must be marked before a normalized manifest is considered shareable.
+  date-author: 2026-06-21, codex manifest business-sensitive tagging.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
 
 current evidence:
 
-- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage; added local fixture capture materialization for raw screen/input marker artifacts; added native capture readiness checks that fail closed until docs and all capture inputs are verified.
+- capture changes: added `packages/capture` raw artifact model and a git-ignore test proving raw/unsafe/tmp capture paths and common unsafe artifacts are ignored; added senior-demonstration normalization to shareable `flow.md` with redaction before persistence; added normalized capture manifests for redacted frame and input evidence without raw path leakage and with business-sensitive tagging; added local fixture capture materialization for raw screen/input marker artifacts; added native capture readiness checks that fail closed until docs and all capture inputs are verified.
 - redaction changes: added `packages/redaction` hard-redaction for emails, password assignments, token-like values, api keys, and session secrets, plus business-sensitive tagging for urls, paths, and record ids.
 - flow changes: added `packages/flow` parser/validator for yaml frontmatter and embedded JSON step blocks, with validation for required fields, confidence threshold, unsafe anchor paths, manual-only action, exact fail-closed message, and forbidden persisted secrets; added ranked local flow search over parsed flow evidence.
 - overlay changes: added `packages/overlay` guidance renderer that only returns text/highlight guidance, never input automation, and fails closed below `0.75`.
@@ -245,7 +253,7 @@ what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
-- latest test suite passed: 31 tests, 31 pass, 0 fail.
+- latest test suite passed: 32 tests, 32 pass, 0 fail.
 
 completion rate:
 
@@ -741,6 +749,27 @@ latest results on 2026-06-21:
 - forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 
+normalized manifest business-sensitive tagging command:
+
+```sh
+pnpm build
+node --test packages/capture
+pnpm proof:fixtures
+```
+
+latest results on 2026-06-21:
+
+- `pnpm build`: passed.
+- `node --test packages/capture`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools after regenerating manifests through the hardened manifest path.
+- fixture manifests did not change because committed fixture frame references are relative redacted paths; the new regression test covers local absolute frame paths and business record ids.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 32 tests, 32 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 generated flow files.
+- forbidden secret scan across `flows`, `evals`, and `captures/normalized`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -791,3 +820,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-20: held-out fixture proof strengthened: senior capture observations now feed normalized flows while eval observations use separate held-out frame paths, and terminal business state requires explicit final visible text.
 - 2026-06-20: machine-readable fixture proof audit added: `proof fixtures` now writes `evals/reports/fixture-proof-audit.json` and fails unless both required tools satisfy the no-help, no-invention, no-privileged-access, held-out, terminal-text, and reviewer-signoff gates.
 - 2026-06-21: ranked local flow search added: `searchFlowDocumentDetails` now scores local `flow.md` files by parsed path, frontmatter, step title, instruction, expected visible text, and success visible text without embeddings or a vector database.
+- 2026-06-21: normalized manifest business-sensitive tagging added: redacted frame paths now pass through shareable tagging before persistence, with tests covering absolute local paths and business record ids.
