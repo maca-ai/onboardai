@@ -39,6 +39,32 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
   assert.equal(goalStatus.summary.missingRealToolProofs, 2);
 });
 
+test("proof status reports fixture proof separately from missing real target-tool proof", () => {
+  execFileSync("node", ["dist/index.js", "proof", "fixtures"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+
+  const result = spawnSync("node", ["dist/index.js", "proof", "status"], {
+    cwd: packageRoot,
+    encoding: "utf8"
+  });
+  const goalStatus = JSON.parse(readFileSync(new URL("evals/reports/full-goal-proof-status.json", workspaceRoot), "utf8"));
+
+  assert.equal(result.status, 1);
+  assert.match(result.stdout, /full goal not proven/);
+  assert.match(result.stdout, /fixture proof passed/);
+  assert.match(result.stdout, /real-tool proof failed: 0\/2 tools/);
+  assert.match(result.stdout, /odoo: missing real target-tool held-out teaching eval evidence/);
+  assert.match(result.stdout, /odoo: missing native screen-plus-input capture evidence/);
+  assert.match(result.stdout, /notion: missing real target-tool held-out teaching eval evidence/);
+  assert.match(result.stdout, /notion: missing native screen-plus-input capture evidence/);
+  assert.equal(goalStatus.fullGoalProven, false);
+  assert.equal(goalStatus.fixtureProofPassed, true);
+  assert.equal(goalStatus.realToolProofPassed, false);
+  assert.equal(goalStatus.realToolProofs.length, 0);
+});
+
 test("proof real-run fails closed for a missing real target-tool run directory", () => {
   const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
   const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;

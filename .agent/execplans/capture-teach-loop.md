@@ -119,6 +119,7 @@ do not weaken any constraint to make an eval pass.
 - [x] validate real run step-trace and reviewer-checklist contents before proof ingestion
 - [x] validate real run outcome evidence before proof ingestion
 - [x] add guarded CLI summary creation for validated real run directories
+- [x] add full-goal proof status command that fails until real odoo and notion proofs exist
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -220,6 +221,9 @@ record observations here.
 
 - observation: live real-proof summaries can now be written from the CLI only after a run directory passes the evidence gate.
   evidence: `onboardai proof real-run <tool> <run-id> --write-summary` writes `evals/reports/real-tool-proof-<tool>.json` only after the same 7-artifact real-run audit passes; CLI tests prove missing runs fail without writing or changing the summary, valid temporary runs can write the summary, and the test restores the repo to no live real-tool summaries.
+
+- observation: the current full-goal gate can now be checked directly without rerunning fixture evals.
+  evidence: `pnpm proof:status` reads `fixture-proof-audit.json`, validates any live real-proof summaries through the same run artifact gate, refreshes `full-goal-proof-status.json`, and currently exits 1 with missing real held-out and native capture evidence for both odoo and notion.
 
 ## decision-log
 
@@ -343,6 +347,10 @@ record observations here.
   rationale: operators need a safe dry run while preparing real odoo/notion evidence; summary creation should be explicit and still blocked by the same local filesystem evidence gate.
   date-author: 2026-06-21, codex real-proof summary writer.
 
+- decision: make `proof status` exit non-zero until the full objective is actually proven.
+  rationale: a status command that returns success for fixture-only proof would invite overclaiming; CI and operators should see failure until both real odoo and real notion held-out runs pass with native screen-plus-input evidence.
+  date-author: 2026-06-21, codex full-goal status command.
+
 ## outcomes-and-retrospective
 
 milestone 1 in progress.
@@ -356,18 +364,19 @@ current evidence:
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`.
 - real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories and guarded `--write-summary` creation for accepted real runs.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
-- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, and audited two-tool fixture proof.
-- proof changes: added `pnpm proof:fixtures`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
+- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, and full-goal proof status.
+- proof changes: added `pnpm proof:fixtures`, `pnpm proof:status`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
 
 what the eval showed:
 
 - odoo fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo opportunity, stage, qualified, saved`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - latest targeted eval-harness test suite passed: 22 tests, 22 pass, 0 fail.
-- latest targeted cli test suite passed: 4 tests, 4 pass, 0 fail.
-- latest full test suite passed: 52 tests, 52 pass, 0 fail.
+- latest targeted cli test suite passed: 5 tests, 5 pass, 0 fail.
+- latest full test suite passed: 53 tests, 53 pass, 0 fail.
 - latest flow validation passed: 2 flow files validated.
 - latest fixture proof passed: 2/2 tool-like fixture evals.
+- latest proof status command exited 1 as expected because the full goal is not proven: real-tool proof failed 0/2 tools with missing real held-out teaching eval evidence and missing native screen-plus-input capture evidence for both odoo and notion.
 - latest full-goal status remains unproven: `fullGoalProven: false`, `fixtureProofPassed: true`, `realToolProofPassed: false`, `realToolProofs: 0`, `missingRealToolProofs: 2`.
 - latest live real-proof summary check found `evals/reports/real-tool-proof-odoo.json` absent and `evals/reports/real-tool-proof-notion.json` absent.
 - latest shareable artifact secret/email scan found no matches.

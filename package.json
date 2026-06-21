@@ -17,7 +17,8 @@
     "flow:search": "pnpm build && pnpm --filter @onboardai/cli onboardai flow search",
     "eval:odoo": "pnpm build && pnpm --filter @onboardai/cli onboardai eval run odoo",
     "eval:notion": "pnpm build && pnpm --filter @onboardai/cli onboardai eval run notion",
-    "proof:fixtures": "pnpm build && pnpm --filter @onboardai/cli onboardai proof fixtures"
+    "proof:fixtures": "pnpm build && pnpm --filter @onboardai/cli onboardai proof fixtures",
+    "proof:status": "pnpm build && pnpm --filter @onboardai/cli onboardai proof status"
   },
   "devDependencies": {
     "@types/node": "20.19.24",

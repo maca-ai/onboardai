@@ -146,6 +146,16 @@ fixture proof is not the full project goal. fixture proof runs must also write
 `evals/reports/full-goal-proof-status.json`, and that status must remain `fullGoalProven: false` until both
 real odoo and real notion held-out evals pass using native screen-plus-input capture evidence.
 
+check the current full-goal gate without regenerating fixture eval evidence:
+
+```sh
+pnpm proof:status
+```
+
+this reads the existing fixture proof audit plus any live real-tool proof summaries, validates live real run
+directories through the same artifact gate, refreshes `evals/reports/full-goal-proof-status.json`, and exits
+non-zero until both real odoo and real notion proof are present and valid.
+
 ## real target-tool proof contract
 
 real target-tool proof, when available, is loaded from:

@@ -91,6 +91,27 @@ if (args[0] === "flow" && args[1] === "validate") {
   writeFullGoalProofStatus(goalStatus);
   console.log(`fixture proof ${audit.passed ? "passed" : "failed"}: ${audit.summary.toolsPassed}/${audit.summary.toolsRequired} tools`);
   process.exitCode = audit.passed ? 0 : 1;
+} else if (args[0] === "proof" && args[1] === "status") {
+  const fixtureAudit = loadFixtureProofAudit();
+  if (!fixtureAudit) {
+    console.error("fixture proof audit missing or invalid; run pnpm proof:fixtures first");
+    process.exitCode = 1;
+  } else {
+    const realToolEvidence = loadRealToolProofEvidence(["odoo", "notion"]);
+    const goalStatus = auditCaptureTeachGoalStatus({
+      fixtureAudit,
+      realToolProofs: realToolEvidence.proofs,
+      realToolProofFindings: realToolEvidence.findings
+    });
+    writeFullGoalProofStatus(goalStatus);
+    console.log(`full goal ${goalStatus.fullGoalProven ? "proven" : "not proven"}`);
+    console.log(`fixture proof ${goalStatus.fixtureProofPassed ? "passed" : "failed"}`);
+    console.log(`real-tool proof ${goalStatus.realToolProofPassed ? "passed" : "failed"}: ${goalStatus.summary.realToolsPassed}/${goalStatus.summary.realToolsRequired} tools`);
+    if (goalStatus.findings.length > 0) {
+      console.log(`findings: ${goalStatus.findings.map((finding) => `${finding.tool}: ${finding.message}`).join("; ")}`);
+    }
+    process.exitCode = goalStatus.fullGoalProven ? 0 : 1;
+  }
 } else if (args[0] === "proof" && args[1] === "real-run") {
   const tool = args[2];
   const runId = args[3];
@@ -113,7 +134,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof status | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -233,6 +254,19 @@ function writeFullGoalProofStatus(status: CaptureTeachGoalStatusResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
   writeFileSync(join(reportDir, "full-goal-proof-status.json"), `${JSON.stringify(status, null, 2)}\n`);
+}
+
+function loadFixtureProofAudit(): EvalProofAuditResult | null {
+  const auditPath = resolveWorkspacePath(join("evals", "reports", "fixture-proof-audit.json"));
+  if (!existsSync(auditPath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(readFileSync(auditPath, "utf8")) as EvalProofAuditResult;
+  } catch {
+    return null;
+  }
 }
 
 function auditRealToolRun(tool: ToolName, runId: string): ReturnType<typeof auditRealToolRunArtifacts> {
