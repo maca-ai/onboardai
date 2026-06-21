@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "substrate": "real-tool",
+  "flowPath": "flows/tool/replace-with-flow.flow.md",
+  "flowId": "replace-with-flow-id",
+  "terminalBusinessState": "replace with flow.md terminal-business-state",
+  "stepIds": [
+    "step-001",
+    "step-002",
+    "step-003"
+  ]
+}

@@ -127,6 +127,8 @@ after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
 - [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current frame under the run directory.
+- [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
+- [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
@@ -147,6 +149,7 @@ the senior reviewer must inspect:
 - [ ] the redacted capture frames and normalized capture manifest.
 - [ ] the held-out eval recording or redacted frame sequence.
 - [ ] `step-trace.json`.
+- [ ] `flow-evidence.json`.
 - [ ] the final screen artifact.
 - [ ] `failure-log.md`.
 - [ ] the eval report.
@@ -175,6 +178,7 @@ evals/templates/reports/real-tool-proof-notion.json
 evals/templates/runs/tool-run-id/step-trace.json
 evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
+evals/templates/runs/tool-run-id/flow-evidence.json
 evals/templates/runs/tool-run-id/screen-input-evidence.json
 evals/templates/runs/tool-run-id/outcome-evidence.json
 ```

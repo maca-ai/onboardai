@@ -121,8 +121,10 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.equal(initResult.status, 0);
     assert.match(initResult.stdout, /initialized real run notion\/real-init-validation-001/);
     assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
+    assert.equal(existsSync(new URL("flow-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
+    assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /flows\/notion\/update-task-status\.flow\.md/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);
 
@@ -217,20 +219,60 @@ test("proof real-run validates complete real target-tool run artifacts and write
         [
           {
             stepId: "step-001",
-            title: "complete taught step",
+            title: "open the opportunity",
             fromStateId: "state-001",
             toStateId: "state-002",
             currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
-            expectedVisibleText: ["demo"],
-            matchedVisibleText: ["demo"],
+            expectedVisibleText: ["pipeline", "demo opportunity", "new"],
+            matchedVisibleText: ["pipeline", "demo opportunity", "new"],
             missingVisibleText: [],
             overlayConfidence: 0.9,
             overlayKind: "instruction",
-            overlayMessage: "Use the visible control shown in the flow.",
-            highlightedAnchorId: "anchor-001",
+            overlayMessage: "select the opportunity card named demo opportunity.",
+            highlightedAnchorId: "opportunity-card",
             actionPrimitive: {
               kind: "click",
-              targetAnchorId: "anchor-001",
+              targetAnchorId: "opportunity-card",
+              manualOnly: true
+            },
+            success: true
+          },
+          {
+            stepId: "step-002",
+            title: "choose qualified stage",
+            fromStateId: "state-002",
+            toStateId: "state-003",
+            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0002.png`,
+            expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+            matchedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+            missingVisibleText: [],
+            overlayConfidence: 0.9,
+            overlayKind: "instruction",
+            overlayMessage: "select the qualified stage.",
+            highlightedAnchorId: "qualified-stage",
+            actionPrimitive: {
+              kind: "click",
+              targetAnchorId: "qualified-stage",
+              manualOnly: true
+            },
+            success: true
+          },
+          {
+            stepId: "step-003",
+            title: "save the qualified stage",
+            fromStateId: "state-003",
+            toStateId: "state-004",
+            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0003.png`,
+            expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+            matchedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+            missingVisibleText: [],
+            overlayConfidence: 0.9,
+            overlayKind: "instruction",
+            overlayMessage: "save the opportunity so the qualified stage remains visible.",
+            highlightedAnchorId: "save-button",
+            actionPrimitive: {
+              kind: "click",
+              targetAnchorId: "save-button",
               manualOnly: true
             },
             success: true
@@ -242,9 +284,27 @@ test("proof real-run validates complete real target-tool run artifacts and write
     );
     writeFileSync(new URL("final-screen.png", runDir), "redacted final screen marker\n");
     writeFileSync(new URL("redacted-frame-0001.png", runDir), "held-out redacted frame marker\n");
+    writeFileSync(new URL("redacted-frame-0002.png", runDir), "held-out redacted frame marker\n");
+    writeFileSync(new URL("redacted-frame-0003.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
     writeFileSync(new URL("reviewer-checklist.md", runDir), "# reviewer checklist\n\n- accepted: true\n");
+    writeFileSync(
+      new URL("flow-evidence.json", runDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          tool: "odoo",
+          substrate: "real-tool",
+          flowPath: "flows/odoo/qualify-opportunity.flow.md",
+          flowId: "odoo-qualify-opportunity",
+          terminalBusinessState: "demo opportunity visible with stage qualified",
+          stepIds: ["step-001", "step-002", "step-003"]
+        },
+        null,
+        2
+      )}\n`
+    );
     writeFileSync(
       new URL("outcome-evidence.json", runDir),
       `${JSON.stringify(
@@ -253,8 +313,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
           tool: "odoo",
           substrate: "real-tool",
           completionRate: 1,
-          stepCount: 1,
-          stepsCompleted: 1,
+          stepCount: 3,
+          stepsCompleted: 3,
           terminalBusinessStateReached: true,
           terminalMissingVisibleText: [],
           zeroHumanHelp: true,
@@ -305,7 +365,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 7\/7 required artifacts/);
+    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 8\/8 required artifacts/);
     assert.equal(existsSync(summaryPath), summaryExistedBefore);
 
     const writeResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId, "--write-summary"], {
@@ -315,7 +375,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     const summary = JSON.parse(readFileSync(summaryPath, "utf8"));
 
     assert.equal(writeResult.status, 0);
-    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 7\/7 required artifacts/);
+    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 8\/8 required artifacts/);
     assert.match(writeResult.stdout, /wrote evals\/reports\/real-tool-proof-odoo\.json/);
     assert.equal(summary.tool, "odoo");
     assert.equal(summary.substrate, "real-tool");

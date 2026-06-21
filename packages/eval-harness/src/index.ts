@@ -1,5 +1,5 @@
 import type { DeterministicFixture, FixtureTransition, ScreenObservation } from "@onboardai/fixtures";
-import type { FlowDocument, FlowStep } from "@onboardai/flow";
+import { validateFlowMarkdown, type FlowDocument, type FlowStep } from "@onboardai/flow";
 import { renderOverlayGuidance } from "@onboardai/overlay";
 
 export type EvalAccessMode = "screen-observation" | "simulated-low-level-input";
@@ -484,6 +484,7 @@ export function auditRealToolRunArtifacts(
     { label: "eval recording", path: `${runDir}/eval-recording.mp4` },
     { label: "failure log", path: `${runDir}/failure-log.md` },
     { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
+    { label: "flow evidence", path: `${runDir}/flow-evidence.json` },
     { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` },
     { label: "outcome evidence", path: `${runDir}/outcome-evidence.json` }
   ] as const;
@@ -519,6 +520,15 @@ export function auditRealToolRunArtifacts(
       findings.push({ tool: proof.tool, message: `${stepTracePath} cannot be validated without file contents` });
     } else {
       auditRealStepTrace(proof, runDir, stepTracePath, readText(stepTracePath), existsPath, references, findings);
+    }
+  }
+
+  const flowEvidencePath = `${runDir}/flow-evidence.json`;
+  if (existsPath(flowEvidencePath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${flowEvidencePath} cannot be validated without file contents` });
+    } else {
+      auditFlowEvidence(proof, runDir, flowEvidencePath, readText(flowEvidencePath), existsPath, readText, references, findings);
     }
   }
 
@@ -924,6 +934,138 @@ function auditRealStepTrace(
   });
 }
 
+function auditFlowEvidence(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  existsPath: (path: string) => boolean,
+  readText: (path: string) => string,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  auditEvidencePathField(proof.tool, path, "flowPath", parsed.flowPath, "flows/", existsPath, references, findings);
+
+  if (typeof parsed.flowPath !== "string" || !existsPath(parsed.flowPath)) {
+    return;
+  }
+
+  const validation = validateFlowMarkdown(readText(parsed.flowPath));
+  if (!validation.valid || !validation.document) {
+    findings.push({ tool: proof.tool, message: `${parsed.flowPath} referenced by ${path} must be a valid flow.md` });
+    return;
+  }
+
+  const flow = validation.document;
+  if (flow.frontmatter.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${parsed.flowPath} tool must match ${proof.tool}` });
+  }
+
+  if (typeof parsed.flowId !== "string" || parsed.flowId !== flow.frontmatter["flow-id"]) {
+    findings.push({ tool: proof.tool, message: `${path} flowId must match ${String(flow.frontmatter["flow-id"])}` });
+  }
+
+  if (typeof parsed.terminalBusinessState !== "string" || parsed.terminalBusinessState !== flow.frontmatter["terminal-business-state"]) {
+    findings.push({
+      tool: proof.tool,
+      message: `${path} terminalBusinessState must match ${String(flow.frontmatter["terminal-business-state"])}`
+    });
+  }
+
+  const flowStepIds = flow.steps.map((step) => step["step-id"]);
+  if (!arrayEquals(parsed.stepIds, flowStepIds)) {
+    findings.push({ tool: proof.tool, message: `${path} stepIds must match the referenced flow step ids` });
+  }
+
+  auditStepTraceGrounding(proof, runDir, path, flow, readText, findings);
+}
+
+function auditStepTraceGrounding(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  flowEvidencePath: string,
+  flow: FlowDocument,
+  readText: (path: string) => string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  const stepTracePath = `${runDir}/step-trace.json`;
+  let parsedTrace: unknown;
+  try {
+    parsedTrace = JSON.parse(readText(stepTracePath));
+  } catch {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for flow grounding` });
+    return;
+  }
+
+  if (!Array.isArray(parsedTrace)) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for flow grounding` });
+    return;
+  }
+
+  if (parsedTrace.length !== flow.steps.length) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain exactly the referenced flow steps` });
+  }
+
+  flow.steps.forEach((step, index) => {
+    const entry = parsedTrace[index];
+    const stepLabel = step["step-id"];
+    if (!isRecord(entry)) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} must be present for flow grounding` });
+      return;
+    }
+
+    if (entry.stepId !== step["step-id"]) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} stepId must match ${step["step-id"]}` });
+    }
+
+    if (entry.overlayMessage !== step.instruction.text) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} overlayMessage must be grounded in ${flowEvidencePath}` });
+    }
+
+    if (entry.highlightedAnchorId !== step.instruction["highlight-anchor-id"]) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} highlightedAnchorId must match flow highlight anchor` });
+    }
+
+    if (!isRecord(entry.actionPrimitive)) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} actionPrimitive must be present for flow grounding` });
+      return;
+    }
+
+    if (entry.actionPrimitive.kind !== step["user-action"].kind) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} action kind must match flow user action` });
+    }
+
+    if (entry.actionPrimitive.targetAnchorId !== step["user-action"]["target-anchor-id"]) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} action target anchor must match flow user action` });
+    }
+
+    if (entry.actionPrimitive.manualOnly !== true || step["user-action"]["manual-only"] !== true) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} action must remain manual-only` });
+    }
+  });
+}
+
 function auditReviewerChecklist(
   proof: RealToolProofEvidence,
   path: string,
@@ -1116,6 +1258,10 @@ function artifactAuditResult(
 
 function isRecord(input: unknown): input is Record<string, unknown> {
   return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function arrayEquals(input: unknown, expected: readonly string[]): boolean {
+  return Array.isArray(input) && input.length === expected.length && input.every((value, index) => value === expected[index]);
 }
 
 function isAllowedShareableEvidencePath(path: string): boolean {

@@ -247,9 +247,13 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/eval-recording.mp4",
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
     "evals/runs/odoo/real-proof/outcome-evidence.json",
     "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
     "captures/normalized/capture-real-odoo-001/manifest.json",
     "captures/redacted/capture-real-odoo-001/frame-0001.png"
   ]);
@@ -261,7 +265,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
 
   assert.equal(audit.passed, true);
   assert.equal(audit.runDir, "evals/runs/odoo/real-proof");
-  assert.equal(audit.summary.requiredArtifacts, 7);
+  assert.equal(audit.summary.requiredArtifacts, 8);
   assert.equal(audit.summary.missingArtifacts, 0);
   assert.equal(audit.findings.length, 0);
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
@@ -275,8 +279,8 @@ test("real target-tool run artifact audit rejects missing required run artifacts
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.summary.requiredArtifacts, 7);
-  assert.equal(audit.summary.missingArtifacts, 6);
+  assert.equal(audit.summary.requiredArtifacts, 8);
+  assert.equal(audit.summary.missingArtifacts, 7);
   assert.equal(audit.findings.some((finding) => finding.message.includes("final-screen.png")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json")), true);
 });
@@ -289,6 +293,7 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
     "evals/runs/odoo/real-proof/eval-recording.mp4",
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
     "evals/runs/odoo/real-proof/outcome-evidence.json"
   ]);
@@ -319,9 +324,11 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
     "evals/runs/notion/real-proof/eval-recording.mp4",
     "evals/runs/notion/real-proof/failure-log.md",
     "evals/runs/notion/real-proof/reviewer-checklist.md",
+    "evals/runs/notion/real-proof/flow-evidence.json",
     "evals/runs/notion/real-proof/screen-input-evidence.json",
     "evals/runs/notion/real-proof/outcome-evidence.json",
     "evals/runs/notion/real-proof/redacted-frame-0001.png",
+    "flows/notion/update-task-status.flow.md",
     "captures/normalized/capture-real-notion-001/manifest.json",
     "captures/redacted/capture-real-notion-001/frame-0001.png"
   ]);
@@ -360,6 +367,52 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
   assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
 });
 
+test("real target-tool run artifact audit rejects ungrounded flow evidence and invented trace steps", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = flowGroundedTrace("odoo");
+        return JSON.stringify([
+          {
+            ...trace[0],
+            overlayMessage: "invented instruction not present in flow",
+            highlightedAnchorId: "invented-anchor",
+            actionPrimitive: { kind: "click", targetAnchorId: "invented-anchor", manualOnly: true }
+          },
+          trace[1]
+        ]);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must contain exactly the referenced flow steps")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlayMessage must be grounded")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("highlightedAnchorId must match flow")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("action target anchor must match flow")), true);
+});
+
 test("real target-tool run artifact audit rejects failed outcome evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -368,9 +421,13 @@ test("real target-tool run artifact audit rejects failed outcome evidence", () =
     "evals/runs/odoo/real-proof/eval-recording.mp4",
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
     "evals/runs/odoo/real-proof/outcome-evidence.json",
     "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
     "captures/normalized/capture-real-odoo-001/manifest.json",
     "captures/redacted/capture-real-odoo-001/frame-0001.png"
   ]);
@@ -507,39 +564,115 @@ function screenInputEvidence(tool) {
 
 function realRunArtifactContent(path, tool) {
   if (path.endsWith("step-trace.json")) {
-    return JSON.stringify([
-      {
-        stepId: "step-001",
-        title: "complete taught step",
-        fromStateId: "state-001",
-        toStateId: "state-002",
-        currentFrame: `evals/runs/${tool}/real-proof/redacted-frame-0001.png`,
-        expectedVisibleText: ["demo"],
-        matchedVisibleText: ["demo"],
-        missingVisibleText: [],
-        overlayConfidence: 0.9,
-        overlayKind: "instruction",
-        overlayMessage: "Use the visible control shown in the flow.",
-        highlightedAnchorId: "anchor-001",
-        actionPrimitive: {
-          kind: "click",
-          targetAnchorId: "anchor-001",
-          manualOnly: true
-        },
-        success: true
-      }
-    ]);
+    return JSON.stringify(flowGroundedTrace(tool));
   }
 
   if (path.endsWith("reviewer-checklist.md")) {
     return "# reviewer checklist\n\n- accepted: true\n- rejected: false\n";
   }
 
+  if (path.endsWith("flow-evidence.json")) {
+    return JSON.stringify(flowEvidence(tool));
+  }
+
   if (path.endsWith("outcome-evidence.json")) {
     return JSON.stringify(outcomeEvidence(tool));
   }
 
+  if (path.endsWith(".flow.md")) {
+    return readFileSync(new URL(path, workspaceRoot), "utf8");
+  }
+
   return JSON.stringify(screenInputEvidence(tool));
+}
+
+function flowGroundedTrace(tool) {
+  const steps = flowStepDefinitions(tool);
+  return steps.map((step, index) => ({
+    stepId: step.stepId,
+    title: step.title,
+    fromStateId: `state-00${index + 1}`,
+    toStateId: `state-00${index + 2}`,
+    currentFrame: `evals/runs/${tool}/real-proof/redacted-frame-000${index + 1}.png`,
+    expectedVisibleText: step.expectedVisibleText,
+    matchedVisibleText: step.expectedVisibleText,
+    missingVisibleText: [],
+    overlayConfidence: 0.9,
+    overlayKind: "instruction",
+    overlayMessage: step.overlayMessage,
+    highlightedAnchorId: step.anchorId,
+    actionPrimitive: {
+      kind: "click",
+      targetAnchorId: step.anchorId,
+      manualOnly: true
+    },
+    success: true
+  }));
+}
+
+function flowStepDefinitions(tool) {
+  if (tool === "odoo") {
+    return [
+      {
+        stepId: "step-001",
+        title: "open the opportunity",
+        expectedVisibleText: ["pipeline", "demo opportunity", "new"],
+        overlayMessage: "select the opportunity card named demo opportunity.",
+        anchorId: "opportunity-card"
+      },
+      {
+        stepId: "step-002",
+        title: "choose qualified stage",
+        expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+        overlayMessage: "select the qualified stage.",
+        anchorId: "qualified-stage"
+      },
+      {
+        stepId: "step-003",
+        title: "save the qualified stage",
+        expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+        overlayMessage: "save the opportunity so the qualified stage remains visible.",
+        anchorId: "save-button"
+      }
+    ];
+  }
+
+  return [
+    {
+      stepId: "step-001",
+      title: "open the task row",
+      expectedVisibleText: ["demo tasks", "demo task", "not started"],
+      overlayMessage: "select the row for demo task.",
+      anchorId: "demo-task-row"
+    },
+    {
+      stepId: "step-002",
+      title: "open status property",
+      expectedVisibleText: ["demo task", "status", "not started"],
+      overlayMessage: "open the status property.",
+      anchorId: "status-property"
+    },
+    {
+      stepId: "step-003",
+      title: "choose ready for review",
+      expectedVisibleText: ["demo task", "ready for review"],
+      overlayMessage: "select ready for review.",
+      anchorId: "ready-for-review-option"
+    }
+  ];
+}
+
+function flowEvidence(tool) {
+  return {
+    schemaVersion: 1,
+    tool,
+    substrate: "real-tool",
+    flowPath: `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
+    flowId: tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status",
+    terminalBusinessState:
+      tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review",
+    stepIds: ["step-001", "step-002", "step-003"]
+  };
 }
 
 function outcomeEvidence(tool) {
@@ -548,8 +681,8 @@ function outcomeEvidence(tool) {
     tool,
     substrate: "real-tool",
     completionRate: 1,
-    stepCount: 1,
-    stepsCompleted: 1,
+    stepCount: 3,
+    stepsCompleted: 3,
     terminalBusinessStateReached: true,
     terminalMissingVisibleText: [],
     zeroHumanHelp: true,

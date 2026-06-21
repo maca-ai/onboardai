@@ -205,6 +205,7 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/eval-recording.mp4
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/flow-evidence.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```
@@ -226,6 +227,10 @@ temporary capture paths.
 `step-trace.json` must contain at least one taught step. every real proof step must show successful
 instruction guidance, overlay confidence at or above `0.75`, a non-empty highlighted anchor id, a manual-only
 user action, and a current frame path under the same run directory.
+
+`flow-evidence.json` must point to the local `flow.md` used for overlay guidance. the referenced flow must
+parse and validate, match the target tool, match the recorded flow id and terminal business state, and its
+step ids, instruction text, highlight anchors, and manual action targets must match the real `step-trace.json`.
 
 `reviewer-checklist.md` must contain `- accepted: true` and must not contain `- rejected: true`.
 
@@ -274,6 +279,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/step-trace.json
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
+/evals/templates/runs/tool-run-id/flow-evidence.json
 /evals/templates/runs/tool-run-id/screen-input-evidence.json
 /evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
@@ -284,6 +290,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/step-trace.json
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/flow-evidence.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```

@@ -351,6 +351,9 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
 
   const replacements: readonly [RegExp, string][] = [
     [/\breplace-with-odoo-or-notion\b/g, tool],
+    [/\bflows\/tool\/replace-with-flow\.flow\.md\b/g, flowPathForTool(tool)],
+    [/\breplace-with-flow-id\b/g, flowIdForTool(tool)],
+    [/\breplace with flow\.md terminal-business-state\b/g, terminalBusinessStateForTool(tool)],
     [/\bevals\/runs\/tool\/replace-with-run-id\b/g, `evals/runs/${tool}/${runId}`],
     [/\breplace-with-run-id\b/g, runId],
     [/\breplace-with-capture-id\b/g, `capture-real-${tool}-${runId}`],
@@ -361,6 +364,7 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
     "step-trace.json",
     "failure-log.md",
     "reviewer-checklist.md",
+    "flow-evidence.json",
     "screen-input-evidence.json",
     "outcome-evidence.json"
   ] as const;
@@ -382,6 +386,18 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
 
 function isSafeRunId(runId: string): boolean {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(runId);
+}
+
+function flowPathForTool(tool: ToolName): string {
+  return tool === "odoo" ? "flows/odoo/qualify-opportunity.flow.md" : "flows/notion/update-task-status.flow.md";
+}
+
+function flowIdForTool(tool: ToolName): string {
+  return tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status";
+}
+
+function terminalBusinessStateForTool(tool: ToolName): string {
+  return tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review";
 }
 
 function auditRealToolRun(tool: ToolName, runId: string): ReturnType<typeof auditRealToolRunArtifacts> {
