@@ -6,10 +6,13 @@ import {
   auditCaptureTeachGoalStatus,
   auditEvalProofResults,
   auditShareableEvidencePaths,
+  parseRealToolProofEvidenceFile,
   runDeterministicEval,
+  type CaptureTeachGoalStatusFinding,
   type CaptureTeachGoalStatusResult,
   type EvalProofAuditResult,
   type EvalRunResult,
+  type RealToolProofEvidence,
   type ShareableEvidencePathReference
 } from "@onboardai/eval-harness";
 import { getDeterministicFixture, getSeniorDemonstration, type ToolName } from "@onboardai/fixtures";
@@ -76,7 +79,12 @@ if (args[0] === "flow" && args[1] === "validate") {
   }
   const evidenceAudit = auditShareableEvidencePaths(collectShareableEvidenceReferences(results), (path) => existsSync(resolveWorkspacePath(path)));
   const audit = auditEvalProofResults(results, ["odoo", "notion"], evidenceAudit);
-  const goalStatus = auditCaptureTeachGoalStatus({ fixtureAudit: audit });
+  const realToolEvidence = loadRealToolProofEvidence(["odoo", "notion"]);
+  const goalStatus = auditCaptureTeachGoalStatus({
+    fixtureAudit: audit,
+    realToolProofs: realToolEvidence.proofs,
+    realToolProofFindings: realToolEvidence.findings
+  });
   writeTwoToolFixtureProof(results, audit, goalStatus);
   writeFixtureProofAudit(audit);
   writeFullGoalProofStatus(goalStatus);
@@ -203,6 +211,42 @@ function writeFullGoalProofStatus(status: CaptureTeachGoalStatusResult): void {
   const reportDir = resolveWorkspacePath(join("evals", "reports"));
   mkdirSync(reportDir, { recursive: true });
   writeFileSync(join(reportDir, "full-goal-proof-status.json"), `${JSON.stringify(status, null, 2)}\n`);
+}
+
+function loadRealToolProofEvidence(requiredTools: readonly ToolName[]): {
+  readonly proofs: readonly RealToolProofEvidence[];
+  readonly findings: readonly CaptureTeachGoalStatusFinding[];
+} {
+  const proofs: RealToolProofEvidence[] = [];
+  const findings: CaptureTeachGoalStatusFinding[] = [];
+
+  for (const tool of requiredTools) {
+    const proofPath = join("evals", "reports", `real-tool-proof-${tool}.json`);
+    const absoluteProofPath = resolveWorkspacePath(proofPath);
+    if (!existsSync(absoluteProofPath)) {
+      continue;
+    }
+
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(readFileSync(absoluteProofPath, "utf8"));
+    } catch {
+      findings.push({ tool, message: `${proofPath} is not valid JSON` });
+      continue;
+    }
+
+    const parsed = parseRealToolProofEvidenceFile(parsedJson, proofPath);
+    proofs.push(...parsed.proofs);
+    findings.push(...parsed.findings);
+
+    for (const proof of parsed.proofs) {
+      if (!existsSync(resolveWorkspacePath(proof.evidencePath))) {
+        findings.push({ tool: proof.tool, message: `${proof.evidencePath} real target-tool evidence path is missing on disk` });
+      }
+    }
+  }
+
+  return { proofs, findings };
 }
 
 function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): readonly ShareableEvidencePathReference[] {

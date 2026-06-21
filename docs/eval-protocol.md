@@ -146,6 +146,36 @@ fixture proof is not the full project goal. fixture proof runs must also write
 `evals/reports/full-goal-proof-status.json`, and that status must remain `fullGoalProven: false` until both
 real odoo and real notion held-out evals pass using native screen-plus-input capture evidence.
 
+## real target-tool proof contract
+
+real target-tool proof, when available, is loaded from:
+
+```text
+/evals/reports/real-tool-proof-odoo.json
+/evals/reports/real-tool-proof-notion.json
+```
+
+each file must contain one proof object:
+
+```json
+{
+  "tool": "odoo",
+  "substrate": "real-tool",
+  "heldOutTeachingEvalPassed": true,
+  "nativeScreenPlusInputCaptureVerified": true,
+  "terminalBusinessStateReached": true,
+  "zeroHumanHelp": true,
+  "noInventedSteps": true,
+  "noPrivilegedAccess": true,
+  "seniorReviewerSignoff": true,
+  "evidencePath": "evals/runs/odoo/<run-id>/step-trace.json"
+}
+```
+
+the `evidencePath` must exist on disk under `evals/runs/`. the proof object is only a summary pointer; it
+does not replace the required run artifacts, native screen-plus-input capture evidence, reviewer checklist,
+or no-privileged-access audit evidence.
+
 ## failure log template
 
 ```md

@@ -164,6 +164,11 @@ export interface CaptureTeachGoalStatusResult {
   };
 }
 
+export interface RealToolProofEvidenceParseResult {
+  readonly proofs: readonly RealToolProofEvidence[];
+  readonly findings: readonly CaptureTeachGoalStatusFinding[];
+}
+
 const allowedShareableEvidencePrefixes = [
   "flows/",
   "captures/normalized/",
@@ -300,11 +305,12 @@ export function auditShareableEvidencePaths(
 export function auditCaptureTeachGoalStatus(input: {
   readonly fixtureAudit: EvalProofAuditResult;
   readonly realToolProofs?: readonly RealToolProofEvidence[];
+  readonly realToolProofFindings?: readonly CaptureTeachGoalStatusFinding[];
   readonly requiredTools?: readonly string[];
 }): CaptureTeachGoalStatusResult {
   const requiredTools = input.requiredTools ?? ["odoo", "notion"];
   const realToolProofs = input.realToolProofs ?? [];
-  const findings: CaptureTeachGoalStatusFinding[] = [];
+  const findings: CaptureTeachGoalStatusFinding[] = [...(input.realToolProofFindings ?? [])];
   const realProofsByTool = new Map<string, RealToolProofEvidence[]>();
 
   if (!input.fixtureAudit.passed) {
@@ -357,6 +363,78 @@ export function auditCaptureTeachGoalStatus(input: {
       nativeCaptureVerifiedTools: requiredRealProofs.filter((proof) => proof.nativeScreenPlusInputCaptureVerified).length,
       missingRealToolProofs: requiredTools.length - requiredRealProofs.length
     }
+  };
+}
+
+export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: string): RealToolProofEvidenceParseResult {
+  if (!isRecord(input)) {
+    return {
+      proofs: [],
+      findings: [{ tool: "unknown", message: `${sourcePath} must contain a real target-tool proof object` }]
+    };
+  }
+
+  const tool = typeof input.tool === "string" ? input.tool : "unknown";
+  const findings: CaptureTeachGoalStatusFinding[] = [];
+
+  if (input.substrate !== "real-tool") {
+    findings.push({ tool, message: `${sourcePath} substrate must be real-tool` });
+  }
+
+  for (const field of [
+    "heldOutTeachingEvalPassed",
+    "nativeScreenPlusInputCaptureVerified",
+    "terminalBusinessStateReached",
+    "zeroHumanHelp",
+    "noInventedSteps",
+    "noPrivilegedAccess",
+    "seniorReviewerSignoff"
+  ] as const) {
+    if (typeof input[field] !== "boolean") {
+      findings.push({ tool, message: `${sourcePath} ${field} must be boolean` });
+    }
+  }
+
+  if (typeof input.tool !== "string" || input.tool.length === 0) {
+    findings.push({ tool, message: `${sourcePath} tool must be a non-empty string` });
+  }
+
+  if (typeof input.evidencePath !== "string" || input.evidencePath.length === 0) {
+    findings.push({ tool, message: `${sourcePath} evidencePath must be a non-empty string` });
+  }
+
+  if (findings.length > 0) {
+    return { proofs: [], findings };
+  }
+
+  const proof = input as {
+    readonly tool: string;
+    readonly heldOutTeachingEvalPassed: boolean;
+    readonly nativeScreenPlusInputCaptureVerified: boolean;
+    readonly terminalBusinessStateReached: boolean;
+    readonly zeroHumanHelp: boolean;
+    readonly noInventedSteps: boolean;
+    readonly noPrivilegedAccess: boolean;
+    readonly seniorReviewerSignoff: boolean;
+    readonly evidencePath: string;
+  };
+
+  return {
+    proofs: [
+      {
+        tool: proof.tool,
+        substrate: "real-tool",
+        heldOutTeachingEvalPassed: proof.heldOutTeachingEvalPassed,
+        nativeScreenPlusInputCaptureVerified: proof.nativeScreenPlusInputCaptureVerified,
+        terminalBusinessStateReached: proof.terminalBusinessStateReached,
+        zeroHumanHelp: proof.zeroHumanHelp,
+        noInventedSteps: proof.noInventedSteps,
+        noPrivilegedAccess: proof.noPrivilegedAccess,
+        seniorReviewerSignoff: proof.seniorReviewerSignoff,
+        evidencePath: proof.evidencePath
+      }
+    ],
+    findings: []
   };
 }
 
@@ -571,6 +649,10 @@ function isPassingRealToolProof(proof: RealToolProofEvidence): boolean {
     proof.seniorReviewerSignoff &&
     proof.evidencePath.startsWith("evals/runs/")
   );
+}
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return typeof input === "object" && input !== null && !Array.isArray(input);
 }
 
 function isAllowedShareableEvidencePath(path: string): boolean {

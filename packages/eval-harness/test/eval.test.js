@@ -8,6 +8,7 @@ import {
   auditEvalProofResults,
   auditShareableEvidencePaths,
   matchScreenState,
+  parseRealToolProofEvidenceFile,
   runDeterministicEval
 } from "../dist/index.js";
 
@@ -154,6 +155,31 @@ test("full goal status passes only with real proof for both required tools", () 
   assert.equal(status.findings.length, 0);
   assert.equal(status.summary.realToolsPassed, 2);
   assert.equal(status.summary.nativeCaptureVerifiedTools, 2);
+});
+
+test("real proof evidence file parser accepts a complete real target proof contract", () => {
+  const parsed = parseRealToolProofEvidenceFile(realToolProof("odoo"), "evals/reports/real-tool-proof-odoo.json");
+
+  assert.equal(parsed.proofs.length, 1);
+  assert.equal(parsed.findings.length, 0);
+  assert.equal(parsed.proofs[0].tool, "odoo");
+  assert.equal(parsed.proofs[0].nativeScreenPlusInputCaptureVerified, true);
+});
+
+test("real proof evidence file parser rejects malformed proof contracts", () => {
+  const parsed = parseRealToolProofEvidenceFile(
+    {
+      tool: "odoo",
+      substrate: "fixture",
+      heldOutTeachingEvalPassed: true
+    },
+    "evals/reports/real-tool-proof-odoo.json"
+  );
+
+  assert.equal(parsed.proofs.length, 0);
+  assert.equal(parsed.findings.length > 0, true);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("substrate")), true);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("nativeScreenPlusInputCaptureVerified")), true);
 });
 
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {

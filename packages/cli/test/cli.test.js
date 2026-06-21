@@ -34,5 +34,6 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
   assert.equal(goalStatus.fullGoalProven, false);
   assert.equal(goalStatus.fixtureProofPassed, true);
   assert.equal(goalStatus.realToolProofPassed, false);
+  assert.equal(goalStatus.realToolProofs.length, 0);
   assert.equal(goalStatus.summary.missingRealToolProofs, 2);
 });
