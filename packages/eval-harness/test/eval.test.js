@@ -1143,6 +1143,63 @@ test("real target-tool run artifact audit rejects outcome counts not backed by s
   );
 });
 
+test("real target-tool run artifact audit rejects terminal outcome text not backed by flow", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("outcome-evidence.json")) {
+        return JSON.stringify({
+          ...outcomeEvidence("odoo"),
+          terminalBusinessState: "wrong terminal state",
+          terminalExpectedVisibleText: ["demo opportunity"],
+          terminalMatchedVisibleText: ["demo opportunity", "qualified"]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("terminalBusinessState must match evals/runs/odoo/real-proof/flow-evidence.json terminal business state")
+    ),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("terminalExpectedVisibleText must match evals/runs/odoo/real-proof/flow-evidence.json terminal visible text")
+    ),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("terminalMatchedVisibleText must match evals/runs/odoo/real-proof/flow-evidence.json terminal visible text")
+    ),
+    true
+  );
+});
+
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
   const audit = auditShareableEvidencePaths(
     [
@@ -1428,6 +1485,10 @@ function outcomeEvidence(tool) {
     stepCount: 3,
     stepsCompleted: 3,
     terminalBusinessStateReached: true,
+    terminalBusinessState:
+      tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review",
+    terminalExpectedVisibleText: terminalVisibleText(tool),
+    terminalMatchedVisibleText: terminalVisibleText(tool),
     terminalMissingVisibleText: [],
     zeroHumanHelp: true,
     noInventedSteps: true,
@@ -1442,4 +1503,8 @@ function outcomeEvidence(tool) {
     finalScreenEvidencePath: `evals/runs/${tool}/real-proof/final-screen.png`,
     stepTraceEvidencePath: `evals/runs/${tool}/real-proof/step-trace.json`
   };
+}
+
+function terminalVisibleText(tool) {
+  return tool === "odoo" ? ["demo opportunity", "qualified", "saved"] : ["demo task", "status", "ready for review"];
 }

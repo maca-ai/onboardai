@@ -596,6 +596,9 @@ export function auditRealToolRunArtifacts(
         content,
         stepTracePath,
         existsPath(stepTracePath) ? readText(stepTracePath) : null,
+        flowEvidencePath,
+        existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
+        readText,
         existsPath,
         references,
         findings
@@ -1579,6 +1582,9 @@ function auditOutcomeEvidence(
   content: string,
   stepTracePath: string,
   stepTraceContent: string | null,
+  flowEvidencePath: string,
+  flowEvidenceContent: string | null,
+  readText: (path: string) => string,
   existsPath: (path: string) => boolean,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
@@ -1654,6 +1660,21 @@ function auditOutcomeEvidence(
     findings.push({ tool: proof.tool, message: `${path} terminalMissingVisibleText must be empty` });
   }
 
+  const terminalOutcome = readFlowTerminalOutcomeSummary(proof, flowEvidencePath, flowEvidenceContent, existsPath, readText, findings);
+  if (terminalOutcome) {
+    if (parsed.terminalBusinessState !== terminalOutcome.terminalBusinessState) {
+      findings.push({ tool: proof.tool, message: `${path} terminalBusinessState must match ${flowEvidencePath} terminal business state` });
+    }
+
+    if (!arrayEquals(parsed.terminalExpectedVisibleText, terminalOutcome.terminalVisibleText)) {
+      findings.push({ tool: proof.tool, message: `${path} terminalExpectedVisibleText must match ${flowEvidencePath} terminal visible text` });
+    }
+
+    if (!arrayEquals(parsed.terminalMatchedVisibleText, terminalOutcome.terminalVisibleText)) {
+      findings.push({ tool: proof.tool, message: `${path} terminalMatchedVisibleText must match ${flowEvidencePath} terminal visible text` });
+    }
+  }
+
   if (!Array.isArray(parsed.privilegedAccessViolations) || parsed.privilegedAccessViolations.length !== 0) {
     findings.push({ tool: proof.tool, message: `${path} privilegedAccessViolations must be empty` });
   }
@@ -1710,6 +1731,54 @@ function readStepTraceCompletionSummary(
   return {
     stepCount: parsedTrace.length,
     stepsCompleted: parsedTrace.filter((entry) => isRecord(entry) && entry.success === true).length
+  };
+}
+
+function readFlowTerminalOutcomeSummary(
+  proof: RealToolProofEvidence,
+  flowEvidencePath: string,
+  flowEvidenceContent: string | null,
+  existsPath: (path: string) => boolean,
+  readText: (path: string) => string,
+  findings: CaptureTeachGoalStatusFinding[]
+): { readonly terminalBusinessState: string; readonly terminalVisibleText: readonly string[] } | null {
+  if (flowEvidenceContent === null) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(flowEvidenceContent);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must be valid JSON for outcome terminal grounding` });
+    return null;
+  }
+
+  if (!isRecord(parsed) || typeof parsed.flowPath !== "string") {
+    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must include flowPath for outcome terminal grounding` });
+    return null;
+  }
+
+  if (!existsPath(parsed.flowPath)) {
+    return null;
+  }
+
+  const flowContent = readText(parsed.flowPath);
+  const validation = validateFlowMarkdown(flowContent);
+  if (!validation.valid || !validation.document) {
+    findings.push({ tool: proof.tool, message: `${parsed.flowPath} referenced by ${flowEvidencePath} must be valid for outcome terminal grounding` });
+    return null;
+  }
+
+  const terminalSteps = validation.document.steps.filter((step) => step["success-condition"].terminal === true);
+  if (terminalSteps.length !== 1) {
+    findings.push({ tool: proof.tool, message: `${parsed.flowPath} must contain exactly one terminal step for outcome terminal grounding` });
+    return null;
+  }
+
+  return {
+    terminalBusinessState: String(validation.document.frontmatter["terminal-business-state"] ?? ""),
+    terminalVisibleText: terminalSteps[0]["success-condition"]["visible-text"] ?? []
   };
 }
 

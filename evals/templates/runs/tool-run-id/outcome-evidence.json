@@ -6,6 +6,13 @@
   "stepCount": 3,
   "stepsCompleted": 3,
   "terminalBusinessStateReached": true,
+  "terminalBusinessState": "replace with flow.md terminal business state",
+  "terminalExpectedVisibleText": [
+    "replace with flow.md terminal success visible text"
+  ],
+  "terminalMatchedVisibleText": [
+    "replace with same terminal visible text observed on final screen"
+  ],
   "terminalMissingVisibleText": [],
   "zeroHumanHelp": true,
   "noInventedSteps": true,
