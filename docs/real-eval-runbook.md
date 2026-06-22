@@ -134,6 +134,7 @@ after eval:
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
+- [ ] for a passing run, confirm `failure-log.md` states `no failure observed` and has no false result lines for pass status, terminal state, zero human help, no invented steps, or no privileged access.
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.

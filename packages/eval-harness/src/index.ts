@@ -563,7 +563,9 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${failureLogPath} cannot be validated without file contents` });
     } else {
-      auditShareableTextRedaction(proof.tool, failureLogPath, readText(failureLogPath), findings);
+      const content = readText(failureLogPath);
+      auditShareableTextRedaction(proof.tool, failureLogPath, content, findings);
+      auditFailureLog(proof, failureLogPath, content, findings);
     }
   }
 
@@ -1600,6 +1602,31 @@ function auditReviewerChecklist(
 
   if (content.includes("- rejected: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
+  }
+}
+
+function auditFailureLog(
+  proof: RealToolProofEvidence,
+  path: string,
+  content: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (!/\bno failure observed\b/i.test(content)) {
+    findings.push({ tool: proof.tool, message: `${path} must state no failure observed for a passing real run` });
+  }
+
+  const contradictionPatterns = [
+    { label: "passed", pattern: /^\s*-\s*passed:\s*false\s*$/im },
+    { label: "terminal state reached", pattern: /^\s*-\s*terminal state reached:\s*false\s*$/im },
+    { label: "zero human help", pattern: /^\s*-\s*zero human help:\s*false\s*$/im },
+    { label: "no invented steps", pattern: /^\s*-\s*no invented steps:\s*false\s*$/im },
+    { label: "no privileged access", pattern: /^\s*-\s*no privileged access:\s*false\s*$/im }
+  ] as const;
+
+  for (const contradiction of contradictionPatterns) {
+    if (contradiction.pattern.test(content)) {
+      findings.push({ tool: proof.tool, message: `${path} contradicts passing outcome: ${contradiction.label} is false` });
+    }
   }
 }
 

@@ -216,6 +216,10 @@ Markdown files, the referenced `flow.md`, and the referenced normalized capture 
 addresses, password assignments, token assignments, api key assignments, and session secret assignments make
 the real run invalid.
 
+`failure-log.md` must state `no failure observed` for a passing real run. it must not contradict the passing
+outcome with result lines such as `- passed: false`, `- terminal state reached: false`,
+`- zero human help: false`, `- no invented steps: false`, or `- no privileged access: false`.
+
 create the editable run skeleton from templates with:
 
 ```sh
