@@ -560,7 +560,17 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${outcomeEvidencePath} cannot be validated without file contents` });
     } else {
-      auditOutcomeEvidence(proof, runDir, outcomeEvidencePath, readText(outcomeEvidencePath), existsPath, references, findings);
+      auditOutcomeEvidence(
+        proof,
+        runDir,
+        outcomeEvidencePath,
+        readText(outcomeEvidencePath),
+        stepTracePath,
+        existsPath(stepTracePath) ? readText(stepTracePath) : null,
+        existsPath,
+        references,
+        findings
+      );
     }
   }
 
@@ -1483,6 +1493,8 @@ function auditOutcomeEvidence(
   runDir: string,
   path: string,
   content: string,
+  stepTracePath: string,
+  stepTraceContent: string | null,
   existsPath: (path: string) => boolean,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
@@ -1543,6 +1555,17 @@ function auditOutcomeEvidence(
     findings.push({ tool: proof.tool, message: `${path} stepsCompleted must equal stepCount` });
   }
 
+  const stepTraceSummary = readStepTraceCompletionSummary(proof, stepTracePath, stepTraceContent, findings);
+  if (stepTraceSummary) {
+    if (parsed.stepCount !== stepTraceSummary.stepCount) {
+      findings.push({ tool: proof.tool, message: `${path} stepCount must match ${stepTracePath} step count` });
+    }
+
+    if (parsed.stepsCompleted !== stepTraceSummary.stepsCompleted) {
+      findings.push({ tool: proof.tool, message: `${path} stepsCompleted must match ${stepTracePath} successful step count` });
+    }
+  }
+
   if (!Array.isArray(parsed.terminalMissingVisibleText) || parsed.terminalMissingVisibleText.length !== 0) {
     findings.push({ tool: proof.tool, message: `${path} terminalMissingVisibleText must be empty` });
   }
@@ -1575,6 +1598,35 @@ function auditOutcomeEvidence(
     references,
     findings
   );
+}
+
+function readStepTraceCompletionSummary(
+  proof: RealToolProofEvidence,
+  stepTracePath: string,
+  stepTraceContent: string | null,
+  findings: CaptureTeachGoalStatusFinding[]
+): { readonly stepCount: number; readonly stepsCompleted: number } | null {
+  if (stepTraceContent === null) {
+    return null;
+  }
+
+  let parsedTrace: unknown;
+  try {
+    parsedTrace = JSON.parse(stepTraceContent);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for outcome evidence grounding` });
+    return null;
+  }
+
+  if (!Array.isArray(parsedTrace)) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for outcome evidence grounding` });
+    return null;
+  }
+
+  return {
+    stepCount: parsedTrace.length,
+    stepsCompleted: parsedTrace.filter((entry) => isRecord(entry) && entry.success === true).length
+  };
 }
 
 function traceStepLabel(entry: unknown, index: number): string {

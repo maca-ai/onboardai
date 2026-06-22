@@ -263,7 +263,8 @@ include one per-step acceptance line for every step id in `step-trace.json`, for
 
 `outcome-evidence.json` must show completion rate `1`, all taught steps completed, terminal business state
 reached, empty terminal missing visible text, zero human-help incidents, zero invented-step incidents, no
-privileged access violations, held-out eval evidence, and senior reviewer signoff.
+privileged access violations, held-out eval evidence, and senior reviewer signoff. its `stepCount` and
+`stepsCompleted` values must match the same-run `step-trace.json` step count and successful step count.
 
 validate a filled real run directory before creating the live proof summary:
 

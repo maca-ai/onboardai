@@ -1009,6 +1009,51 @@ test("real target-tool run artifact audit rejects failed outcome evidence", () =
   assert.equal(audit.findings.some((finding) => finding.message.includes("evals/runs/odoo/real-proof/step-trace.json")), true);
 });
 
+test("real target-tool run artifact audit rejects outcome counts not backed by step trace", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("outcome-evidence.json")) {
+        return JSON.stringify({
+          ...outcomeEvidence("odoo"),
+          stepCount: 4,
+          stepsCompleted: 4
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("stepCount must match evals/runs/odoo/real-proof/step-trace.json step count")), true);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("stepsCompleted must match evals/runs/odoo/real-proof/step-trace.json successful step count")
+    ),
+    true
+  );
+});
+
 test("shareable evidence path audit accepts existing allowed artifact paths", () => {
   const audit = auditShareableEvidencePaths(
     [
