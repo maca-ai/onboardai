@@ -1183,20 +1183,12 @@ function readStepTraceActionTargets(
     return [];
   }
 
-  let parsedTrace: unknown;
-  try {
-    parsedTrace = JSON.parse(stepTraceContent);
-  } catch {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for manifest input evidence grounding` });
+  const steps = readStepTraceEntries(proof, stepTracePath, stepTraceContent, "manifest input evidence grounding", findings);
+  if (!steps) {
     return [];
   }
 
-  if (!Array.isArray(parsedTrace)) {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for manifest input evidence grounding` });
-    return [];
-  }
-
-  return parsedTrace.flatMap((entry) => {
+  return steps.flatMap((entry) => {
     if (!isRecord(entry) || typeof entry.stepId !== "string" || entry.stepId.length === 0) {
       return [];
     }
@@ -1312,25 +1304,17 @@ function auditRealStepTrace(
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+  const steps = readStepTraceEntries(proof, path, content, "real step trace validation", findings);
+  if (!steps) {
     return;
   }
 
-  if (!Array.isArray(parsed)) {
-    findings.push({ tool: proof.tool, message: `${path} must contain a step trace array` });
-    return;
-  }
-
-  if (parsed.length === 0) {
+  if (steps.length === 0) {
     findings.push({ tool: proof.tool, message: `${path} must contain at least one taught step` });
     return;
   }
 
-  parsed.forEach((entry, index) => {
+  steps.forEach((entry, index) => {
     const stepLabel = traceStepLabel(entry, index);
     if (!isRecord(entry)) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} must be an object` });
@@ -1532,25 +1516,17 @@ function auditStepTraceGrounding(
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
   const stepTracePath = `${runDir}/step-trace.json`;
-  let parsedTrace: unknown;
-  try {
-    parsedTrace = JSON.parse(readText(stepTracePath));
-  } catch {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for flow grounding` });
+  const steps = readStepTraceEntries(proof, stepTracePath, readText(stepTracePath), "flow grounding", findings);
+  if (!steps) {
     return;
   }
 
-  if (!Array.isArray(parsedTrace)) {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for flow grounding` });
-    return;
-  }
-
-  if (parsedTrace.length !== flow.steps.length) {
+  if (steps.length !== flow.steps.length) {
     findings.push({ tool: proof.tool, message: `${stepTracePath} must contain exactly the referenced flow steps` });
   }
 
   flow.steps.forEach((step, index) => {
-    const entry = parsedTrace[index];
+    const entry = steps[index];
     const stepLabel = step["step-id"];
     if (!isRecord(entry)) {
       findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} must be present for flow grounding` });
@@ -1644,21 +1620,13 @@ function auditReviewerStepSignoff(
   stepTraceContent: string,
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
-  let parsedTrace: unknown;
-  try {
-    parsedTrace = JSON.parse(stepTraceContent);
-  } catch {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for reviewer step signoff` });
-    return;
-  }
-
-  if (!Array.isArray(parsedTrace)) {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for reviewer step signoff` });
+  const steps = readStepTraceEntries(proof, stepTracePath, stepTraceContent, "reviewer step signoff", findings);
+  if (!steps) {
     return;
   }
 
   const acceptedLines = new Set(checklistContent.split(/\r?\n/).map((line) => line.trim()));
-  for (const entry of parsedTrace) {
+  for (const entry of steps) {
     if (!isRecord(entry) || typeof entry.stepId !== "string" || entry.stepId.length === 0) {
       continue;
     }
@@ -1812,22 +1780,14 @@ function readStepTraceCompletionSummary(
     return null;
   }
 
-  let parsedTrace: unknown;
-  try {
-    parsedTrace = JSON.parse(stepTraceContent);
-  } catch {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must be valid JSON for outcome evidence grounding` });
-    return null;
-  }
-
-  if (!Array.isArray(parsedTrace)) {
-    findings.push({ tool: proof.tool, message: `${stepTracePath} must contain an array for outcome evidence grounding` });
+  const steps = readStepTraceEntries(proof, stepTracePath, stepTraceContent, "outcome evidence grounding", findings);
+  if (!steps) {
     return null;
   }
 
   return {
-    stepCount: parsedTrace.length,
-    stepsCompleted: parsedTrace.filter((entry) => isRecord(entry) && entry.success === true).length
+    stepCount: steps.length,
+    stepsCompleted: steps.filter((entry) => isRecord(entry) && entry.success === true).length
   };
 }
 
@@ -1896,6 +1856,36 @@ function auditSchemaVersion(
   if (parsed.schemaVersion !== 1) {
     findings.push({ tool: proof.tool, message: `${path} schemaVersion must be 1` });
   }
+}
+
+function readStepTraceEntries(
+  proof: RealToolProofEvidence,
+  path: string,
+  content: string,
+  context: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): readonly unknown[] | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON for ${context}` });
+    return null;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain a step trace object with schemaVersion 1 and steps array for ${context}` });
+    return null;
+  }
+
+  auditSchemaVersion(proof, path, parsed, findings);
+
+  if (!Array.isArray(parsed.steps)) {
+    findings.push({ tool: proof.tool, message: `${path} steps must contain a step trace array for ${context}` });
+    return null;
+  }
+
+  return parsed.steps;
 }
 
 function auditEvidencePathField(

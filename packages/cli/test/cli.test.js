@@ -218,71 +218,74 @@ test("proof real-run validates complete real target-tool run artifacts and write
     writeFileSync(
       new URL("step-trace.json", runDir),
       `${JSON.stringify(
-        [
-          {
-            stepId: "step-001",
-            title: "open the opportunity",
-            fromStateId: "state-001",
-            toStateId: "state-002",
-            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
-            expectedVisibleText: ["pipeline", "demo opportunity", "new"],
-            matchedVisibleText: ["pipeline", "demo opportunity", "new"],
-            missingVisibleText: [],
-            overlayConfidence: 0.9,
-            overlayKind: "instruction",
-            overlayCanAutomateInput: false,
-            overlayMessage: "select the opportunity card named demo opportunity.",
-            highlightedAnchorId: "opportunity-card",
-            actionPrimitive: {
-              kind: "click",
-              targetAnchorId: "opportunity-card",
-              manualOnly: true
+        {
+          schemaVersion: 1,
+          steps: [
+            {
+              stepId: "step-001",
+              title: "open the opportunity",
+              fromStateId: "state-001",
+              toStateId: "state-002",
+              currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
+              expectedVisibleText: ["pipeline", "demo opportunity", "new"],
+              matchedVisibleText: ["pipeline", "demo opportunity", "new"],
+              missingVisibleText: [],
+              overlayConfidence: 0.9,
+              overlayKind: "instruction",
+              overlayCanAutomateInput: false,
+              overlayMessage: "select the opportunity card named demo opportunity.",
+              highlightedAnchorId: "opportunity-card",
+              actionPrimitive: {
+                kind: "click",
+                targetAnchorId: "opportunity-card",
+                manualOnly: true
+              },
+              success: true
             },
-            success: true
-          },
-          {
-            stepId: "step-002",
-            title: "choose qualified stage",
-            fromStateId: "state-002",
-            toStateId: "state-003",
-            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0002.png`,
-            expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
-            matchedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
-            missingVisibleText: [],
-            overlayConfidence: 0.9,
-            overlayKind: "instruction",
-            overlayCanAutomateInput: false,
-            overlayMessage: "select the qualified stage.",
-            highlightedAnchorId: "qualified-stage",
-            actionPrimitive: {
-              kind: "click",
-              targetAnchorId: "qualified-stage",
-              manualOnly: true
+            {
+              stepId: "step-002",
+              title: "choose qualified stage",
+              fromStateId: "state-002",
+              toStateId: "state-003",
+              currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0002.png`,
+              expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+              matchedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+              missingVisibleText: [],
+              overlayConfidence: 0.9,
+              overlayKind: "instruction",
+              overlayCanAutomateInput: false,
+              overlayMessage: "select the qualified stage.",
+              highlightedAnchorId: "qualified-stage",
+              actionPrimitive: {
+                kind: "click",
+                targetAnchorId: "qualified-stage",
+                manualOnly: true
+              },
+              success: true
             },
-            success: true
-          },
-          {
-            stepId: "step-003",
-            title: "save the qualified stage",
-            fromStateId: "state-003",
-            toStateId: "state-004",
-            currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0003.png`,
-            expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
-            matchedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
-            missingVisibleText: [],
-            overlayConfidence: 0.9,
-            overlayKind: "instruction",
-            overlayCanAutomateInput: false,
-            overlayMessage: "save the opportunity so the qualified stage remains visible.",
-            highlightedAnchorId: "save-button",
-            actionPrimitive: {
-              kind: "click",
-              targetAnchorId: "save-button",
-              manualOnly: true
+            {
+              stepId: "step-003",
+              title: "save the qualified stage",
+              fromStateId: "state-003",
+              toStateId: "state-004",
+              currentFrame: `evals/runs/odoo/${runId}/redacted-frame-0003.png`,
+              expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+              matchedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+              missingVisibleText: [],
+              overlayConfidence: 0.9,
+              overlayKind: "instruction",
+              overlayCanAutomateInput: false,
+              overlayMessage: "save the opportunity so the qualified stage remains visible.",
+              highlightedAnchorId: "save-button",
+              actionPrimitive: {
+                kind: "click",
+                targetAnchorId: "save-button",
+                manualOnly: true
+              },
+              success: true
             },
-            success: true
-          }
-        ],
+          ]
+        },
         null,
         2
       )}\n`

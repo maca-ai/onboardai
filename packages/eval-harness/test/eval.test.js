@@ -295,8 +295,8 @@ test("real target-tool run artifact audit rejects same-run non-frame step eviden
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        const trace = flowGroundedTrace("odoo");
-        trace[0].currentFrame = "evals/runs/odoo/real-proof/failure-log.md";
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].currentFrame = "evals/runs/odoo/real-proof/failure-log.md";
         return JSON.stringify(trace);
       }
 
@@ -379,6 +379,7 @@ test("real target-tool run artifact audit rejects unsupported real-run evidence 
     (path) => existing.has(path),
     (path) => {
       if (
+        path.endsWith("step-trace.json") ||
         path.endsWith("screen-input-evidence.json") ||
         path.endsWith("capture-readiness.json") ||
         path.endsWith("flow-evidence.json") ||
@@ -392,6 +393,7 @@ test("real target-tool run artifact audit rejects unsupported real-run evidence 
   );
 
   assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("step-trace.json schemaVersion must be 1")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json schemaVersion must be 1")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("capture-readiness.json schemaVersion must be 1")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("flow-evidence.json schemaVersion must be 1")), true);
@@ -956,18 +958,21 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        return JSON.stringify([
-          {
-            stepId: "step-001",
-            success: false,
-            overlayKind: "fail-closed",
-            overlayMessage: "",
-            overlayConfidence: 0.5,
-            highlightedAnchorId: null,
-            actionPrimitive: { kind: "click", manualOnly: false },
-            currentFrame: "evals/runs/notion/real-proof/redacted-frame-0001.png"
-          }
-        ]);
+        return JSON.stringify({
+          schemaVersion: 1,
+          steps: [
+            {
+              stepId: "step-001",
+              success: false,
+              overlayKind: "fail-closed",
+              overlayMessage: "",
+              overlayConfidence: 0.5,
+              highlightedAnchorId: null,
+              actionPrimitive: { kind: "click", manualOnly: false },
+              currentFrame: "evals/runs/notion/real-proof/redacted-frame-0001.png"
+            }
+          ]
+        });
       }
 
       if (path.endsWith("reviewer-checklist.md")) {
@@ -1010,9 +1015,9 @@ test("real target-tool run artifact audit rejects overlay automation exposure in
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        const trace = flowGroundedTrace("odoo");
-        trace[0].overlayCanAutomateInput = true;
-        trace[0].overlayAutomation = { clickTarget: "opportunity-card" };
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].overlayCanAutomateInput = true;
+        trace.steps[0].overlayAutomation = { clickTarget: "opportunity-card" };
         return JSON.stringify(trace);
       }
 
@@ -1049,10 +1054,10 @@ test("real target-tool run artifact audit rejects ungrounded step visible text e
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        const trace = flowGroundedTrace("odoo");
-        trace[0].expectedVisibleText = ["unrelated dashboard"];
-        trace[0].matchedVisibleText = ["pipeline"];
-        trace[0].missingVisibleText = ["pipeline"];
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].expectedVisibleText = ["unrelated dashboard"];
+        trace.steps[0].matchedVisibleText = ["pipeline"];
+        trace.steps[0].missingVisibleText = ["pipeline"];
         return JSON.stringify(trace);
       }
 
@@ -1100,8 +1105,8 @@ test("real target-tool run artifact audit rejects partial matched visible text e
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        const trace = flowGroundedTrace("odoo");
-        trace[0].matchedVisibleText = ["pipeline"];
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].matchedVisibleText = ["pipeline"];
         return JSON.stringify(trace);
       }
 
@@ -1142,16 +1147,19 @@ test("real target-tool run artifact audit rejects ungrounded flow evidence and i
     (path) => existing.has(path),
     (path) => {
       if (path.endsWith("step-trace.json")) {
-        const trace = flowGroundedTrace("odoo");
-        return JSON.stringify([
+        const trace = stepTraceDocument("odoo");
+        return JSON.stringify({
+          ...trace,
+          steps: [
           {
-            ...trace[0],
+            ...trace.steps[0],
             overlayMessage: "invented instruction not present in flow",
             highlightedAnchorId: "invented-anchor",
             actionPrimitive: { kind: "click", targetAnchorId: "invented-anchor", manualOnly: true }
           },
-          trace[1]
-        ]);
+          trace.steps[1]
+          ]
+        });
       }
 
       return realRunArtifactContent(path, "odoo");
@@ -1437,7 +1445,7 @@ function captureReadinessEvidence(tool) {
 
 function realRunArtifactContent(path, tool) {
   if (path.endsWith("step-trace.json")) {
-    return JSON.stringify(flowGroundedTrace(tool));
+    return JSON.stringify(stepTraceDocument(tool));
   }
 
   if (path.endsWith("failure-log.md")) {
@@ -1503,6 +1511,13 @@ function flowGroundedTrace(tool) {
     },
     success: true
   }));
+}
+
+function stepTraceDocument(tool) {
+  return {
+    schemaVersion: 1,
+    steps: flowGroundedTrace(tool)
+  };
 }
 
 function flowStepDefinitions(tool) {

@@ -216,9 +216,9 @@ Markdown files, the referenced `flow.md`, and the referenced normalized capture 
 addresses, password assignments, token assignments, api key assignments, and session secret assignments make
 the real run invalid.
 
-real-run JSON evidence files must use `schemaVersion: 1`. this applies to `flow-evidence.json`,
-`capture-readiness.json`, `screen-input-evidence.json`, `outcome-evidence.json`, and the referenced normalized
-capture manifest.
+real-run JSON evidence files must use `schemaVersion: 1`. this applies to `step-trace.json`,
+`flow-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`, `outcome-evidence.json`, and the
+referenced normalized capture manifest.
 
 `failure-log.md` must state `no failure observed` for a passing real run. it must not contradict the passing
 outcome with result lines such as `- passed: false`, `- terminal state reached: false`,
@@ -252,17 +252,17 @@ manifest.
 each normalized manifest `inputEvidence[].inputEvents[]` entry must be a captured mouse or keyboard event
 with a non-empty event name. input event records must not include privileged proof handles such as api,
 backend, database, dom, mcp, or selector fields.
-for every real `step-trace.json` entry with an action target anchor, the matching manifest `inputEvidence`
+for every real `step-trace.json` step with an action target anchor, the matching manifest `inputEvidence`
 entry must include at least one input event with the same `anchorId`.
 
 `capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs
 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output redacted
 frames, and protected by raw-artifact git ignore. its blockers list must be empty.
 
-`step-trace.json` must contain at least one taught step. every real proof step must show successful
-instruction guidance, overlay confidence at or above `0.75`, `overlayCanAutomateInput: false`, a non-empty
-highlighted anchor id, a manual-only user action, and a current frame path under the same run directory. the
-current frame path must point to a same-run redacted-frame PNG, for example
+`step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
+step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,
+`overlayCanAutomateInput: false`, a non-empty highlighted anchor id, a manual-only user action, and a current
+frame path under the same run directory. the current frame path must point to a same-run redacted-frame PNG, for example
 `evals/runs/<tool>/<run-id>/redacted-frame-0001.png`; a same-run log, JSON file, final screen, raw capture,
 unsafe file, or temporary file cannot stand in for step frame evidence. the trace must not include overlay
 automation command fields for click, type, submit, approve, delete, or state mutation. each step's

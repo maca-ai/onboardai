@@ -127,11 +127,12 @@ after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
 - [ ] confirm every real-run JSON evidence file uses `schemaVersion: 1`.
-- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
+- [ ] confirm `step-trace.json` contains a `steps` array.
+- [ ] confirm every `step-trace.json` step is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
 - [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
-- [ ] confirm every `step-trace.json` entry has `missingVisibleText: []`, `expectedVisibleText` exactly matching that step's `flow.md` expected visible text, and `matchedVisibleText` proving the same visible text was observed.
+- [ ] confirm every `step-trace.json` step has `missingVisibleText: []`, `expectedVisibleText` exactly matching that step's `flow.md` expected visible text, and `matchedVisibleText` proving the same visible text was observed.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
