@@ -487,6 +487,46 @@ test("real target-tool run artifact audit rejects manifests missing per-step inp
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvidence must include real-run step step-003")), true);
 });
 
+test("real target-tool run artifact audit rejects manifests for a different flow", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          flowId: "notion-update-task-status",
+          flowPath: "flows/notion/update-task-status.flow.md"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("manifest.json flowPath must match evals/runs/odoo/real-proof/flow-evidence.json flowPath")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("manifest.json flowId must match evals/runs/odoo/real-proof/flow-evidence.json flowId")), true);
+});
+
 test("real target-tool run artifact audit rejects privileged input event evidence in normalized manifests", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

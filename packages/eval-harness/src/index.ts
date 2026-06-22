@@ -879,12 +879,15 @@ function auditScreenInputEvidence(
   let manifestAudit: NormalizedCaptureManifestAudit | null = null;
   if (typeof parsed.normalizedCaptureManifestPath === "string" && existsPath(parsed.normalizedCaptureManifestPath)) {
     const stepTracePath = `${runDir}/step-trace.json`;
+    const flowEvidencePath = `${runDir}/flow-evidence.json`;
     manifestAudit = auditNormalizedCaptureManifest(
       proof,
       path,
       parsed.normalizedCaptureManifestPath,
       stepTracePath,
       existsPath(stepTracePath) ? readText(stepTracePath) : null,
+      flowEvidencePath,
+      existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
       existsPath,
       readText,
       references,
@@ -933,6 +936,8 @@ function auditNormalizedCaptureManifest(
   manifestPath: string,
   stepTracePath: string,
   stepTraceContent: string | null,
+  flowEvidencePath: string,
+  flowEvidenceContent: string | null,
   existsPath: (path: string) => boolean,
   readText: (path: string) => string,
   references: ShareableEvidencePathReference[],
@@ -958,6 +963,17 @@ function auditNormalizedCaptureManifest(
 
   if (parsed.tool !== proof.tool) {
     findings.push({ tool: proof.tool, message: `${manifestPath} tool must match ${proof.tool}` });
+  }
+
+  const flowEvidenceSummary = readFlowEvidenceSummary(proof, flowEvidencePath, flowEvidenceContent, findings);
+  if (flowEvidenceSummary) {
+    if (parsed.flowPath !== flowEvidenceSummary.flowPath) {
+      findings.push({ tool: proof.tool, message: `${manifestPath} flowPath must match ${flowEvidencePath} flowPath` });
+    }
+
+    if (parsed.flowId !== flowEvidenceSummary.flowId) {
+      findings.push({ tool: proof.tool, message: `${manifestPath} flowId must match ${flowEvidencePath} flowId` });
+    }
   }
 
   if (parsed.rawCapturePolicy !== "unsafe-to-share-local-only") {
@@ -1153,6 +1169,40 @@ function readStepTraceActionTargets(
 
     return [{ stepId: entry.stepId, targetAnchorId }];
   });
+}
+
+function readFlowEvidenceSummary(
+  proof: RealToolProofEvidence,
+  flowEvidencePath: string,
+  flowEvidenceContent: string | null,
+  findings: CaptureTeachGoalStatusFinding[]
+): { readonly flowPath: string; readonly flowId: string } | null {
+  if (flowEvidenceContent === null) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(flowEvidenceContent);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must be valid JSON for normalized manifest flow grounding` });
+    return null;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must contain an object for normalized manifest flow grounding` });
+    return null;
+  }
+
+  if (typeof parsed.flowPath !== "string" || typeof parsed.flowId !== "string") {
+    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must include flowPath and flowId for normalized manifest flow grounding` });
+    return null;
+  }
+
+  return {
+    flowPath: parsed.flowPath,
+    flowId: parsed.flowId
+  };
 }
 
 function auditCaptureReadinessEvidence(
