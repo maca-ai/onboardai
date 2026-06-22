@@ -5,6 +5,19 @@
   "adapterKind": "native",
   "platform": "replace-with-macos-or-windows",
   "docsVerified": true,
+  "verifiedDocReferences": [
+    {
+      "sourceType": "replace-with-official-docs-or-context7",
+      "reference": "replace with exact official docs url or context7 library id",
+      "behaviors": [
+        "screen-recording",
+        "keyboard-event-log",
+        "mouse-event-log",
+        "redacted-frame-output",
+        "raw-artifacts-ignored"
+      ]
+    }
+  ],
   "screenRecording": true,
   "keyboardEventLog": true,
   "mouseEventLog": true,

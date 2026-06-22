@@ -367,6 +367,13 @@ test("proof real-run validates complete real target-tool run artifacts and write
           adapterKind: "native",
           platform: "macos",
           docsVerified: true,
+          verifiedDocReferences: [
+            {
+              sourceType: "context7",
+              reference: "/websites/v2_tauri_app",
+              behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]
+            }
+          ],
           screenRecording: true,
           keyboardEventLog: true,
           mouseEventLog: true,

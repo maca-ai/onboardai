@@ -913,6 +913,13 @@ test("real target-tool run artifact audit rejects unverified native capture read
           adapterKind: "fixture",
           platform: "linux",
           docsVerified: false,
+          verifiedDocReferences: [
+            {
+              sourceType: "blog",
+              reference: "",
+              behaviors: ["screen-recording"]
+            }
+          ],
           keyboardEventLog: false,
           blockers: ["native keyboard hook official docs not verified"]
         });
@@ -926,6 +933,10 @@ test("real target-tool run artifact audit rejects unverified native capture read
   assert.equal(audit.findings.some((finding) => finding.message.includes("adapterKind must be native")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("platform must be macos or windows")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("docsVerified must be true")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("sourceType must be official-docs or context7")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be a non-empty string")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover keyboard-event-log")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover mouse-event-log")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("keyboardEventLog must be true")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("blockers must be empty")), true);
 });
@@ -1498,6 +1509,13 @@ function captureReadinessEvidence(tool) {
     adapterKind: "native",
     platform: "macos",
     docsVerified: true,
+    verifiedDocReferences: [
+      {
+        sourceType: "context7",
+        reference: "/websites/v2_tauri_app",
+        behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]
+      }
+    ],
     screenRecording: true,
     keyboardEventLog: true,
     mouseEventLog: true,

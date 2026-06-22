@@ -266,9 +266,12 @@ backend, database, dom, mcp, or selector fields.
 for every real `step-trace.json` step with an action target anchor, the matching manifest `inputEvidence`
 entry must include at least one input event with the same `anchorId`.
 
-`capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs
-verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output redacted
-frames, and protected by raw-artifact git ignore. its blockers list must be empty.
+`capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs or
+context7 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output
+redacted frames, and protected by raw-artifact git ignore. its blockers list must be empty. it must include
+`verifiedDocReferences` entries with source type `official-docs` or `context7`, a non-empty reference, and
+behavior coverage for `screen-recording`, `keyboard-event-log`, `mouse-event-log`, `redacted-frame-output`,
+and `raw-artifacts-ignored`.
 
 `step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
 step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,

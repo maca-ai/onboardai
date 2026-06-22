@@ -1314,8 +1314,57 @@ function auditCaptureReadinessEvidence(
     }
   }
 
+  auditVerifiedDocReferences(proof, path, parsed.verifiedDocReferences, findings);
+
   if (!Array.isArray(parsed.blockers) || parsed.blockers.length !== 0) {
     findings.push({ tool: proof.tool, message: `${path} blockers must be empty` });
+  }
+}
+
+function auditVerifiedDocReferences(
+  proof: RealToolProofEvidence,
+  path: string,
+  references: unknown,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  const requiredBehaviors = new Set(["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]);
+
+  if (!Array.isArray(references) || references.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences must contain official or context7 documentation evidence` });
+    return;
+  }
+
+  const coveredBehaviors = new Set<string>();
+  references.forEach((reference, index) => {
+    if (!isRecord(reference)) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}] must be an object` });
+      return;
+    }
+
+    if (reference.sourceType !== "official-docs" && reference.sourceType !== "context7") {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].sourceType must be official-docs or context7` });
+    }
+
+    if (typeof reference.reference !== "string" || reference.reference.length === 0) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].reference must be a non-empty string` });
+    }
+
+    if (!Array.isArray(reference.behaviors) || reference.behaviors.length === 0) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].behaviors must list verified capture behaviors` });
+      return;
+    }
+
+    reference.behaviors.forEach((behavior) => {
+      if (typeof behavior === "string") {
+        coveredBehaviors.add(behavior);
+      }
+    });
+  });
+
+  for (const behavior of requiredBehaviors) {
+    if (!coveredBehaviors.has(behavior)) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences must cover ${behavior}` });
+    }
   }
 }
 
