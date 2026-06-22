@@ -847,6 +847,8 @@ function auditScreenInputEvidence(
     return;
   }
 
+  auditSchemaVersion(proof, path, parsed, findings);
+
   if (parsed.substrate !== "real-tool") {
     findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
   }
@@ -1261,6 +1263,8 @@ function auditCaptureReadinessEvidence(
     return;
   }
 
+  auditSchemaVersion(proof, path, parsed, findings);
+
   if (parsed.substrate !== "real-tool") {
     findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
   }
@@ -1470,6 +1474,8 @@ function auditFlowEvidence(
     findings.push({ tool: proof.tool, message: `${path} must contain an object` });
     return;
   }
+
+  auditSchemaVersion(proof, path, parsed, findings);
 
   if (parsed.substrate !== "real-tool") {
     findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
@@ -1691,6 +1697,8 @@ function auditOutcomeEvidence(
     return;
   }
 
+  auditSchemaVersion(proof, path, parsed, findings);
+
   if (parsed.substrate !== "real-tool") {
     findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
   }
@@ -1877,6 +1885,17 @@ function traceStepLabel(entry: unknown, index: number): string {
   }
 
   return `step-${index + 1}`;
+}
+
+function auditSchemaVersion(
+  proof: RealToolProofEvidence,
+  path: string,
+  parsed: Record<string, unknown>,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (parsed.schemaVersion !== 1) {
+    findings.push({ tool: proof.tool, message: `${path} schemaVersion must be 1` });
+  }
 }
 
 function auditEvidencePathField(

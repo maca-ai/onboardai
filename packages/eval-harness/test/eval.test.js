@@ -355,6 +355,49 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
 });
 
+test("real target-tool run artifact audit rejects unsupported real-run evidence schema versions", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (
+        path.endsWith("screen-input-evidence.json") ||
+        path.endsWith("capture-readiness.json") ||
+        path.endsWith("flow-evidence.json") ||
+        path.endsWith("outcome-evidence.json")
+      ) {
+        return JSON.stringify({ ...JSON.parse(realRunArtifactContent(path, "odoo")), schemaVersion: 2 });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json schemaVersion must be 1")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("capture-readiness.json schemaVersion must be 1")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("flow-evidence.json schemaVersion must be 1")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("outcome-evidence.json schemaVersion must be 1")), true);
+});
+
 test("real target-tool run artifact audit rejects unredacted shareable text artifacts", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

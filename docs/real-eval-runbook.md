@@ -126,6 +126,7 @@ during eval:
 after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
+- [ ] confirm every real-run JSON evidence file uses `schemaVersion: 1`.
 - [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
 - [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.

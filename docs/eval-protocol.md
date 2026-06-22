@@ -216,6 +216,10 @@ Markdown files, the referenced `flow.md`, and the referenced normalized capture 
 addresses, password assignments, token assignments, api key assignments, and session secret assignments make
 the real run invalid.
 
+real-run JSON evidence files must use `schemaVersion: 1`. this applies to `flow-evidence.json`,
+`capture-readiness.json`, `screen-input-evidence.json`, `outcome-evidence.json`, and the referenced normalized
+capture manifest.
+
 `failure-log.md` must state `no failure observed` for a passing real run. it must not contradict the passing
 outcome with result lines such as `- passed: false`, `- terminal state reached: false`,
 `- zero human help: false`, `- no invented steps: false`, or `- no privileged access: false`.
