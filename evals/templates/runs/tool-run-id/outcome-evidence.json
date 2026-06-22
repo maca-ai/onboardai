@@ -25,5 +25,9 @@
   "privilegedAccessViolations": [],
   "overlayMisreads": [],
   "finalScreenEvidencePath": "evals/runs/tool/replace-with-run-id/final-screen.png",
-  "stepTraceEvidencePath": "evals/runs/tool/replace-with-run-id/step-trace.json"
+  "stepTraceEvidencePath": "evals/runs/tool/replace-with-run-id/step-trace.json",
+  "heldOutEvidencePaths": [
+    "evals/runs/tool/replace-with-run-id/final-screen.png",
+    "evals/runs/tool/replace-with-run-id/eval-recording.mp4"
+  ]
 }

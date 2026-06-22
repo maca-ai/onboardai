@@ -1279,6 +1279,45 @@ test("real target-tool run artifact audit rejects failed outcome evidence", () =
   assert.equal(audit.findings.some((finding) => finding.message.includes("evals/runs/odoo/real-proof/step-trace.json")), true);
 });
 
+test("real target-tool run artifact audit rejects held-out claims without same-run eval evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/tmp/eval-recording.mp4");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("outcome-evidence.json")) {
+        return JSON.stringify({
+          ...outcomeEvidence("odoo"),
+          heldOutEvidencePaths: [
+            "captures/redacted/capture-real-odoo-001/frame-0001.png",
+            "evals/runs/odoo/real-proof/tmp/eval-recording.mp4"
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("heldOutEvidencePaths[0] must point to evals/runs/odoo/real-proof/")),
+    true
+  );
+  assert.equal(audit.findings.some((finding) => finding.message.includes("not capture evidence")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must not use raw, unsafe, or tmp path segments")), true);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("heldOutEvidencePaths must include evals/runs/odoo/real-proof/final-screen.png")),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("heldOutEvidencePaths must include evals/runs/odoo/real-proof/eval-recording.mp4")),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects outcome counts not backed by step trace", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -1734,7 +1773,8 @@ function outcomeEvidence(tool) {
     privilegedAccessViolations: [],
     overlayMisreads: [],
     finalScreenEvidencePath: `evals/runs/${tool}/real-proof/final-screen.png`,
-    stepTraceEvidencePath: `evals/runs/${tool}/real-proof/step-trace.json`
+    stepTraceEvidencePath: `evals/runs/${tool}/real-proof/step-trace.json`,
+    heldOutEvidencePaths: [`evals/runs/${tool}/real-proof/final-screen.png`, `evals/runs/${tool}/real-proof/eval-recording.mp4`]
   };
 }
 

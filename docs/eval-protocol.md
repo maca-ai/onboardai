@@ -298,6 +298,12 @@ human-help incidents, zero invented-step incidents, no privileged access violati
 and senior reviewer signoff. its `stepCount` and `stepsCompleted` values must match the same-run
 `step-trace.json` step count and successful step count.
 
+`outcome-evidence.json` `heldOutEvidencePaths` must include same-run held-out eval artifacts, including
+`evals/runs/<tool>/<run-id>/final-screen.png` and `evals/runs/<tool>/<run-id>/eval-recording.mp4`. these paths
+must exist under the same run directory and must not point to `captures/`, raw, unsafe, tmp, absolute, or
+traversal paths. capture artifacts can prove the senior demonstration, but they cannot prove the held-out
+naive-user eval outcome.
+
 validate a filled real run directory before creating the live proof summary:
 
 ```sh

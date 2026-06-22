@@ -351,7 +351,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
           privilegedAccessViolations: [],
           overlayMisreads: [],
           finalScreenEvidencePath: `evals/runs/odoo/${runId}/final-screen.png`,
-          stepTraceEvidencePath: `evals/runs/odoo/${runId}/step-trace.json`
+          stepTraceEvidencePath: `evals/runs/odoo/${runId}/step-trace.json`,
+          heldOutEvidencePaths: [`evals/runs/odoo/${runId}/final-screen.png`, `evals/runs/odoo/${runId}/eval-recording.mp4`]
         },
         null,
         2

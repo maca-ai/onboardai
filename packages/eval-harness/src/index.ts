@@ -1841,6 +1841,54 @@ function auditOutcomeEvidence(
     references,
     findings
   );
+  auditHeldOutEvidencePaths(proof, runDir, path, parsed.heldOutEvidencePaths, existsPath, references, findings);
+}
+
+function auditHeldOutEvidencePaths(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  value: unknown,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  const requiredPaths = [`${runDir}/final-screen.png`, `${runDir}/eval-recording.mp4`];
+
+  if (!Array.isArray(value) || value.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} heldOutEvidencePaths must contain same-run held-out eval evidence paths` });
+    return;
+  }
+
+  const heldOutPaths = new Set<string>();
+  value.forEach((heldOutPath, index) => {
+    auditEvidencePathField(
+      proof.tool,
+      path,
+      `heldOutEvidencePaths[${index}]`,
+      heldOutPath,
+      `${runDir}/`,
+      existsPath,
+      references,
+      findings
+    );
+
+    if (typeof heldOutPath === "string") {
+      heldOutPaths.add(heldOutPath);
+      if (heldOutPath.startsWith("captures/")) {
+        findings.push({
+          tool: proof.tool,
+          message: `${path} heldOutEvidencePaths[${index}] must point to held-out eval run evidence, not capture evidence`
+        });
+      }
+    }
+  });
+
+  for (const requiredPath of requiredPaths) {
+    if (!heldOutPaths.has(requiredPath)) {
+      findings.push({ tool: proof.tool, message: `${path} heldOutEvidencePaths must include ${requiredPath}` });
+    }
+  }
 }
 
 function readStepTraceCompletionSummary(
@@ -1986,6 +2034,10 @@ function auditEvidencePathField(
     findings.push({ tool, message: `${sourcePath} ${field} points to unsafe capture evidence` });
   }
 
+  if (hasUnsafePathSegment(value)) {
+    findings.push({ tool, message: `${sourcePath} ${field} must not use raw, unsafe, or tmp path segments` });
+  }
+
   const matchesExpected =
     expectedPrefixOrExactPath.endsWith("/") ? value.startsWith(expectedPrefixOrExactPath) : value === expectedPrefixOrExactPath;
   if (!matchesExpected) {
@@ -2056,6 +2108,10 @@ function isAllowedShareableEvidencePath(path: string): boolean {
 
 function isUnsafeEvidencePath(path: string): boolean {
   return path.startsWith("captures/raw/") || path.startsWith("captures/unsafe/") || path.startsWith("captures/tmp/");
+}
+
+function hasUnsafePathSegment(path: string): boolean {
+  return path.split("/").some((segment) => segment === "raw" || segment === "unsafe" || segment === "tmp");
 }
 
 function isRedactedCaptureFramePath(path: string): boolean {

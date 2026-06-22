@@ -1350,6 +1350,27 @@ latest results on 2026-06-22:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 
+latest results on 2026-06-22:
+
+- changed: `outcome-evidence.json` now requires `heldOutEvidencePaths` that include same-run held-out eval artifacts, specifically `final-screen.png` and `eval-recording.mp4`; the real-run validator rejects held-out outcome paths that point to capture storage or leave the run directory.
+- eval showed: targeted eval-harness coverage now rejects a run that sets `heldOutFromCapture: true` while backing it with `captures/redacted/...`; CLI complete-run fixture still passes after adding same-run held-out paths.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, fill same-run `final-screen.png`, `eval-recording.mp4`, `step-trace.json`, `outcome-evidence.json`, capture evidence, and reviewer checklist from a clean held-out run, then dry-run `proof real-run`.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 45 tests, 45 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 9 tests, 9 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 80 tests, 80 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 24 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1409,3 +1430,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-22: audited real-proof status gate added: full-goal status now rejects unaudited real-proof summary booleans and counts real proofs only after the referenced run directory passes the artifact audit.
 - 2026-06-22: proof-summary derived-field rejection added: `real-tool-proof-*.json` files containing `runEvidenceAudited` are invalid because that field is created only by the validator after run-directory audit.
 - 2026-06-22: capture-readiness documentation evidence gate added: real-run `capture-readiness.json` must cite official docs or context7 references covering every required native capture behavior.
+- 2026-06-22: held-out outcome evidence path gate added: `outcome-evidence.json` must cite same-run held-out eval artifacts and cannot use senior capture storage as held-out eval proof.
