@@ -487,6 +487,60 @@ test("real target-tool run artifact audit rejects manifests missing per-step inp
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvidence must include real-run step step-003")), true);
 });
 
+test("real target-tool run artifact audit rejects privileged input event evidence in normalized manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          inputEvidence: [
+            {
+              stepId: "step-001",
+              inputEvents: [{ kind: "api", event: "write", apiEndpoint: "/odoo/opportunity" }]
+            },
+            {
+              stepId: "step-002",
+              inputEvents: [{ kind: "mouse", event: "click", selector: "#qualified-stage" }]
+            },
+            {
+              stepId: "step-003",
+              inputEvents: [{ kind: "keyboard", event: "" }]
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvents[0].kind must be mouse or keyboard")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field apiEndpoint")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field selector")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvents[0].event must be a non-empty string")), true);
+});
+
 test("real target-tool run artifact audit rejects screen-input frames not listed in the normalized manifest", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

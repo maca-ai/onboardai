@@ -1050,6 +1050,36 @@ function auditNormalizedCaptureManifest(
 
       if (!Array.isArray(entry.inputEvents) || entry.inputEvents.length === 0) {
         findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}].inputEvents must contain screen-plus-input events` });
+      } else {
+        entry.inputEvents.forEach((event, eventIndex) => {
+          if (!isRecord(event)) {
+            findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}].inputEvents[${eventIndex}] must be an object` });
+            return;
+          }
+
+          if (event.kind !== "mouse" && event.kind !== "keyboard") {
+            findings.push({
+              tool: proof.tool,
+              message: `${manifestPath} inputEvidence[${index}].inputEvents[${eventIndex}].kind must be mouse or keyboard`
+            });
+          }
+
+          if (typeof event.event !== "string" || event.event.length === 0) {
+            findings.push({
+              tool: proof.tool,
+              message: `${manifestPath} inputEvidence[${index}].inputEvents[${eventIndex}].event must be a non-empty string`
+            });
+          }
+
+          for (const field of Object.keys(event)) {
+            if (isPrivilegedInputEvidenceField(field)) {
+              findings.push({
+                tool: proof.tool,
+                message: `${manifestPath} inputEvidence[${index}].inputEvents[${eventIndex}] must not include privileged proof field ${field}`
+              });
+            }
+          }
+        });
       }
     });
 
@@ -1607,6 +1637,10 @@ function isRedactedCaptureFramePath(path: string): boolean {
 
 function isRawArtifactPathLeak(field: string, value: string): boolean {
   return field.toLowerCase().includes("path") || isAbsolutePath(value) || value.startsWith("file://") || isUnsafeEvidencePath(value);
+}
+
+function isPrivilegedInputEvidenceField(field: string): boolean {
+  return /(?:api|backend|database|dom|mcp|selector)/i.test(field);
 }
 
 function isAbsolutePath(path: string): boolean {

@@ -140,6 +140,7 @@ after eval:
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json`.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] confirm normalized manifest raw artifact summaries do not contain path-like fields such as `path`, `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references.
+- [ ] confirm every normalized manifest input event has `kind` set to `mouse` or `keyboard`, has a non-empty event name, and contains no api/backend/database/dom/mcp/selector fields.
 - [ ] confirm every normalized manifest redacted frame path and every `screen-input-evidence.json` redacted frame evidence path points to `captures/redacted/<capture-id>/frame-*.png`.
 - [ ] confirm every `screen-input-evidence.json` redacted frame evidence path is listed in the normalized capture manifest.
 - [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.

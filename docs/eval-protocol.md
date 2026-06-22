@@ -235,6 +235,10 @@ id in the real `step-trace.json`. raw artifact summaries must not include path-l
 `redactedFrameEvidencePaths` entry in `screen-input-evidence.json` must also be listed in that normalized
 manifest.
 
+each normalized manifest `inputEvidence[].inputEvents[]` entry must be a captured mouse or keyboard event
+with a non-empty event name. input event records must not include privileged proof handles such as api,
+backend, database, dom, mcp, or selector fields.
+
 `capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs
 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output redacted
 frames, and protected by raw-artifact git ignore. its blockers list must be empty.
