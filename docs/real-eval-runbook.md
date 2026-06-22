@@ -129,6 +129,7 @@ after eval:
 - [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
+- [ ] confirm every `step-trace.json` entry has `missingVisibleText: []` and `expectedVisibleText` exactly matching that step's `flow.md` expected visible text.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.

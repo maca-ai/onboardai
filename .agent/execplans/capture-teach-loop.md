@@ -133,6 +133,7 @@ do not weaken any constraint to make an eval pass.
 - [x] reject path-like raw artifact leaks in normalized capture manifests
 - [x] restrict normalized input evidence to mouse and keyboard event observations
 - [x] require normalized input evidence to include traced action target anchors
+- [x] require real-run visible text evidence to be grounded in `flow.md`
 - [ ] complete retrospective
 
 ## surprises-and-discoveries
@@ -276,6 +277,9 @@ record observations here.
 
 - observation: real run validation now rejects per-step input evidence that does not include the traced action target anchor.
   evidence: the normalized manifest validator reads `step-trace.json` action target anchors and requires the matching `inputEvidence` entry to include the same `anchorId`; a regression using unrelated per-step mouse events fails validation; targeted eval-harness tests passed 33/33.
+
+- observation: real run validation now rejects step traces whose visible text evidence does not match the referenced flow.
+  evidence: `step-trace.json` entries must have empty `missingVisibleText`, and `expectedVisibleText` must equal the matching `flow.md` step's expected visible text; targeted eval-harness tests passed 34/34.
 
 ## decision-log
 
@@ -454,6 +458,10 @@ record observations here.
 - decision: ground normalized input evidence in the traced action target anchor.
   rationale: a mouse or keyboard event for the right step can still be unrelated to the taught action; comparing input event `anchorId` values to `step-trace.json` action target anchors prevents unrelated input logs from satisfying the screen-plus-input proof.
   date-author: 2026-06-22, codex input target grounding gate.
+
+- decision: ground real step visible text evidence in `flow.md`.
+  rationale: a real proof should not pass when the trace claims screen recognition but the visible text evidence differs from the taught screen state or still reports missing expected text.
+  date-author: 2026-06-22, codex visible text grounding gate.
 
 ## outcomes-and-retrospective
 

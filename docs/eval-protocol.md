@@ -250,6 +250,8 @@ instruction guidance, overlay confidence at or above `0.75`, a non-empty highlig
 user action, and a current frame path under the same run directory. the current frame path must point to a
 same-run redacted-frame PNG, for example `evals/runs/<tool>/<run-id>/redacted-frame-0001.png`; a same-run
 log, JSON file, final screen, raw capture, unsafe file, or temporary file cannot stand in for step frame evidence.
+each step's `expectedVisibleText` must match the referenced `flow.md` step expected visible text, and
+`missingVisibleText` must be an empty array.
 
 `flow-evidence.json` must point to the local `flow.md` used for overlay guidance. the referenced flow must
 parse and validate, match the target tool, match the recorded flow id and terminal business state, and its

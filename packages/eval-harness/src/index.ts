@@ -1256,6 +1256,10 @@ function auditRealStepTrace(
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayConfidence must be at least 0.75` });
     }
 
+    if (!Array.isArray(entry.missingVisibleText) || entry.missingVisibleText.length !== 0) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} missingVisibleText must be empty` });
+    }
+
     if (typeof entry.highlightedAnchorId !== "string" || entry.highlightedAnchorId.length === 0) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} highlightedAnchorId must be present` });
     }
@@ -1392,6 +1396,10 @@ function auditStepTraceGrounding(
 
     if (entry.overlayMessage !== step.instruction.text) {
       findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} overlayMessage must be grounded in ${flowEvidencePath}` });
+    }
+
+    if (!arrayEquals(entry.expectedVisibleText, step["expected-state"]["visible-text"] ?? [])) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} expectedVisibleText must match flow expected visible text` });
     }
 
     if (entry.highlightedAnchorId !== step.instruction["highlight-anchor-id"]) {
