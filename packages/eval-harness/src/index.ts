@@ -1036,12 +1036,14 @@ function auditNormalizedCaptureManifest(
     findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must contain per-step input evidence` });
   } else {
     const inputEvidenceStepIds = new Set<string>();
+    const inputEvidenceAnchorIdsByStep = new Map<string, Set<string>>();
     parsed.inputEvidence.forEach((entry, index) => {
       if (!isRecord(entry)) {
         findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}] must be an object` });
         return;
       }
 
+      const stepId = typeof entry.stepId === "string" && entry.stepId.length > 0 ? entry.stepId : null;
       if (typeof entry.stepId !== "string" || entry.stepId.length === 0) {
         findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence[${index}].stepId must be a non-empty string` });
       } else {
@@ -1071,6 +1073,12 @@ function auditNormalizedCaptureManifest(
             });
           }
 
+          if (stepId && typeof event.anchorId === "string" && event.anchorId.length > 0) {
+            const anchorIds = inputEvidenceAnchorIdsByStep.get(stepId) ?? new Set<string>();
+            anchorIds.add(event.anchorId);
+            inputEvidenceAnchorIdsByStep.set(stepId, anchorIds);
+          }
+
           for (const field of Object.keys(event)) {
             if (isPrivilegedInputEvidenceField(field)) {
               findings.push({
@@ -1083,9 +1091,16 @@ function auditNormalizedCaptureManifest(
       }
     });
 
-    for (const stepId of readStepTraceIds(proof, stepTracePath, stepTraceContent, findings)) {
-      if (!inputEvidenceStepIds.has(stepId)) {
-        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must include real-run step ${stepId}` });
+    for (const step of readStepTraceActionTargets(proof, stepTracePath, stepTraceContent, findings)) {
+      if (!inputEvidenceStepIds.has(step.stepId)) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must include real-run step ${step.stepId}` });
+      }
+
+      if (step.targetAnchorId && !inputEvidenceAnchorIdsByStep.get(step.stepId)?.has(step.targetAnchorId)) {
+        findings.push({
+          tool: proof.tool,
+          message: `${manifestPath} inputEvidence for real-run step ${step.stepId} must include action target anchor ${step.targetAnchorId}`
+        });
       }
     }
   }
@@ -1093,12 +1108,12 @@ function auditNormalizedCaptureManifest(
   return result;
 }
 
-function readStepTraceIds(
+function readStepTraceActionTargets(
   proof: RealToolProofEvidence,
   stepTracePath: string,
   stepTraceContent: string | null,
   findings: CaptureTeachGoalStatusFinding[]
-): readonly string[] {
+): readonly { readonly stepId: string; readonly targetAnchorId: string | null }[] {
   if (stepTraceContent === null) {
     return [];
   }
@@ -1116,7 +1131,18 @@ function readStepTraceIds(
     return [];
   }
 
-  return parsedTrace.flatMap((entry) => (isRecord(entry) && typeof entry.stepId === "string" && entry.stepId.length > 0 ? [entry.stepId] : []));
+  return parsedTrace.flatMap((entry) => {
+    if (!isRecord(entry) || typeof entry.stepId !== "string" || entry.stepId.length === 0) {
+      return [];
+    }
+
+    const targetAnchorId =
+      isRecord(entry.actionPrimitive) && typeof entry.actionPrimitive.targetAnchorId === "string" && entry.actionPrimitive.targetAnchorId.length > 0
+        ? entry.actionPrimitive.targetAnchorId
+        : null;
+
+    return [{ stepId: entry.stepId, targetAnchorId }];
+  });
 }
 
 function auditCaptureReadinessEvidence(
