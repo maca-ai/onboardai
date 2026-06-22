@@ -201,6 +201,19 @@ test("real proof evidence file parser rejects malformed proof contracts", () => 
   assert.equal(parsed.findings.some((finding) => finding.message.includes("nativeScreenPlusInputCaptureVerified")), true);
 });
 
+test("real proof evidence file parser rejects self-attested run evidence audit markers", () => {
+  const parsed = parseRealToolProofEvidenceFile(
+    {
+      ...realToolProof("odoo"),
+      runEvidenceAudited: true
+    },
+    "evals/reports/real-tool-proof-odoo.json"
+  );
+
+  assert.equal(parsed.proofs.length, 0);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("runEvidenceAudited is derived")), true);
+});
+
 test("real proof evidence file parser rejects incomplete summaries and misplaced evidence paths", () => {
   const parsed = parseRealToolProofEvidenceFile(
     {

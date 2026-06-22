@@ -171,6 +171,8 @@ the full-goal status must not trust real-tool proof summary booleans by themselv
 only after the referenced run directory has passed the artifact gate in the same process; the validator then
 marks that proof internally as run-evidence-audited before including it in full-goal status. do not add an
 operator-written `runEvidenceAudited` field to `real-tool-proof-*.json`.
+summary files that include `runEvidenceAudited` are invalid because that field is derived proof state, not
+operator evidence.
 
 ## real target-tool proof contract
 

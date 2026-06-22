@@ -473,6 +473,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     assert.equal(summary.evidencePath, `evals/runs/odoo/${runId}/step-trace.json`);
     assert.equal(summary.heldOutTeachingEvalPassed, true);
     assert.equal(summary.nativeScreenPlusInputCaptureVerified, true);
+    assert.equal(summary.runEvidenceAudited, undefined);
   } finally {
     rmSync(runDir, { recursive: true, force: true });
     rmSync(normalizedDir, { recursive: true, force: true });

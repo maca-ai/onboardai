@@ -159,7 +159,7 @@ after eval:
 - [ ] after the dry run passes, run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id> --write-summary` to create the real-tool proof summary.
 - [ ] only keep the real-tool proof summary if the eval reached the terminal business state with zero human help, zero invented steps, no privileged access, and reviewer acceptance.
 - [ ] run `pnpm proof:status` and confirm the real-tool proof is counted only after the run-directory artifact gate accepts it.
-- [ ] do not hand-write `runEvidenceAudited`; it is a derived validator marker, not a field in `real-tool-proof-*.json`.
+- [ ] confirm `real-tool-proof-*.json` does not contain `runEvidenceAudited`; that field is a derived validator marker and makes summary files invalid when hand-written.
 
 ## reviewer signoff checklist
 
@@ -211,3 +211,4 @@ evals/templates/runs/tool-run-id/outcome-evidence.json
 do not copy the proof summary template into `evals/reports/real-tool-proof-*.json` until the real run artifacts exist and the reviewer has accepted every taught step.
 the proof summary template still does not prove the run by itself; full-goal status counts it only after the
 referenced run directory is audited and accepted.
+do not add `runEvidenceAudited` to proof summaries.

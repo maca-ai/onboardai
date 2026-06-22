@@ -405,6 +405,10 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
     findings.push({ tool, message: `${sourcePath} substrate must be real-tool` });
   }
 
+  if ("runEvidenceAudited" in input) {
+    findings.push({ tool, message: `${sourcePath} runEvidenceAudited is derived by the validator and must not be written in proof summaries` });
+  }
+
   for (const field of [
     "heldOutTeachingEvalPassed",
     "nativeScreenPlusInputCaptureVerified",
