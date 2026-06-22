@@ -1402,6 +1402,10 @@ function auditStepTraceGrounding(
       findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} expectedVisibleText must match flow expected visible text` });
     }
 
+    if (!arrayEquals(entry.matchedVisibleText, step["expected-state"]["visible-text"] ?? [])) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} matchedVisibleText must match flow expected visible text` });
+    }
+
     if (entry.highlightedAnchorId !== step.instruction["highlight-anchor-id"]) {
       findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} highlightedAnchorId must match flow highlight anchor` });
     }

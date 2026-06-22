@@ -831,6 +831,7 @@ test("real target-tool run artifact audit rejects ungrounded step visible text e
       if (path.endsWith("step-trace.json")) {
         const trace = flowGroundedTrace("odoo");
         trace[0].expectedVisibleText = ["unrelated dashboard"];
+        trace[0].matchedVisibleText = ["pipeline"];
         trace[0].missingVisibleText = ["pipeline"];
         return JSON.stringify(trace);
       }
@@ -844,6 +845,54 @@ test("real target-tool run artifact audit rejects ungrounded step visible text e
   assert.equal(
     audit.findings.some((finding) =>
       finding.message.includes("step-001 expectedVisibleText must match flow expected visible text")
+    ),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("step-001 matchedVisibleText must match flow expected visible text")
+    ),
+    true
+  );
+});
+
+test("real target-tool run artifact audit rejects partial matched visible text evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = flowGroundedTrace("odoo");
+        trace[0].matchedVisibleText = ["pipeline"];
+        return JSON.stringify(trace);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("step-001 matchedVisibleText must match flow expected visible text")
     ),
     true
   );
