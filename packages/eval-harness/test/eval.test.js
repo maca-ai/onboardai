@@ -894,6 +894,45 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
   assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
 });
 
+test("real target-tool run artifact audit rejects overlay automation exposure in step trace", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = flowGroundedTrace("odoo");
+        trace[0].overlayCanAutomateInput = true;
+        trace[0].overlayAutomation = { clickTarget: "opportunity-card" };
+        return JSON.stringify(trace);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlayCanAutomateInput must be false")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlay must not expose input automation field overlayAutomation")), true);
+});
+
 test("real target-tool run artifact audit rejects ungrounded step visible text evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -1358,6 +1397,7 @@ function flowGroundedTrace(tool) {
     missingVisibleText: [],
     overlayConfidence: 0.9,
     overlayKind: "instruction",
+    overlayCanAutomateInput: false,
     overlayMessage: step.overlayMessage,
     highlightedAnchorId: step.anchorId,
     actionPrimitive: {

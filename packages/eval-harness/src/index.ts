@@ -1351,6 +1351,8 @@ function auditRealStepTrace(
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayConfidence must be at least 0.75` });
     }
 
+    auditOverlayAutomationExposure(proof, path, stepLabel, entry, findings);
+
     if (!Array.isArray(entry.missingVisibleText) || entry.missingVisibleText.length !== 0) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} missingVisibleText must be empty` });
     }
@@ -1382,6 +1384,66 @@ function auditRealStepTrace(
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a PNG frame artifact` });
     }
   });
+}
+
+function auditOverlayAutomationExposure(
+  proof: RealToolProofEvidence,
+  path: string,
+  stepLabel: string,
+  entry: Record<string, unknown>,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (entry.overlayCanAutomateInput !== false) {
+    findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayCanAutomateInput must be false` });
+  }
+
+  for (const [field, value] of Object.entries(entry)) {
+    if (field === "actionPrimitive" || field === "overlayCanAutomateInput") {
+      continue;
+    }
+
+    auditForbiddenOverlayAutomationField(proof, path, stepLabel, field, value, findings);
+  }
+}
+
+function auditForbiddenOverlayAutomationField(
+  proof: RealToolProofEvidence,
+  path: string,
+  stepLabel: string,
+  field: string,
+  value: unknown,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (field === "canAutomateInput") {
+    if (value !== false) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} canAutomateInput must be false` });
+    }
+    return;
+  }
+
+  if (isForbiddenOverlayAutomationField(field)) {
+    findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlay must not expose input automation field ${field}` });
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => auditForbiddenOverlayAutomationField(proof, path, stepLabel, `${field}[${index}]`, item, findings));
+    return;
+  }
+
+  if (!isRecord(value)) {
+    return;
+  }
+
+  for (const [nestedField, nestedValue] of Object.entries(value)) {
+    auditForbiddenOverlayAutomationField(proof, path, stepLabel, nestedField, nestedValue, findings);
+  }
+}
+
+function isForbiddenOverlayAutomationField(field: string): boolean {
+  return /automation|automate|automated|clickCommand|clickTarget|typeCommand|typeText|submitCommand|submitTarget|approveCommand|approveTarget|deleteCommand|deleteTarget|mutateToolState|stateMutation/i.test(
+    field
+  );
 }
 
 function auditFlowEvidence(

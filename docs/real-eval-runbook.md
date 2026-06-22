@@ -126,7 +126,8 @@ during eval:
 after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
-- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
+- [ ] confirm every `step-trace.json` entry is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
+- [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
 - [ ] confirm every `step-trace.json` entry has `missingVisibleText: []`, `expectedVisibleText` exactly matching that step's `flow.md` expected visible text, and `matchedVisibleText` proving the same visible text was observed.

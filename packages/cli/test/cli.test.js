@@ -230,6 +230,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
             missingVisibleText: [],
             overlayConfidence: 0.9,
             overlayKind: "instruction",
+            overlayCanAutomateInput: false,
             overlayMessage: "select the opportunity card named demo opportunity.",
             highlightedAnchorId: "opportunity-card",
             actionPrimitive: {
@@ -250,6 +251,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
             missingVisibleText: [],
             overlayConfidence: 0.9,
             overlayKind: "instruction",
+            overlayCanAutomateInput: false,
             overlayMessage: "select the qualified stage.",
             highlightedAnchorId: "qualified-stage",
             actionPrimitive: {
@@ -270,6 +272,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
             missingVisibleText: [],
             overlayConfidence: 0.9,
             overlayKind: "instruction",
+            overlayCanAutomateInput: false,
             overlayMessage: "save the opportunity so the qualified stage remains visible.",
             highlightedAnchorId: "save-button",
             actionPrimitive: {
