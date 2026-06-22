@@ -167,6 +167,11 @@ this reads the existing fixture proof audit plus any live real-tool proof summar
 directories through the same artifact gate, refreshes `evals/reports/full-goal-proof-status.json`, and exits
 non-zero until both real odoo and real notion proof are present and valid.
 
+the full-goal status must not trust real-tool proof summary booleans by themselves. a real proof object counts
+only after the referenced run directory has passed the artifact gate in the same process; the validator then
+marks that proof internally as run-evidence-audited before including it in full-goal status. do not add an
+operator-written `runEvidenceAudited` field to `real-tool-proof-*.json`.
+
 ## real target-tool proof contract
 
 real target-tool proof, when available, is loaded from:
@@ -192,6 +197,10 @@ each file must contain one proof object:
   "evidencePath": "evals/runs/odoo/<run-id>/step-trace.json"
 }
 ```
+
+this summary is only a pointer plus claims. it is not sufficient proof until
+`evals/runs/<tool>/<run-id>/` is audited and accepted by `pnpm proof:status` or
+`pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>`.
 
 the `evidencePath` must exist on disk under `evals/runs/<tool>/<run-id>/step-trace.json`. the proof object is
 only a summary pointer; it does not replace the required run artifacts, native screen-plus-input capture

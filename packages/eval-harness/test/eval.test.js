@@ -8,6 +8,7 @@ import {
   auditEvalProofResults,
   auditRealToolRunArtifacts,
   auditShareableEvidencePaths,
+  markRealToolProofEvidenceAudited,
   matchScreenState,
   parseRealToolProofEvidenceFile,
   runDeterministicEval
@@ -141,12 +142,29 @@ test("full goal status remains unproven when only fixture proof passes", () => {
   assert.equal(status.findings.some((finding) => finding.tool === "notion" && finding.message.includes("missing native screen-plus-input")), true);
 });
 
-test("full goal status passes only with real proof for both required tools", () => {
+test("full goal status rejects unaudited real proof summary booleans", () => {
   const status = auditCaptureTeachGoalStatus({
     fixtureAudit: passingFixtureAudit(),
     realToolProofs: [
       realToolProof("odoo"),
       realToolProof("notion")
+    ]
+  });
+
+  assert.equal(status.fullGoalProven, false);
+  assert.equal(status.fixtureProofPassed, true);
+  assert.equal(status.realToolProofPassed, false);
+  assert.equal(status.summary.realToolsPassed, 0);
+  assert.equal(status.findings.some((finding) => finding.tool === "odoo" && finding.message.includes("run-directory evidence was not audited")), true);
+  assert.equal(status.findings.some((finding) => finding.tool === "notion" && finding.message.includes("run-directory evidence was not audited")), true);
+});
+
+test("full goal status passes only with evidence-audited real proof for both required tools", () => {
+  const status = auditCaptureTeachGoalStatus({
+    fixtureAudit: passingFixtureAudit(),
+    realToolProofs: [
+      auditedRealToolProof("odoo"),
+      auditedRealToolProof("notion")
     ]
   });
 
@@ -223,11 +241,11 @@ test("full goal status rejects incomplete real proof summaries without weakening
     fixtureAudit: passingFixtureAudit(),
     realToolProofs: [
       {
-        ...realToolProof("odoo"),
+        ...auditedRealToolProof("odoo"),
         zeroHumanHelp: false,
         evidencePath: "captures/raw/odoo/step-trace.json"
       },
-      realToolProof("notion")
+      auditedRealToolProof("notion")
     ]
   });
 
@@ -1407,6 +1425,39 @@ function realToolProof(tool) {
   };
 }
 
+function auditedRealToolProof(tool) {
+  const proof = realToolProof(tool);
+  const existing = realRunExistingPaths(tool);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => realRunArtifactContent(path, tool)
+  );
+  const audited = markRealToolProofEvidenceAudited(proof, audit);
+  assert.notEqual(audited, null);
+  return audited;
+}
+
+function realRunExistingPaths(tool) {
+  return new Set([
+    `evals/runs/${tool}/real-proof/step-trace.json`,
+    `evals/runs/${tool}/real-proof/final-screen.png`,
+    `evals/runs/${tool}/real-proof/eval-recording.mp4`,
+    `evals/runs/${tool}/real-proof/failure-log.md`,
+    `evals/runs/${tool}/real-proof/reviewer-checklist.md`,
+    `evals/runs/${tool}/real-proof/flow-evidence.json`,
+    `evals/runs/${tool}/real-proof/capture-readiness.json`,
+    `evals/runs/${tool}/real-proof/screen-input-evidence.json`,
+    `evals/runs/${tool}/real-proof/outcome-evidence.json`,
+    `evals/runs/${tool}/real-proof/redacted-frame-0001.png`,
+    `evals/runs/${tool}/real-proof/redacted-frame-0002.png`,
+    `evals/runs/${tool}/real-proof/redacted-frame-0003.png`,
+    `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
+    `captures/normalized/capture-real-${tool}-001/manifest.json`,
+    `captures/redacted/capture-real-${tool}-001/frame-0001.png`
+  ]);
+}
+
 function screenInputEvidence(tool) {
   return {
     schemaVersion: 1,
@@ -1551,21 +1602,21 @@ function flowStepDefinitions(tool) {
     {
       stepId: "step-001",
       title: "open the task row",
-      expectedVisibleText: ["demo tasks", "demo task", "not started"],
+      expectedVisibleText: ["project tasks", "demo task", "status: not started"],
       overlayMessage: "select the row for demo task.",
       anchorId: "demo-task-row"
     },
     {
       stepId: "step-002",
       title: "open status property",
-      expectedVisibleText: ["demo task", "status", "not started"],
+      expectedVisibleText: ["demo task", "status", "not started", "ready for review"],
       overlayMessage: "open the status property.",
       anchorId: "status-property"
     },
     {
       stepId: "step-003",
       title: "choose ready for review",
-      expectedVisibleText: ["demo task", "ready for review"],
+      expectedVisibleText: ["status", "not started", "ready for review"],
       overlayMessage: "select ready for review.",
       anchorId: "ready-for-review-option"
     }

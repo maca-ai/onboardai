@@ -7,12 +7,14 @@ import {
   auditEvalProofResults,
   auditRealToolRunArtifacts,
   auditShareableEvidencePaths,
+  markRealToolProofEvidenceAudited,
   parseRealToolProofEvidenceFile,
   runDeterministicEval,
   type CaptureTeachGoalStatusFinding,
   type CaptureTeachGoalStatusResult,
   type EvalProofAuditResult,
   type EvalRunResult,
+  type AuditedRealToolProofEvidence,
   type RealToolProofEvidence,
   type ShareableEvidencePathReference
 } from "@onboardai/eval-harness";
@@ -435,10 +437,10 @@ function realToolProofForRun(tool: ToolName, runId: string): RealToolProofEviden
 }
 
 function loadRealToolProofEvidence(requiredTools: readonly ToolName[]): {
-  readonly proofs: readonly RealToolProofEvidence[];
+  readonly proofs: readonly AuditedRealToolProofEvidence[];
   readonly findings: readonly CaptureTeachGoalStatusFinding[];
 } {
-  const proofs: RealToolProofEvidence[] = [];
+  const proofs: AuditedRealToolProofEvidence[] = [];
   const findings: CaptureTeachGoalStatusFinding[] = [];
 
   for (const tool of requiredTools) {
@@ -468,8 +470,9 @@ function loadRealToolProofEvidence(requiredTools: readonly ToolName[]): {
 
       findings.push(...artifactAudit.findings);
 
-      if (artifactAudit.passed) {
-        proofs.push(proof);
+      const auditedProof = markRealToolProofEvidenceAudited(proof, artifactAudit);
+      if (auditedProof) {
+        proofs.push(auditedProof);
       }
     }
   }

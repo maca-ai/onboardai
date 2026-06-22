@@ -142,6 +142,10 @@ export interface RealToolProofEvidence {
   readonly evidencePath: string;
 }
 
+export interface AuditedRealToolProofEvidence extends RealToolProofEvidence {
+  readonly runEvidenceAudited: true;
+}
+
 export interface CaptureTeachGoalStatusFinding {
   readonly tool: string;
   readonly message: string;
@@ -153,7 +157,7 @@ export interface CaptureTeachGoalStatusResult {
   readonly realToolProofPassed: boolean;
   readonly requiredTools: readonly string[];
   readonly findings: readonly CaptureTeachGoalStatusFinding[];
-  readonly realToolProofs: readonly RealToolProofEvidence[];
+  readonly realToolProofs: readonly AuditedRealToolProofEvidence[];
   readonly summary: {
     readonly fixtureToolsPassed: number;
     readonly fixtureToolsRequired: number;
@@ -324,14 +328,14 @@ export function auditShareableEvidencePaths(
 
 export function auditCaptureTeachGoalStatus(input: {
   readonly fixtureAudit: EvalProofAuditResult;
-  readonly realToolProofs?: readonly RealToolProofEvidence[];
+  readonly realToolProofs?: readonly AuditedRealToolProofEvidence[];
   readonly realToolProofFindings?: readonly CaptureTeachGoalStatusFinding[];
   readonly requiredTools?: readonly string[];
 }): CaptureTeachGoalStatusResult {
   const requiredTools = input.requiredTools ?? ["odoo", "notion"];
   const realToolProofs = input.realToolProofs ?? [];
   const findings: CaptureTeachGoalStatusFinding[] = [...(input.realToolProofFindings ?? [])];
-  const realProofsByTool = new Map<string, RealToolProofEvidence[]>();
+  const realProofsByTool = new Map<string, AuditedRealToolProofEvidence[]>();
 
   if (!input.fixtureAudit.passed) {
     findings.push({ tool: "fixture", message: "fixture proof audit did not pass" });
@@ -611,6 +615,18 @@ export function auditRealToolRunArtifacts(
   return artifactAuditResult(runDir, references, findings, requiredArtifacts.length);
 }
 
+export function markRealToolProofEvidenceAudited(
+  proof: RealToolProofEvidence,
+  artifactAudit: RealToolRunArtifactAuditResult
+): AuditedRealToolProofEvidence | null {
+  const runDir = getRealToolRunDir(proof);
+  if (!artifactAudit.passed || artifactAudit.runDir === null || artifactAudit.runDir !== runDir) {
+    return null;
+  }
+
+  return { ...proof, runEvidenceAudited: true };
+}
+
 export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicFixture): EvalRunResult {
   assertNoPrivilegedProofAccess(["screen-observation", "simulated-low-level-input"]);
 
@@ -800,6 +816,9 @@ function emptyShareableEvidencePathAudit(): ShareableEvidencePathAuditResult {
 
 function auditSingleRealToolProof(proof: RealToolProofEvidence, findings: CaptureTeachGoalStatusFinding[]): void {
   if (proof.substrate !== "real-tool") findings.push({ tool: proof.tool, message: "proof substrate was not real-tool" });
+  if ((proof as Partial<AuditedRealToolProofEvidence>).runEvidenceAudited !== true) {
+    findings.push({ tool: proof.tool, message: "real target-tool run-directory evidence was not audited" });
+  }
   if (!proof.heldOutTeachingEvalPassed) findings.push({ tool: proof.tool, message: "real target-tool held-out teaching eval did not pass" });
   if (!proof.nativeScreenPlusInputCaptureVerified) findings.push({ tool: proof.tool, message: "native screen-plus-input capture was not verified" });
   if (!proof.terminalBusinessStateReached) findings.push({ tool: proof.tool, message: "terminal business state was not reached" });
@@ -813,6 +832,7 @@ function auditSingleRealToolProof(proof: RealToolProofEvidence, findings: Captur
 function isPassingRealToolProof(proof: RealToolProofEvidence): boolean {
   return (
     proof.substrate === "real-tool" &&
+    (proof as Partial<AuditedRealToolProofEvidence>).runEvidenceAudited === true &&
     proof.heldOutTeachingEvalPassed &&
     proof.nativeScreenPlusInputCaptureVerified &&
     proof.terminalBusinessStateReached &&
