@@ -191,6 +191,14 @@ const allowedShareableEvidencePrefixes = [
   "evals/runs/"
 ] as const;
 
+const forbiddenShareableTextPatterns = [
+  { label: "email address", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
+  { label: "password assignment", pattern: /\bpassword\s*[:=]/i },
+  { label: "token assignment", pattern: /\btoken\s*[:=]/i },
+  { label: "api key assignment", pattern: /\bapi[_-]?key\s*[:=]/i },
+  { label: "session secret assignment", pattern: /\bsession[_-]?secret\s*[:=]/i }
+] as const;
+
 export function matchScreenState(step: FlowStep, observation: ScreenObservation): ScreenStateMatch {
   const expectedVisibleText = step["expected-state"]["visible-text"] ?? [];
   const normalizedVisible = observation.visibleText.map((text) => text.toLowerCase());
@@ -511,7 +519,9 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${screenInputEvidencePath} cannot be validated without file contents` });
     } else {
-      auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, readText(screenInputEvidencePath), existsPath, readText, references, findings);
+      const content = readText(screenInputEvidencePath);
+      auditShareableTextRedaction(proof.tool, screenInputEvidencePath, content, findings);
+      auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, content, existsPath, readText, references, findings);
     }
   }
 
@@ -520,7 +530,9 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${captureReadinessPath} cannot be validated without file contents` });
     } else {
-      auditCaptureReadinessEvidence(proof, captureReadinessPath, readText(captureReadinessPath), findings);
+      const content = readText(captureReadinessPath);
+      auditShareableTextRedaction(proof.tool, captureReadinessPath, content, findings);
+      auditCaptureReadinessEvidence(proof, captureReadinessPath, content, findings);
     }
   }
 
@@ -529,7 +541,9 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${stepTracePath} cannot be validated without file contents` });
     } else {
-      auditRealStepTrace(proof, runDir, stepTracePath, readText(stepTracePath), existsPath, references, findings);
+      const content = readText(stepTracePath);
+      auditShareableTextRedaction(proof.tool, stepTracePath, content, findings);
+      auditRealStepTrace(proof, runDir, stepTracePath, content, existsPath, references, findings);
     }
   }
 
@@ -538,7 +552,18 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${flowEvidencePath} cannot be validated without file contents` });
     } else {
-      auditFlowEvidence(proof, runDir, flowEvidencePath, readText(flowEvidencePath), existsPath, readText, references, findings);
+      const content = readText(flowEvidencePath);
+      auditShareableTextRedaction(proof.tool, flowEvidencePath, content, findings);
+      auditFlowEvidence(proof, runDir, flowEvidencePath, content, existsPath, readText, references, findings);
+    }
+  }
+
+  const failureLogPath = `${runDir}/failure-log.md`;
+  if (existsPath(failureLogPath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${failureLogPath} cannot be validated without file contents` });
+    } else {
+      auditShareableTextRedaction(proof.tool, failureLogPath, readText(failureLogPath), findings);
     }
   }
 
@@ -547,10 +572,12 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${reviewerChecklistPath} cannot be validated without file contents` });
     } else {
-      auditReviewerChecklist(proof, reviewerChecklistPath, readText(reviewerChecklistPath), findings);
+      const content = readText(reviewerChecklistPath);
+      auditShareableTextRedaction(proof.tool, reviewerChecklistPath, content, findings);
+      auditReviewerChecklist(proof, reviewerChecklistPath, content, findings);
       const stepTracePath = `${runDir}/step-trace.json`;
       if (existsPath(stepTracePath)) {
-        auditReviewerStepSignoff(proof, reviewerChecklistPath, readText(reviewerChecklistPath), stepTracePath, readText(stepTracePath), findings);
+        auditReviewerStepSignoff(proof, reviewerChecklistPath, content, stepTracePath, readText(stepTracePath), findings);
       }
     }
   }
@@ -560,11 +587,13 @@ export function auditRealToolRunArtifacts(
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${outcomeEvidencePath} cannot be validated without file contents` });
     } else {
+      const content = readText(outcomeEvidencePath);
+      auditShareableTextRedaction(proof.tool, outcomeEvidencePath, content, findings);
       auditOutcomeEvidence(
         proof,
         runDir,
         outcomeEvidencePath,
-        readText(outcomeEvidencePath),
+        content,
         stepTracePath,
         existsPath(stepTracePath) ? readText(stepTracePath) : null,
         existsPath,
@@ -944,9 +973,12 @@ function auditNormalizedCaptureManifest(
   findings: CaptureTeachGoalStatusFinding[]
 ): NormalizedCaptureManifestAudit {
   const result: NormalizedCaptureManifestAudit = { manifestPath, redactedFramePaths: new Set<string>() };
+  const manifestContent = readText(manifestPath);
+  auditShareableTextRedaction(proof.tool, manifestPath, manifestContent, findings);
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(readText(manifestPath));
+    parsed = JSON.parse(manifestContent);
   } catch {
     findings.push({ tool: proof.tool, message: `${manifestPath} referenced by ${sourcePath} must be valid JSON` });
     return result;
@@ -1386,7 +1418,9 @@ function auditFlowEvidence(
     return;
   }
 
-  const validation = validateFlowMarkdown(readText(parsed.flowPath));
+  const flowContent = readText(parsed.flowPath);
+  auditShareableTextRedaction(proof.tool, parsed.flowPath, flowContent, findings);
+  const validation = validateFlowMarkdown(flowContent);
   if (!validation.valid || !validation.document) {
     findings.push({ tool: proof.tool, message: `${parsed.flowPath} referenced by ${path} must be a valid flow.md` });
     return;
@@ -1724,6 +1758,19 @@ function auditEvidencePathField(
 
   if (!existsPath(value)) {
     findings.push({ tool, message: `${value} referenced by ${sourcePath} ${field} is missing on disk` });
+  }
+}
+
+function auditShareableTextRedaction(
+  tool: string,
+  path: string,
+  content: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  for (const rule of forbiddenShareableTextPatterns) {
+    if (rule.pattern.test(content)) {
+      findings.push({ tool, message: `${path} contains unredacted ${rule.label}` });
+    }
   }
 }
 

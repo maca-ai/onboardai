@@ -211,6 +211,11 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```
 
+all shareable text artifacts read by the real-run gate must be hard-redacted. this includes the run JSON and
+Markdown files, the referenced `flow.md`, and the referenced normalized capture manifest. forbidden email
+addresses, password assignments, token assignments, api key assignments, and session secret assignments make
+the real run invalid.
+
 create the editable run skeleton from templates with:
 
 ```sh

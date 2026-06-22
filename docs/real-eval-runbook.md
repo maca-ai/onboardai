@@ -148,6 +148,7 @@ after eval:
 - [ ] confirm every `screen-input-evidence.json` redacted frame evidence path is listed in the normalized capture manifest.
 - [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.
 - [ ] confirm `outcome-evidence.json` `stepCount` and `stepsCompleted` match the same-run `step-trace.json` step count and successful step count.
+- [ ] confirm real-run shareable text artifacts, the referenced `flow.md`, and the referenced normalized manifest contain no forbidden email addresses, password assignments, token assignments, api key assignments, or session secret assignments.
 - [ ] write a report under `evals/reports/`.
 - [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.
 - [ ] after the dry run passes, run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id> --write-summary` to create the real-tool proof summary.
