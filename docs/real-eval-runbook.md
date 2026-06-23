@@ -156,6 +156,7 @@ after eval:
 - [ ] confirm every normalized manifest redacted frame path and every `screen-input-evidence.json` redacted frame evidence path points to either `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`.
 - [ ] confirm every `screen-input-evidence.json` redacted frame evidence path is listed in the normalized capture manifest.
 - [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.
+- [ ] confirm `outcome-evidence.json` `evaluatorRole` is `first-time-user` or `deterministic-mock-user-harness`, not senior demonstrator or senior reviewer.
 - [ ] confirm `outcome-evidence.json` `stepCount` and `stepsCompleted` match the same-run `step-trace.json` step count and successful step count.
 - [ ] confirm `outcome-evidence.json` `terminalBusinessState`, `terminalExpectedVisibleText`, and `terminalMatchedVisibleText` match the referenced `flow.md` terminal business state and terminal success visible text.
 - [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png` and `eval-recording.mp4`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.

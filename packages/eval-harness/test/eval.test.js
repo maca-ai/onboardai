@@ -1382,6 +1382,7 @@ test("real target-tool run artifact audit rejects failed outcome evidence", () =
         return JSON.stringify({
           ...outcomeEvidence("odoo"),
           tool: "jira",
+          evaluatorRole: "senior-demonstrator",
           terminalBusinessStateReached: false,
           zeroHumanHelp: false,
           noInventedSteps: false,
@@ -1408,6 +1409,7 @@ test("real target-tool run artifact audit rejects failed outcome evidence", () =
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("tool must be odoo or notion")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("tool must match odoo")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evaluatorRole must be first-time-user or deterministic-mock-user-harness")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("terminalBusinessStateReached")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("zeroHumanHelp")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("completionRate")), true);
@@ -1896,6 +1898,7 @@ function outcomeEvidence(tool) {
     schemaVersion: 1,
     tool,
     substrate: "real-tool",
+    evaluatorRole: "first-time-user",
     completionRate: 1,
     stepCount: 3,
     stepsCompleted: 3,

@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "tool": "replace-with-odoo-or-notion",
   "substrate": "real-tool",
+  "evaluatorRole": "replace-with-first-time-user-or-deterministic-mock-user-harness",
   "completionRate": 1,
   "stepCount": 3,
   "stepsCompleted": 3,

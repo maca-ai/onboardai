@@ -372,6 +372,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
           schemaVersion: 1,
           tool: "odoo",
           substrate: "real-tool",
+          evaluatorRole: "first-time-user",
           completionRate: 1,
           stepCount: 3,
           stepsCompleted: 3,

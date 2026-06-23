@@ -1806,6 +1806,10 @@ function auditOutcomeEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
+  if (parsed.evaluatorRole !== "first-time-user" && parsed.evaluatorRole !== "deterministic-mock-user-harness") {
+    findings.push({ tool: proof.tool, message: `${path} evaluatorRole must be first-time-user or deterministic-mock-user-harness` });
+  }
+
   for (const field of [
     "terminalBusinessStateReached",
     "zeroHumanHelp",
