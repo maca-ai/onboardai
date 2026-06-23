@@ -1111,6 +1111,8 @@ test("real target-tool run artifact audit rejects reviewer checklists without pe
   );
 
   assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must identify a senior reviewer")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must include an ISO review date")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("per-step signoff - step-001: accepted")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("per-step signoff - step-002: accepted")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("per-step signoff - step-003: accepted")), true);
@@ -1156,7 +1158,7 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
       }
 
       if (path.endsWith("reviewer-checklist.md")) {
-        return "# reviewer checklist\n\n- accepted: false\n- rejected: true\n";
+        return "# reviewer checklist\n\n- reviewer: senior-reviewer-001\n- date: 2026-06-23\n- accepted: false\n- rejected: true\n";
       }
 
       return realRunArtifactContent(path, "notion");
@@ -1714,6 +1716,9 @@ function realRunArtifactContent(path, tool) {
   if (path.endsWith("reviewer-checklist.md")) {
     return [
       "# reviewer checklist",
+      "",
+      "- reviewer: senior-reviewer-001",
+      "- date: 2026-06-23",
       "",
       "- step-001: accepted",
       "- step-002: accepted",

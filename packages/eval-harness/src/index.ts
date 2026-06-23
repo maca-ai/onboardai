@@ -1697,6 +1697,14 @@ function auditReviewerChecklist(
   content: string,
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
+  if (!/^\s*-\s*reviewer:\s*\S.*$/im.test(content)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist must identify a senior reviewer` });
+  }
+
+  if (!/^\s*-\s*date:\s*\d{4}-\d{2}-\d{2}\s*$/im.test(content)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist must include an ISO review date` });
+  }
+
   if (!content.includes("- accepted: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must contain accepted: true` });
   }

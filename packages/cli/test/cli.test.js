@@ -338,6 +338,9 @@ test("proof real-run validates complete real target-tool run artifacts and write
       [
         "# reviewer checklist",
         "",
+        "- reviewer: senior-reviewer-001",
+        "- date: 2026-06-23",
+        "",
         "- step-001: accepted",
         "- step-002: accepted",
         "- step-003: accepted",

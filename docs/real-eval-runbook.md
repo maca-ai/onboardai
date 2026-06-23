@@ -138,6 +138,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
 - [ ] for a passing run, confirm `failure-log.md` states `no failure observed` and has no false result lines for pass status, terminal state, zero human help, no invented steps, or no privileged access.
 - [ ] write `evals/runs/<tool>/<run-id>/reviewer-checklist.md`.
+- [ ] confirm `reviewer-checklist.md` identifies the senior reviewer and includes an ISO review date.
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
