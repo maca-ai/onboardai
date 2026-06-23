@@ -1029,6 +1029,56 @@ test("real target-tool run artifact audit rejects unverified native capture read
   assert.equal(audit.findings.some((finding) => finding.message.includes("blockers must be empty")), true);
 });
 
+test("real target-tool run artifact audit rejects unfilled template placeholders", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("capture-readiness.json")) {
+        return JSON.stringify({
+          ...captureReadinessEvidence("odoo"),
+          verifiedDocReferences: [
+            {
+              sourceType: "context7",
+              reference: "replace with exact official docs url or context7 library id",
+              behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]
+            }
+          ]
+        });
+      }
+
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          captureId: "replace-with-capture-id"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some(
+      (finding) =>
+        finding.message.includes("evals/runs/odoo/real-proof/capture-readiness.json") &&
+        finding.message.includes("unfilled real-run template placeholder")
+    ),
+    true
+  );
+  assert.equal(
+    audit.findings.some(
+      (finding) =>
+        finding.message.includes("captures/normalized/capture-real-odoo-001/manifest.json") &&
+        finding.message.includes("unfilled real-run template placeholder")
+    ),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects reviewer checklists without per-step signoff", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

@@ -159,6 +159,7 @@ after eval:
 - [ ] confirm `outcome-evidence.json` `terminalBusinessState`, `terminalExpectedVisibleText`, and `terminalMatchedVisibleText` match the referenced `flow.md` terminal business state and terminal success visible text.
 - [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png` and `eval-recording.mp4`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.
 - [ ] confirm real-run shareable text artifacts, the referenced `flow.md`, and the referenced normalized manifest contain no forbidden email addresses, password assignments, token assignments, api key assignments, or session secret assignments.
+- [ ] confirm real-run shareable text artifacts and the referenced normalized manifest contain no unfilled template placeholders such as `replace-with-*` or `replace with *`.
 - [ ] write a report under `evals/reports/`.
 - [ ] run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id>` and fix every finding.
 - [ ] after the dry run passes, run `pnpm --filter @onboardai/cli onboardai proof real-run <tool> <run-id> --write-summary` to create the real-tool proof summary.

@@ -203,6 +203,8 @@ const forbiddenShareableTextPatterns = [
   { label: "session secret assignment", pattern: /\bsession[_-]?secret\s*[:=]/i }
 ] as const;
 
+const realRunTemplatePlaceholderPattern = /\breplace(?:-with|\s+with)\b/i;
+
 export function matchScreenState(step: FlowStep, observation: ScreenObservation): ScreenStateMatch {
   const expectedVisibleText = step["expected-state"]["visible-text"] ?? [];
   const normalizedVisible = observation.visibleText.map((text) => text.toLowerCase());
@@ -529,6 +531,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(screenInputEvidencePath);
       auditShareableTextRedaction(proof.tool, screenInputEvidencePath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, screenInputEvidencePath, content, findings);
       auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, content, existsPath, readText, references, findings);
     }
   }
@@ -540,6 +543,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(captureReadinessPath);
       auditShareableTextRedaction(proof.tool, captureReadinessPath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, captureReadinessPath, content, findings);
       auditCaptureReadinessEvidence(proof, captureReadinessPath, content, findings);
     }
   }
@@ -551,6 +555,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(stepTracePath);
       auditShareableTextRedaction(proof.tool, stepTracePath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, stepTracePath, content, findings);
       auditRealStepTrace(proof, runDir, stepTracePath, content, existsPath, references, findings);
     }
   }
@@ -562,6 +567,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(flowEvidencePath);
       auditShareableTextRedaction(proof.tool, flowEvidencePath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, flowEvidencePath, content, findings);
       auditFlowEvidence(proof, runDir, flowEvidencePath, content, existsPath, readText, references, findings);
     }
   }
@@ -573,6 +579,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(failureLogPath);
       auditShareableTextRedaction(proof.tool, failureLogPath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, failureLogPath, content, findings);
       auditFailureLog(proof, failureLogPath, content, findings);
     }
   }
@@ -584,6 +591,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(reviewerChecklistPath);
       auditShareableTextRedaction(proof.tool, reviewerChecklistPath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, reviewerChecklistPath, content, findings);
       auditReviewerChecklist(proof, reviewerChecklistPath, content, findings);
       const stepTracePath = `${runDir}/step-trace.json`;
       if (existsPath(stepTracePath)) {
@@ -599,6 +607,7 @@ export function auditRealToolRunArtifacts(
     } else {
       const content = readText(outcomeEvidencePath);
       auditShareableTextRedaction(proof.tool, outcomeEvidencePath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, outcomeEvidencePath, content, findings);
       auditOutcomeEvidence(
         proof,
         runDir,
@@ -1006,6 +1015,7 @@ function auditNormalizedCaptureManifest(
   const result: NormalizedCaptureManifestAudit = { manifestPath, redactedFramePaths: new Set<string>() };
   const manifestContent = readText(manifestPath);
   auditShareableTextRedaction(proof.tool, manifestPath, manifestContent, findings);
+  auditRealRunTemplatePlaceholders(proof.tool, manifestPath, manifestContent, findings);
 
   let parsed: unknown;
   try {
@@ -2099,6 +2109,17 @@ function auditShareableTextRedaction(
     if (rule.pattern.test(content)) {
       findings.push({ tool, message: `${path} contains unredacted ${rule.label}` });
     }
+  }
+}
+
+function auditRealRunTemplatePlaceholders(
+  tool: string,
+  path: string,
+  content: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (realRunTemplatePlaceholderPattern.test(content)) {
+    findings.push({ tool, message: `${path} contains unfilled real-run template placeholder text` });
   }
 }
 

@@ -246,6 +246,10 @@ pnpm --filter @onboardai/cli onboardai proof real-run init <odoo|notion> <run-id
 the init command creates only editable template files. it does not create a final screen, eval recording,
 redacted frame evidence, normalized capture manifest, live proof summary, or passing real proof.
 
+all copied real-run templates must be fully replaced before proof ingestion. `proof real-run` rejects unfilled
+template placeholder text such as `replace-with-*` or `replace with *` in run JSON, run Markdown, and the
+referenced normalized capture manifest.
+
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
 redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
