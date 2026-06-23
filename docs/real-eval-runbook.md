@@ -152,6 +152,7 @@ after eval:
 - [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.
 - [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, and `dataClass` of `clean-demo` or `sanitized-duplicate`.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
+- [ ] confirm normalized manifest raw artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context notes.
 - [ ] confirm the referenced normalized capture manifest `flowPath` and `flowId` match `flow-evidence.json`.
 - [ ] confirm normalized manifest raw artifact summaries do not contain path-like fields such as `path`, `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references.
 - [ ] confirm normalized manifest shareable text fields contain no emails, password assignments, token assignments, api keys, or session secrets.

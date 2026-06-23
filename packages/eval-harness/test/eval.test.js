@@ -789,6 +789,34 @@ test("real target-tool run artifact audit rejects raw artifact path leaks in nor
   assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[1] must not include raw artifact path field localPath")), true);
 });
 
+test("real target-tool run artifact audit rejects unsupported raw artifact kinds in normalized manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          rawArtifacts: [
+            ...normalizedCaptureManifest("odoo").rawArtifacts,
+            { kind: "api-export", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("rawArtifacts[4].kind must be screen, keyboard, mouse, or human notes evidence")),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects manifests missing per-step input evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

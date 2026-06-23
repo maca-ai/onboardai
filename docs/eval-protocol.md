@@ -270,7 +270,9 @@ three required raw inputs without raw file paths, at least one redacted frame un
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
 per-step input evidence for every step id in the real `step-trace.json`. raw artifact summaries must not
 include path-like fields such as `path`,
-`rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references. every
+`rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references. raw
+artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context
+notes. every
 `redactedFrameEvidencePaths` entry in `screen-input-evidence.json` must also be listed in that normalized
 manifest.
 

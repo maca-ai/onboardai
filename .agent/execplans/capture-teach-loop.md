@@ -1596,6 +1596,27 @@ latest results on 2026-06-23:
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 
+latest results on 2026-06-23:
+
+- changed: normalized capture manifest audit now rejects unsupported raw artifact kinds, limiting shareable raw artifact summaries to screen recording, keyboard event log, mouse event log, and optional human context notes.
+- eval showed: targeted eval-harness coverage rejects a manifest that includes an `api-export` raw artifact summary even when required screen/key/mouse summaries are present; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, generate or fill a normalized capture manifest whose raw artifact summaries are limited to screen recording, keyboard event log, mouse event log, and optional senior notes, then dry-run `proof real-run`.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 54 tests, 54 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 95 tests, 95 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 26 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1670,3 +1691,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-23: capture-readiness adapter attribution gate added: real runs must name the installed native capture adapter and version, and every verified documentation reference must apply to that same adapter version.
 - 2026-06-23: screen-input adapter attribution gate added: real screen/input evidence must name the same installed native capture adapter and version as the same-run readiness evidence.
 - 2026-06-23: normalized manifest identity gate added: real capture manifests must have a safe capture id, ISO generation timestamp, and clean or sanitized data class.
+- 2026-06-23: normalized manifest raw artifact allowlist added: real capture manifests must summarize only screen recording, keyboard event log, mouse event log, and optional human context notes.

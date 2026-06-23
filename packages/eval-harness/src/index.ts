@@ -1146,6 +1146,7 @@ function auditNormalizedCaptureManifest(
     findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts must contain sanitized raw artifact summaries` });
   } else {
     const artifactKinds = new Set<string>();
+    const allowedArtifactKinds = new Set(["screen-recording", "keyboard-event-log", "mouse-event-log", "human-context-notes"]);
     parsed.rawArtifacts.forEach((artifact, index) => {
       if (!isRecord(artifact)) {
         findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must be an object` });
@@ -1160,6 +1161,11 @@ function auditNormalizedCaptureManifest(
 
       if (typeof artifact.kind === "string") {
         artifactKinds.add(artifact.kind);
+        if (!allowedArtifactKinds.has(artifact.kind)) {
+          findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}].kind must be screen, keyboard, mouse, or human notes evidence` });
+        }
+      } else {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}].kind must be a string` });
       }
 
       if (artifact.safety !== "unsafe-to-share-local-only") {
