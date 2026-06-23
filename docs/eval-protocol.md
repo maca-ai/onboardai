@@ -68,6 +68,7 @@ each run should write:
 /evals/runs/<tool>/<run-id>/final-screen.png
 /evals/runs/<tool>/<run-id>/eval-recording.mp4
 /evals/runs/<tool>/<run-id>/failure-log.md
+/evals/runs/<tool>/<run-id>/capture-manifest.json
 /evals/reviewer-checklists/<tool>-<run-id>.md
 /evals/reports/<tool>-<run-id>.md
 /evals/reports/fixture-proof-audit.json
@@ -220,6 +221,7 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/capture-readiness.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
+/evals/runs/<tool>/<run-id>/capture-manifest.json
 ```
 
 all shareable text artifacts read by the real-run gate must be hard-redacted. this includes the run JSON and
@@ -247,18 +249,34 @@ redacted frame evidence, normalized capture manifest, live proof summary, or pas
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
 redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
 may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
-temporary capture paths. redacted frame evidence paths must point to `captures/redacted/<capture-id>/frame-*.png`.
+temporary capture paths. redacted frame evidence paths must point to
+`evals/runs/<tool>/<run-id>/redacted-frame-*.png` for same-run evidence or
+`captures/redacted/<capture-id>/frame-*.png` for separately materialized shareable redacted capture evidence.
 it must also point to the exact same-run `capture-readiness.json` artifact.
 
 the referenced normalized capture manifest must be valid JSON and must show the same tool, local-only raw
 capture policy, hard-secret-redaction policy, matching `flowPath` and `flowId` from `flow-evidence.json`,
 captured screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries for all
 three required raw inputs without raw file paths, at least one redacted frame under
-`captures/redacted/<capture-id>/frame-*.png`, and per-step input evidence for every step id in the real
-`step-trace.json`. raw artifact summaries must not include path-like fields such as `path`,
+`evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
+per-step input evidence for every step id in the real `step-trace.json`. raw artifact summaries must not
+include path-like fields such as `path`,
 `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references. every
 `redactedFrameEvidencePaths` entry in `screen-input-evidence.json` must also be listed in that normalized
 manifest.
+
+the preferred capture artifact pipeline skeleton writes the shareable normalized manifest to:
+
+```text
+evals/runs/<tool>/<run-id>/capture-manifest.json
+```
+
+the manifest must use `schemaVersion: 1`, contain only project-relative shareable paths, and reject raw paths,
+absolute paths, `file://` paths, traversal paths, unsafe/tmp capture references, email addresses, and
+secret-like strings. any remaining customer names, browser urls, local file paths, internal object names, or
+business record ids detected in the manifest must be listed under `redaction.businessSensitiveTags`. raw
+capture inputs remain local under ignored paths such as `captures/raw/`, `captures/unsafe/`, and
+`captures/tmp/` until the user manually deletes them.
 
 each normalized manifest `inputEvidence[].inputEvents[]` entry must be a captured mouse or keyboard event
 with a non-empty event name. input event records must not include privileged proof handles such as api,

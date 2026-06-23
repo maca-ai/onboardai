@@ -144,12 +144,15 @@ after eval:
 - [ ] confirm `capture-readiness.json` `verifiedDocReferences` cites official docs or context7 references covering screen recording, keyboard event logging, mouse event logging, redacted frame output, and raw artifact ignore behavior.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, and no-privileged-access confirmations.
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json`.
+- [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] confirm the referenced normalized capture manifest `flowPath` and `flowId` match `flow-evidence.json`.
 - [ ] confirm normalized manifest raw artifact summaries do not contain path-like fields such as `path`, `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references.
+- [ ] confirm normalized manifest shareable text fields contain no emails, password assignments, token assignments, api keys, or session secrets.
+- [ ] confirm normalized manifest `redaction.businessSensitiveTags` lists any remaining customer names, browser urls, local file paths, internal object names, or business record ids detected in manifest text.
 - [ ] confirm every normalized manifest input event has `kind` set to `mouse` or `keyboard`, has a non-empty event name, and contains no api/backend/database/dom/mcp/selector fields.
 - [ ] confirm each step's normalized manifest input evidence includes the same `anchorId` as that step's `actionPrimitive.targetAnchorId` in `step-trace.json`.
-- [ ] confirm every normalized manifest redacted frame path and every `screen-input-evidence.json` redacted frame evidence path points to `captures/redacted/<capture-id>/frame-*.png`.
+- [ ] confirm every normalized manifest redacted frame path and every `screen-input-evidence.json` redacted frame evidence path points to either `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`.
 - [ ] confirm every `screen-input-evidence.json` redacted frame evidence path is listed in the normalized capture manifest.
 - [ ] write `evals/runs/<tool>/<run-id>/outcome-evidence.json` with terminal state, completion, zero-help, zero-invention, no-privileged-access, held-out, and reviewer-signoff results.
 - [ ] confirm `outcome-evidence.json` `stepCount` and `stepsCompleted` match the same-run `step-trace.json` step count and successful step count.
@@ -209,6 +212,9 @@ evals/templates/runs/tool-run-id/capture-readiness.json
 evals/templates/runs/tool-run-id/screen-input-evidence.json
 evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
+
+the capture normalization pipeline should generate `evals/runs/<tool>/<run-id>/capture-manifest.json` from
+redacted frame and input evidence; do not create it as a placeholder.
 
 do not copy the proof summary template into `evals/reports/real-tool-proof-*.json` until the real run artifacts exist and the reviewer has accepted every taught step.
 the proof summary template still does not prove the run by itself; full-goal status counts it only after the

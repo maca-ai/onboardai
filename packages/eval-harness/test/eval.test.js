@@ -303,6 +303,84 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
 });
 
+test("real target-tool run artifact audit accepts same-run normalized capture manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["demo"]
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, true);
+  assert.equal(audit.references.some((reference) => reference.path === "evals/runs/odoo/real-proof/capture-manifest.json"), true);
+});
+
+test("real target-tool run artifact audit rejects untagged business-sensitive manifest values", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["customer name: demo account"]
+            }
+          ],
+          redaction: {
+            replacements: [],
+            businessSensitiveTags: []
+          }
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("business-sensitive value must be tagged: customer-name")), true);
+});
+
 test("real target-tool run artifact audit rejects same-run non-frame step evidence", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -880,8 +958,18 @@ test("real target-tool run artifact audit rejects non-PNG redacted frame evidenc
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.findings.some((finding) => finding.message.includes("redactedFrames[0].path must point to a captures/redacted frame PNG")), true);
-  assert.equal(audit.findings.some((finding) => finding.message.includes("redactedFrameEvidencePaths[0] must point to a captures/redacted frame PNG")), true);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("redactedFrames[0].path must point to a captures/redacted or same-run redacted frame PNG")
+    ),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("redactedFrameEvidencePaths[0] must point to a captures/redacted or same-run redacted frame PNG")
+    ),
+    true
+  );
 });
 
 test("real target-tool run artifact audit rejects unverified native capture readiness evidence", () => {

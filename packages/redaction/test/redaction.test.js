@@ -9,7 +9,9 @@ test("forbidden secret strings and email addresses are redacted from shareable a
     "token sk-live-1234567890abcdef",
     "api_key=abcdef1234567890",
     "session_secret=local-session-secret",
-    "url: https://example.test/customer/opp-123"
+    "url: https://example.test/customer/opp-123",
+    "customer name: demo account",
+    "internal object name: approval queue"
   ].join("\n");
 
   const result = redactShareableText(artifact);
@@ -22,4 +24,6 @@ test("forbidden secret strings and email addresses are redacted from shareable a
   assert.equal(containsForbiddenPersistedSecret(result.text), false);
   assert.equal(result.businessSensitiveTags.some((tag) => tag.kind === "browser-url"), true);
   assert.equal(result.businessSensitiveTags.some((tag) => tag.kind === "business-record-id"), true);
+  assert.equal(result.businessSensitiveTags.some((tag) => tag.kind === "customer-name"), true);
+  assert.equal(result.businessSensitiveTags.some((tag) => tag.kind === "internal-object-name"), true);
 });

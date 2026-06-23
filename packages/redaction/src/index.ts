@@ -5,7 +5,7 @@ export interface RedactionResult {
 }
 
 export interface BusinessSensitiveTag {
-  readonly kind: "browser-url" | "file-path" | "business-record-id";
+  readonly kind: "browser-url" | "file-path" | "business-record-id" | "customer-name" | "internal-object-name";
   readonly value: string;
 }
 
@@ -20,7 +20,9 @@ const forbiddenPatterns: ReadonlyArray<{ readonly label: string; readonly patter
 const businessSensitivePatterns: ReadonlyArray<{ readonly kind: BusinessSensitiveTag["kind"]; readonly pattern: RegExp }> = [
   { kind: "browser-url", pattern: /\bhttps?:\/\/[^\s)]+/gi },
   { kind: "file-path", pattern: /(?:[A-Za-z]:\\|\/Users\/|\/home\/|\/var\/|\/tmp\/)[^\s,;)]+/g },
-  { kind: "business-record-id", pattern: /\b(?:opp|task|record)-[0-9]{3,}\b/gi }
+  { kind: "business-record-id", pattern: /\b(?:opp|task|record)-[0-9]{3,}\b/gi },
+  { kind: "customer-name", pattern: /\bcustomer(?:\s+(?:name|label))?\s*[:=]\s*("[^"]+"|'[^']+'|[^\n,;]+)/gi },
+  { kind: "internal-object-name", pattern: /\binternal\s+object(?:\s+name)?\s*[:=]\s*("[^"]+"|'[^']+'|[^\n,;]+)/gi }
 ];
 
 export function redactShareableText(input: string): RedactionResult {

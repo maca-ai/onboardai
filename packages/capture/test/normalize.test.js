@@ -5,8 +5,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createNormalizedCaptureManifest,
+  createNormalizedRunCaptureManifest,
   createRawCaptureArtifact,
+  localRawCaptureInputDirectories,
   normalizeDemonstrationToFlowMarkdown,
+  validateNormalizedRunCaptureManifest,
   writeLocalCaptureBundle
 } from "../dist/index.js";
 
@@ -102,6 +105,100 @@ test("normalized capture manifest records redacted evidence without raw paths", 
   assert.doesNotThrow(() => JSON.parse(manifest.json));
 });
 
+test("raw capture input directories are local unsafe and git-ignored by policy", () => {
+  assert.deepEqual(localRawCaptureInputDirectories("capture-real-odoo-001"), {
+    raw: "captures/raw/capture-real-odoo-001",
+    unsafe: "captures/unsafe/capture-real-odoo-001",
+    tmp: "captures/tmp/capture-real-odoo-001"
+  });
+  assert.throws(() => localRawCaptureInputDirectories("Capture_001"), /lowercase kebab-case/);
+});
+
+test("run-local normalized capture manifest accepts same-run redacted frame references", () => {
+  const runDemonstration = runLocalDemonstration();
+  const flow = normalizeDemonstrationToFlowMarkdown(runDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+  const manifest = createNormalizedRunCaptureManifest(runDemonstration, flow, {
+    tool: "odoo",
+    runId: "real-odoo-qualify-001"
+  });
+
+  assert.equal(manifest.path, "evals/runs/odoo/real-odoo-qualify-001/capture-manifest.json");
+  assert.equal(manifest.manifest.schemaVersion, 1);
+  assert.equal(manifest.manifest.redactedFrames[0].path, "evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png");
+  assert.equal(manifest.json.includes("captures/raw/"), false);
+  assert.equal(manifest.json.includes("file://"), false);
+  assert.doesNotThrow(() => JSON.parse(manifest.json));
+});
+
+test("run-local normalized capture manifest rejects raw, unsafe, tmp, absolute, file, and traversal frame references", () => {
+  const cases = [
+    ["raw path", "captures/raw/test/frame-0001.png", /unsafe frame|raw, unsafe, or tmp|under evals\/runs/],
+    ["absolute path", "/Users/demo/captures/redacted/frame-0001.png", /absolute local paths|under evals\/runs/],
+    ["file url", "file:///Users/demo/frame-0001.png", /file:\/\/ paths|under evals\/runs/],
+    ["traversal path", "evals/runs/odoo/real-odoo-qualify-001/../redacted-frame-0001.png", /traversal|under evals\/runs/],
+    ["unsafe path", "captures/unsafe/test/frame-0001.png", /unsafe frame|raw, unsafe, or tmp|under evals\/runs/],
+    ["tmp path", "captures/tmp/test/frame-0001.png", /raw or unsafe capture paths|raw, unsafe, or tmp|under evals\/runs/]
+  ];
+
+  for (const [, framePath, expectedError] of cases) {
+    const runDemonstration = runLocalDemonstration(framePath);
+
+    assert.throws(
+      () => {
+        const flow = normalizeDemonstrationToFlowMarkdown(runDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+        createNormalizedRunCaptureManifest(runDemonstration, flow, {
+          tool: "odoo",
+          runId: "real-odoo-qualify-001"
+        });
+      },
+      expectedError
+    );
+  }
+});
+
+test("run-local normalized capture manifest rejects unredacted emails and secret-like strings", () => {
+  for (const visibleText of ["operator reviewer@example.com", "token=abc123def456ghi789", "api_key=abc123def456ghi789"]) {
+    const runDemonstration = runLocalDemonstration("evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png", [visibleText]);
+    const flow = normalizeDemonstrationToFlowMarkdown(runDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+
+    assert.throws(
+      () =>
+        createNormalizedRunCaptureManifest(runDemonstration, flow, {
+          tool: "odoo",
+          runId: "real-odoo-qualify-001"
+        }),
+      /unredacted email or secret-like text/
+    );
+  }
+});
+
+test("run-local normalized capture manifest validation rejects missing schemaVersion", () => {
+  const manifest = {
+    tool: "odoo",
+    flowId: "odoo-qualify-opportunity",
+    flowPath: "flows/odoo/qualify-opportunity.flow.md",
+    rawCapturePolicy: "unsafe-to-share-local-only",
+    redactionPolicy: "hard-secret-redaction-v0",
+    rawArtifacts: [
+      { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+    ],
+    redactedFrames: [{ frameId: "start", path: "evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png", visibleText: ["demo"] }],
+    inputEvidence: [{ stepId: "step-001", inputEvents: [{ kind: "mouse", event: "click", anchorId: "opportunity-card" }] }],
+    redaction: { replacements: [], businessSensitiveTags: [] }
+  };
+  const validation = validateNormalizedRunCaptureManifest(manifest, {
+    tool: "odoo",
+    runId: "real-odoo-qualify-001",
+    flowId: "odoo-qualify-opportunity",
+    flowPath: "flows/odoo/qualify-opportunity.flow.md"
+  });
+
+  assert.equal(validation.valid, false);
+  assert.equal(validation.errors.some((error) => error.includes("schemaVersion must be 1")), true);
+});
+
 test("normalized capture manifest tags business-sensitive frame paths", () => {
   const sensitiveFrameDemonstration = {
     ...demonstration,
@@ -150,3 +247,20 @@ test("local capture adapter writes unsafe raw screen and input artifacts under r
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+function runLocalDemonstration(
+  framePath = "evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png",
+  visibleText = ["pipeline", "demo opportunity", "new"]
+) {
+  return {
+    ...demonstration,
+    captureId: "capture-real-odoo-001",
+    frames: [
+      {
+        ...demonstration.frames[0],
+        redactedFramePath: framePath,
+        visibleText
+      }
+    ]
+  };
+}

@@ -931,7 +931,7 @@ function auditScreenInputEvidence(
     path,
     "normalizedCaptureManifestPath",
     parsed.normalizedCaptureManifestPath,
-    "captures/normalized/",
+    ["captures/normalized/", `${runDir}/capture-manifest.json`],
     existsPath,
     references,
     findings
@@ -964,7 +964,7 @@ function auditScreenInputEvidence(
         path,
         `redactedFrameEvidencePaths[${index}]`,
         framePath,
-        "captures/redacted/",
+        ["captures/redacted/", `${runDir}/`],
         existsPath,
         references,
         findings
@@ -975,10 +975,10 @@ function auditScreenInputEvidence(
           message: `${path} redactedFrameEvidencePaths[${index}] must be listed in ${manifestAudit.manifestPath}`
         });
       }
-      if (typeof framePath === "string" && !isRedactedCaptureFramePath(framePath)) {
+      if (typeof framePath === "string" && !isRedactedFrameEvidencePath(framePath, runDir)) {
         findings.push({
           tool: proof.tool,
-          message: `${path} redactedFrameEvidencePaths[${index}] must point to a captures/redacted frame PNG`
+          message: `${path} redactedFrameEvidencePaths[${index}] must point to a captures/redacted or same-run redacted frame PNG`
         });
       }
     });
@@ -1047,6 +1047,8 @@ function auditNormalizedCaptureManifest(
     findings.push({ tool: proof.tool, message: `${manifestPath} redactionPolicy must be hard-secret-redaction-v0` });
   }
 
+  auditManifestBusinessSensitiveTags(proof, manifestPath, parsed, findings);
+
   if (!isRecord(parsed.rawCaptureSummary)) {
     findings.push({ tool: proof.tool, message: `${manifestPath} rawCaptureSummary must be present` });
   } else {
@@ -1107,15 +1109,15 @@ function auditNormalizedCaptureManifest(
         manifestPath,
         `redactedFrames[${index}].path`,
         frame.path,
-        "captures/redacted/",
+        ["captures/redacted/", sameRunFramePrefixFromManifestPath(manifestPath) ?? "captures/redacted/"],
         existsPath,
         references,
         findings
       );
       if (typeof frame.path === "string") {
         result.redactedFramePaths.add(frame.path);
-        if (!isRedactedCaptureFramePath(frame.path)) {
-          findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}].path must point to a captures/redacted frame PNG` });
+        if (!isRedactedFrameEvidencePath(frame.path, realRunDirFromManifestPath(manifestPath))) {
+          findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}].path must point to a captures/redacted or same-run redacted frame PNG` });
         }
       }
     });
@@ -1195,6 +1197,40 @@ function auditNormalizedCaptureManifest(
   }
 
   return result;
+}
+
+function auditManifestBusinessSensitiveTags(
+  proof: RealToolProofEvidence,
+  manifestPath: string,
+  parsed: Record<string, unknown>,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  const declaredTags =
+    isRecord(parsed.redaction) && Array.isArray(parsed.redaction.businessSensitiveTags) ? parsed.redaction.businessSensitiveTags : [];
+  const declaredTagKeys = new Set(
+    declaredTags.flatMap((tag) =>
+      isRecord(tag) && typeof tag.kind === "string" && typeof tag.value === "string" ? [`${tag.kind}:${tag.value}`] : []
+    )
+  );
+  const detectedTags = detectManifestBusinessSensitiveTags(JSON.stringify({ ...parsed, redaction: undefined }));
+
+  for (const tag of detectedTags) {
+    if (!declaredTagKeys.has(`${tag.kind}:${tag.value}`)) {
+      findings.push({ tool: proof.tool, message: `${manifestPath} business-sensitive value must be tagged: ${tag.kind}` });
+    }
+  }
+}
+
+function detectManifestBusinessSensitiveTags(input: string): readonly { readonly kind: string; readonly value: string }[] {
+  const rules = [
+    { kind: "browser-url", pattern: /\bhttps?:\/\/[^\s)]+/gi },
+    { kind: "file-path", pattern: /(?:[A-Za-z]:\\|\/Users\/|\/home\/|\/var\/|\/tmp\/)[^\s,;)]+/g },
+    { kind: "business-record-id", pattern: /\b(?:opp|task|record)-[0-9]{3,}\b/gi },
+    { kind: "customer-name", pattern: /\bcustomer(?:\s+(?:name|label))?\s*[:=]\s*("[^"]+"|'[^']+'|[^\n,;]+)/gi },
+    { kind: "internal-object-name", pattern: /\binternal\s+object(?:\s+name)?\s*[:=]\s*("[^"]+"|'[^']+'|[^\n,;]+)/gi }
+  ] as const;
+
+  return rules.flatMap((rule) => [...input.matchAll(rule.pattern)].map((match) => ({ kind: rule.kind, value: match[0] })));
 }
 
 function readStepTraceActionTargets(
@@ -2014,7 +2050,7 @@ function auditEvidencePathField(
   sourcePath: string,
   field: string,
   value: unknown,
-  expectedPrefixOrExactPath: string,
+  expectedPrefixOrExactPath: string | readonly string[],
   existsPath: (path: string) => boolean,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
@@ -2038,10 +2074,10 @@ function auditEvidencePathField(
     findings.push({ tool, message: `${sourcePath} ${field} must not use raw, unsafe, or tmp path segments` });
   }
 
-  const matchesExpected =
-    expectedPrefixOrExactPath.endsWith("/") ? value.startsWith(expectedPrefixOrExactPath) : value === expectedPrefixOrExactPath;
+  const expectedPaths = Array.isArray(expectedPrefixOrExactPath) ? expectedPrefixOrExactPath : [expectedPrefixOrExactPath];
+  const matchesExpected = expectedPaths.some((expected) => (expected.endsWith("/") ? value.startsWith(expected) : value === expected));
   if (!matchesExpected) {
-    findings.push({ tool, message: `${sourcePath} ${field} must point to ${expectedPrefixOrExactPath}` });
+    findings.push({ tool, message: `${sourcePath} ${field} must point to ${expectedPaths.join(" or ")}` });
   }
 
   if (!isAllowedShareableEvidencePath(value)) {
@@ -2116,6 +2152,27 @@ function hasUnsafePathSegment(path: string): boolean {
 
 function isRedactedCaptureFramePath(path: string): boolean {
   return /^captures\/redacted\/[^/]+\/frame-[^/]+\.png$/.test(path);
+}
+
+function isSameRunRedactedFramePath(path: string, runDir: string | null): boolean {
+  return runDir !== null && path.startsWith(`${runDir}/redacted-frame-`) && path.endsWith(".png") && !path.slice(runDir.length + 1).includes("/");
+}
+
+function isRedactedFrameEvidencePath(path: string, runDir: string | null): boolean {
+  return isRedactedCaptureFramePath(path) || isSameRunRedactedFramePath(path, runDir);
+}
+
+function realRunDirFromManifestPath(path: string): string | null {
+  if (!path.startsWith("evals/runs/") || !path.endsWith("/capture-manifest.json")) {
+    return null;
+  }
+
+  return path.slice(0, -"/capture-manifest.json".length);
+}
+
+function sameRunFramePrefixFromManifestPath(path: string): string | null {
+  const runDir = realRunDirFromManifestPath(path);
+  return runDir === null ? null : `${runDir}/`;
 }
 
 function isRawArtifactPathLeak(field: string, value: string): boolean {

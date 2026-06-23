@@ -11,8 +11,8 @@
   "noPrivilegedAccessUsed": true,
   "captureReadinessEvidencePath": "evals/runs/tool/replace-with-run-id/capture-readiness.json",
   "screenRecordingEvidencePath": "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
-  "normalizedCaptureManifestPath": "captures/normalized/replace-with-capture-id/manifest.json",
+  "normalizedCaptureManifestPath": "evals/runs/tool/replace-with-run-id/capture-manifest.json",
   "redactedFrameEvidencePaths": [
-    "captures/redacted/replace-with-capture-id/frame-0001.png"
+    "evals/runs/tool/replace-with-run-id/redacted-frame-0001.png"
   ]
 }

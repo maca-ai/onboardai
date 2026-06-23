@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { redactShareableText } from "@onboardai/redaction";
+import { containsForbiddenPersistedSecret, redactShareableText } from "@onboardai/redaction";
 
 export type CaptureInputKind = "screen-recording" | "keyboard-event-log" | "mouse-event-log" | "human-context-notes";
 
@@ -131,6 +131,29 @@ export interface NormalizedCaptureManifestArtifact {
   readonly path: string;
   readonly manifest: NormalizedCaptureManifest;
   readonly json: string;
+}
+
+export interface LocalRawCaptureInputDirectories {
+  readonly raw: string;
+  readonly unsafe: string;
+  readonly tmp: string;
+}
+
+export interface NormalizedRunCaptureManifestOptions {
+  readonly tool: SeniorDemonstration["tool"];
+  readonly runId: string;
+}
+
+export interface NormalizedRunCaptureManifestValidationOptions {
+  readonly tool: SeniorDemonstration["tool"];
+  readonly runId: string;
+  readonly flowId?: string;
+  readonly flowPath?: string;
+}
+
+export interface NormalizedRunCaptureManifestValidationResult {
+  readonly valid: boolean;
+  readonly errors: readonly string[];
 }
 
 export interface LocalCaptureWrite {
@@ -296,6 +319,106 @@ export function createNormalizedCaptureManifest(
     manifest,
     json
   };
+}
+
+export function localRawCaptureInputDirectories(captureId: string): LocalRawCaptureInputDirectories {
+  assertSafeId(captureId, "capture id");
+
+  return {
+    raw: `captures/raw/${captureId}`,
+    unsafe: `captures/unsafe/${captureId}`,
+    tmp: `captures/tmp/${captureId}`
+  };
+}
+
+export function createNormalizedRunCaptureManifest(
+  demonstration: SeniorDemonstration,
+  flowArtifact: NormalizedFlowArtifact,
+  options: NormalizedRunCaptureManifestOptions
+): NormalizedCaptureManifestArtifact {
+  if (options.tool !== demonstration.tool) {
+    throw new Error(`normalized run capture manifest tool must match demonstration tool ${demonstration.tool}`);
+  }
+
+  assertSafeId(options.runId, "run id");
+  assertNoUnredactedShareableText(demonstration);
+
+  const manifestPath = `evals/runs/${options.tool}/${options.runId}/capture-manifest.json`;
+  const artifact = createNormalizedCaptureManifest(demonstration, flowArtifact, manifestPath);
+  const validation = validateNormalizedRunCaptureManifest(artifact.manifest, {
+    tool: options.tool,
+    runId: options.runId,
+    flowId: demonstration.flowId,
+    flowPath: flowArtifact.path
+  });
+
+  if (!validation.valid) {
+    throw new Error(`normalized run capture manifest invalid: ${validation.errors.join("; ")}`);
+  }
+
+  return artifact;
+}
+
+export function validateNormalizedRunCaptureManifest(
+  input: unknown,
+  options: NormalizedRunCaptureManifestValidationOptions
+): NormalizedRunCaptureManifestValidationResult {
+  const errors: string[] = [];
+  assertSafeId(options.runId, "run id");
+  const runDir = `evals/runs/${options.tool}/${options.runId}`;
+
+  if (!isRecord(input)) {
+    return { valid: false, errors: ["normalized run capture manifest must contain an object"] };
+  }
+
+  if (input.schemaVersion !== 1) {
+    errors.push("schemaVersion must be 1");
+  }
+
+  if (input.tool !== options.tool) {
+    errors.push(`tool must match ${options.tool}`);
+  }
+
+  if (options.flowId && input.flowId !== options.flowId) {
+    errors.push(`flowId must match ${options.flowId}`);
+  }
+
+  if (options.flowPath && input.flowPath !== options.flowPath) {
+    errors.push(`flowPath must match ${options.flowPath}`);
+  }
+
+  if (input.rawCapturePolicy !== "unsafe-to-share-local-only") {
+    errors.push("rawCapturePolicy must be unsafe-to-share-local-only");
+  }
+
+  if (input.redactionPolicy !== "hard-secret-redaction-v0") {
+    errors.push("redactionPolicy must be hard-secret-redaction-v0");
+  }
+
+  validateNoForbiddenManifestValues(input, "$", errors);
+  validateBusinessSensitiveTags(input, errors);
+  validateRawArtifactSummaries(input.rawArtifacts, errors);
+
+  if (!Array.isArray(input.redactedFrames) || input.redactedFrames.length === 0) {
+    errors.push("redactedFrames must contain at least one same-run redacted frame");
+  } else {
+    input.redactedFrames.forEach((frame, index) => {
+      if (!isRecord(frame)) {
+        errors.push(`redactedFrames[${index}] must be an object`);
+        return;
+      }
+
+      if (typeof frame.path !== "string" || !isSameRunRedactedFramePath(frame.path, runDir)) {
+        errors.push(`redactedFrames[${index}].path must point under ${runDir}/redacted-frame-*.png`);
+      }
+    });
+  }
+
+  if (!Array.isArray(input.inputEvidence) || input.inputEvidence.length === 0) {
+    errors.push("inputEvidence must contain per-step input evidence");
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 function validateDemonstration(demonstration: SeniorDemonstration): void {
@@ -492,4 +615,151 @@ function rawArtifactContent(demonstration: SeniorDemonstration, artifact: RawCap
   }
 
   return demonstration.humanNotes ? `${demonstration.humanNotes}\n` : "";
+}
+
+function assertSafeId(value: string, label: string): void {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) {
+    throw new Error(`${label} must be lowercase kebab-case`);
+  }
+}
+
+function assertNoUnredactedShareableText(demonstration: SeniorDemonstration): void {
+  const shareableTexts = [
+    demonstration.flowId,
+    demonstration.toolSurface,
+    demonstration.terminalBusinessState,
+    ...demonstration.frames.flatMap((frame) => [frame.frameId, frame.redactedFramePath, ...frame.visibleText]),
+    ...demonstration.anchors.flatMap((anchor) => [anchor.anchorId, anchor.frameId]),
+    ...demonstration.steps.flatMap((step) => [
+      step.stepId,
+      step.title,
+      step.instructionText,
+      step.expectedFrameId,
+      step.highlightAnchorId,
+      step.userAction.targetAnchorId ?? "",
+      ...step.expectedVisibleText,
+      ...step.successVisibleText,
+      ...step.inputEvents.flatMap((event) => [event.event, event.anchorId ?? "", event.key ?? "", event.text ?? ""])
+    ])
+  ];
+
+  for (const text of shareableTexts) {
+    if (containsForbiddenPersistedSecret(text)) {
+      throw new Error("normalized run capture manifest cannot include unredacted email or secret-like text");
+    }
+  }
+}
+
+function validateNoForbiddenManifestValues(input: unknown, location: string, errors: string[]): void {
+  if (typeof input === "string") {
+    if (containsForbiddenPersistedSecret(input)) {
+      errors.push(`${location} contains unredacted email or secret-like text`);
+    }
+
+    if (isAbsolutePath(input)) {
+      errors.push(`${location} must not contain absolute local paths`);
+    }
+
+    if (input.startsWith("file://")) {
+      errors.push(`${location} must not contain file:// paths`);
+    }
+
+    if (hasTraversal(input)) {
+      errors.push(`${location} must not contain traversal paths`);
+    }
+
+    if (isUnsafeCaptureReference(input) || hasUnsafePathSegment(input)) {
+      errors.push(`${location} must not contain raw, unsafe, or tmp capture references`);
+    }
+
+    return;
+  }
+
+  if (Array.isArray(input)) {
+    input.forEach((item, index) => validateNoForbiddenManifestValues(item, `${location}[${index}]`, errors));
+    return;
+  }
+
+  if (!isRecord(input)) {
+    return;
+  }
+
+  for (const [field, value] of Object.entries(input)) {
+    if (typeof value === "string" && field.toLowerCase().includes("path") && !isAllowedShareablePathValue(value)) {
+      errors.push(`${location}.${field} must use a project-relative shareable artifact path`);
+    }
+
+    validateNoForbiddenManifestValues(value, `${location}.${field}`, errors);
+  }
+}
+
+function validateBusinessSensitiveTags(input: Record<string, unknown>, errors: string[]): void {
+  const tags = isRecord(input.redaction) && Array.isArray(input.redaction.businessSensitiveTags) ? input.redaction.businessSensitiveTags : [];
+  const tagKeys = new Set(
+    tags.flatMap((tag) => (isRecord(tag) && typeof tag.kind === "string" && typeof tag.value === "string" ? [`${tag.kind}:${tag.value}`] : []))
+  );
+  const serialized = JSON.stringify({ ...input, redaction: undefined });
+  const detected = redactShareableText(serialized).businessSensitiveTags;
+
+  for (const tag of detected) {
+    if (!tagKeys.has(`${tag.kind}:${tag.value}`)) {
+      errors.push(`business-sensitive value must be tagged: ${tag.kind}`);
+    }
+  }
+}
+
+function validateRawArtifactSummaries(rawArtifacts: unknown, errors: string[]): void {
+  if (!Array.isArray(rawArtifacts) || rawArtifacts.length === 0) {
+    errors.push("rawArtifacts must contain sanitized raw artifact summaries");
+    return;
+  }
+
+  rawArtifacts.forEach((artifact, index) => {
+    if (!isRecord(artifact)) {
+      errors.push(`rawArtifacts[${index}] must be an object`);
+      return;
+    }
+
+    for (const field of Object.keys(artifact)) {
+      if (field.toLowerCase().includes("path")) {
+        errors.push(`rawArtifacts[${index}] must not include raw artifact path field ${field}`);
+      }
+    }
+
+    if (artifact.safety !== "unsafe-to-share-local-only") {
+      errors.push(`rawArtifacts[${index}].safety must be unsafe-to-share-local-only`);
+    }
+
+    if (artifact.gitPolicy !== "excluded-from-git") {
+      errors.push(`rawArtifacts[${index}].gitPolicy must be excluded-from-git`);
+    }
+  });
+}
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function isAllowedShareablePathValue(value: string): boolean {
+  return value.startsWith("flows/") || value.startsWith("captures/redacted/") || value.startsWith("evals/runs/");
+}
+
+function isSameRunRedactedFramePath(path: string, runDir: string): boolean {
+  return path.startsWith(`${runDir}/redacted-frame-`) && path.endsWith(".png") && !path.slice(runDir.length + 1).includes("/");
+}
+
+function isUnsafeCaptureReference(path: string): boolean {
+  return path.startsWith("captures/raw/") || path.startsWith("captures/unsafe/") || path.startsWith("captures/tmp/");
+}
+
+function hasUnsafePathSegment(path: string): boolean {
+  return path.split("/").some((segment) => segment === "raw" || segment === "unsafe" || segment === "tmp");
+}
+
+function hasTraversal(path: string): boolean {
+  return path === ".." || path.startsWith("../") || path.includes("/../") || path.endsWith("/..");
+}
+
+function isAbsolutePath(path: string): boolean {
+  return path.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(path);
 }
