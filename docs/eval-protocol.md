@@ -320,9 +320,10 @@ step.
 parse and validate, match the target tool, match the recorded flow id and terminal business state, and its
 step ids, instruction text, highlight anchors, and manual action targets must match the real `step-trace.json`.
 
-`reviewer-checklist.md` must identify the senior reviewer, include an ISO review date, contain
-`- accepted: true`, must not contain `- rejected: true`, and must include one per-step acceptance line for
-every step id in `step-trace.json`, for example `- step-001: accepted`.
+`reviewer-checklist.md` must identify the senior reviewer, include an ISO review date, bind the signoff to the
+same tool, run id, and `flow-evidence.json` flow id, contain `- accepted: true`, must not contain
+`- rejected: true`, and must include one per-step acceptance line for every step id in `step-trace.json`, for
+example `- step-001: accepted`.
 
 `outcome-evidence.json` must identify the held-out evaluator as `first-time-user` or
 `deterministic-mock-user-harness`, show completion rate `1`, all taught steps completed, terminal business

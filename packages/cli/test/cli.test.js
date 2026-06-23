@@ -356,6 +356,9 @@ test("proof real-run validates complete real target-tool run artifacts and write
       [
         "# reviewer checklist",
         "",
+        "- tool: odoo",
+        "- flow id: odoo-qualify-opportunity",
+        `- run id: ${runId}`,
         "- reviewer: senior-reviewer-001",
         "- date: 2026-06-23",
         "",

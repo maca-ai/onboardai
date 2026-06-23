@@ -1157,6 +1157,61 @@ test("real target-tool run artifact audit rejects reviewer checklists without pe
   assert.equal(audit.findings.some((finding) => finding.message.includes("per-step signoff - step-003: accepted")), true);
 });
 
+test("real target-tool run artifact audit rejects reviewer checklists copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-checklist.md")) {
+        return [
+          "# reviewer checklist",
+          "",
+          "- tool: notion",
+          "- flow id: notion-update-task-status",
+          "- run id: other-real-proof",
+          "- reviewer: senior-reviewer-001",
+          "- date: 2026-06-23",
+          "",
+          "- step-001: accepted",
+          "- step-002: accepted",
+          "- step-003: accepted",
+          "- accepted: true",
+          "- rejected: false",
+          ""
+        ].join("\n");
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer checklist tool must match odoo")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer checklist run id must match real-proof")), true);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("reviewer checklist flow id must match odoo-qualify-opportunity")),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects incomplete step trace and reviewer signoff evidence", () => {
   const proof = realToolProof("notion");
   const existing = new Set([
@@ -1823,6 +1878,9 @@ function realRunArtifactContent(path, tool) {
     return [
       "# reviewer checklist",
       "",
+      `- tool: ${tool}`,
+      `- flow id: ${tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status"}`,
+      "- run id: real-proof",
       "- reviewer: senior-reviewer-001",
       "- date: 2026-06-23",
       "",

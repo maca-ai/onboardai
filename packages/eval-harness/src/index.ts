@@ -592,7 +592,14 @@ export function auditRealToolRunArtifacts(
       const content = readText(reviewerChecklistPath);
       auditShareableTextRedaction(proof.tool, reviewerChecklistPath, content, findings);
       auditRealRunTemplatePlaceholders(proof.tool, reviewerChecklistPath, content, findings);
-      auditReviewerChecklist(proof, reviewerChecklistPath, content, findings);
+      auditReviewerChecklist(
+        proof,
+        runDir,
+        reviewerChecklistPath,
+        content,
+        existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
+        findings
+      );
       const stepTracePath = `${runDir}/step-trace.json`;
       if (existsPath(stepTracePath)) {
         auditReviewerStepSignoff(proof, reviewerChecklistPath, content, stepTracePath, readText(stepTracePath), findings);
@@ -1703,10 +1710,26 @@ function auditStepTraceGrounding(
 
 function auditReviewerChecklist(
   proof: RealToolProofEvidence,
+  runDir: string,
   path: string,
   content: string,
+  flowEvidenceContent: string | null,
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
+  if (!hasExactChecklistLine(content, "tool", proof.tool)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist tool must match ${proof.tool}` });
+  }
+
+  const runId = runDir.split("/").at(-1) ?? "";
+  if (!hasExactChecklistLine(content, "run id", runId)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist run id must match ${runId}` });
+  }
+
+  const flowId = flowIdFromEvidence(flowEvidenceContent);
+  if (flowId && !hasExactChecklistLine(content, "flow id", flowId)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewer checklist flow id must match ${flowId}` });
+  }
+
   if (!/^\s*-\s*reviewer:\s*\S.*$/im.test(content)) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must identify a senior reviewer` });
   }
@@ -1721,6 +1744,29 @@ function auditReviewerChecklist(
 
   if (content.includes("- rejected: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
+  }
+}
+
+function hasExactChecklistLine(content: string, label: string, value: string): boolean {
+  const escapedLabel = escapeRegExp(label);
+  const escapedValue = escapeRegExp(value);
+  return new RegExp(`^\\s*-\\s*${escapedLabel}:\\s*${escapedValue}\\s*$`, "im").test(content);
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function flowIdFromEvidence(content: string | null): string | null {
+  if (!content) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(content);
+    return isRecord(parsed) && typeof parsed.flowId === "string" ? parsed.flowId : null;
+  } catch {
+    return null;
   }
 }
 
