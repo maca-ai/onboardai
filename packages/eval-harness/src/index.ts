@@ -1724,6 +1724,20 @@ function auditFailureLog(
     findings.push({ tool: proof.tool, message: `${path} must state no failure observed for a passing real run` });
   }
 
+  const requiredPassingPatterns = [
+    { label: "passed", pattern: /^\s*-\s*passed:\s*true\s*$/im },
+    { label: "terminal state reached", pattern: /^\s*-\s*terminal state reached:\s*true\s*$/im },
+    { label: "zero human help", pattern: /^\s*-\s*zero human help:\s*true\s*$/im },
+    { label: "no invented steps", pattern: /^\s*-\s*no invented steps:\s*true\s*$/im },
+    { label: "no privileged access", pattern: /^\s*-\s*no privileged access:\s*true\s*$/im }
+  ] as const;
+
+  for (const required of requiredPassingPatterns) {
+    if (!required.pattern.test(content)) {
+      findings.push({ tool: proof.tool, message: `${path} must confirm passing outcome: ${required.label} is true` });
+    }
+  }
+
   const contradictionPatterns = [
     { label: "passed", pattern: /^\s*-\s*passed:\s*false\s*$/im },
     { label: "terminal state reached", pattern: /^\s*-\s*terminal state reached:\s*false\s*$/im },

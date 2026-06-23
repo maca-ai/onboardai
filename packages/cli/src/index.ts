@@ -841,6 +841,9 @@ function renderFailureLog(result: EvalRunResult): string {
 - passed: ${result.passed}
 - first failed step: ${result.firstStuckStep ?? "none"}
 - terminal state reached: ${result.terminalBusinessStateReached}
+- zero human help: ${result.humanHelpIncidents === 0}
+- no invented steps: ${result.inventedStepIncidents === 0}
+- no privileged access: ${result.privilegedAccessViolations.length === 0}
 
 ## observed failure
 

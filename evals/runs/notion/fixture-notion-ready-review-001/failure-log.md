@@ -13,6 +13,9 @@
 - passed: true
 - first failed step: none
 - terminal state reached: true
+- zero human help: true
+- no invented steps: true
+- no privileged access: true
 
 ## observed failure
 

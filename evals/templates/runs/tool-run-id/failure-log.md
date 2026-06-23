@@ -21,7 +21,7 @@
 
 ## observed failure
 
-state `no failure observed` only if the terminal business state was reached and every proof invariant passed.
+state `no failure observed` only if the terminal business state was reached and every proof invariant above is `true`.
 
 ## evidence
 

@@ -332,7 +332,25 @@ test("proof real-run validates complete real target-tool run artifacts and write
     writeFileSync(new URL("redacted-frame-0002.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("redacted-frame-0003.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
-    writeFileSync(new URL("failure-log.md", runDir), "# failure log\n\nno failure observed\n");
+    writeFileSync(
+      new URL("failure-log.md", runDir),
+      [
+        "# failure log",
+        "",
+        "## result",
+        "",
+        "- passed: true",
+        "- terminal state reached: true",
+        "- zero human help: true",
+        "- no invented steps: true",
+        "- no privileged access: true",
+        "",
+        "## observed failure",
+        "",
+        "no failure observed",
+        ""
+      ].join("\n")
+    );
     writeFileSync(
       new URL("reviewer-checklist.md", runDir),
       [
