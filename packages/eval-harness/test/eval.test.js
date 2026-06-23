@@ -710,6 +710,32 @@ test("real target-tool run artifact audit rejects empty normalized capture manif
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvidence must contain")), true);
 });
 
+test("real target-tool run artifact audit rejects malformed normalized capture manifest identity", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          captureId: "Capture 001",
+          generatedAt: "yesterday",
+          dataClass: "production"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("captureId must be a lowercase kebab-case id")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("generatedAt must be an ISO UTC timestamp")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("dataClass must be clean-demo or sanitized-duplicate")), true);
+});
+
 test("real target-tool run artifact audit rejects raw artifact path leaks in normalized manifests", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([

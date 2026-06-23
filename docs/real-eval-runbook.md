@@ -150,6 +150,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with matching installed adapter name and version, native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, no-privileged-access, no-Playwright-selector, and no-computer-use-automation confirmations.
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json` and its `captureAdapterName` and `captureAdapterVersion` match that readiness artifact.
 - [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.
+- [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, and `dataClass` of `clean-demo` or `sanitized-duplicate`.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] confirm the referenced normalized capture manifest `flowPath` and `flowId` match `flow-evidence.json`.
 - [ ] confirm normalized manifest raw artifact summaries do not contain path-like fields such as `path`, `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references.

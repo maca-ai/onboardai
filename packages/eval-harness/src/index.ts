@@ -1095,8 +1095,20 @@ function auditNormalizedCaptureManifest(
     findings.push({ tool: proof.tool, message: `${manifestPath} schemaVersion must be 1` });
   }
 
+  if (typeof parsed.captureId !== "string" || !isSafeKebabId(parsed.captureId)) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} captureId must be a lowercase kebab-case id` });
+  }
+
   if (parsed.tool !== proof.tool) {
     findings.push({ tool: proof.tool, message: `${manifestPath} tool must match ${proof.tool}` });
+  }
+
+  if (typeof parsed.generatedAt !== "string" || !isIsoUtcTimestamp(parsed.generatedAt)) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} generatedAt must be an ISO UTC timestamp` });
+  }
+
+  if (parsed.dataClass !== "clean-demo" && parsed.dataClass !== "sanitized-duplicate") {
+    findings.push({ tool: proof.tool, message: `${manifestPath} dataClass must be clean-demo or sanitized-duplicate` });
   }
 
   const flowEvidenceSummary = readFlowEvidenceSummary(proof, flowEvidencePath, flowEvidenceContent, findings);
@@ -2323,6 +2335,18 @@ function artifactAuditResult(
 
 function isRecord(input: unknown): input is Record<string, unknown> {
   return typeof input === "object" && input !== null && !Array.isArray(input);
+}
+
+function isSafeKebabId(input: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input);
+}
+
+function isIsoUtcTimestamp(input: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(input)) {
+    return false;
+  }
+
+  return !Number.isNaN(Date.parse(input));
 }
 
 function arrayEquals(input: unknown, expected: readonly string[]): boolean {

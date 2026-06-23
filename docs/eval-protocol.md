@@ -263,8 +263,9 @@ reference raw, unsafe, or temporary capture paths. redacted frame evidence paths
 it must also point to the exact same-run `capture-readiness.json` artifact.
 
 the referenced normalized capture manifest must be valid JSON and must show the same tool, local-only raw
-capture policy, hard-secret-redaction policy, matching `flowPath` and `flowId` from `flow-evidence.json`,
-captured screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries for all
+capture policy, hard-secret-redaction policy, lowercase kebab-case `captureId`, ISO UTC `generatedAt`,
+`dataClass` of `clean-demo` or `sanitized-duplicate`, matching `flowPath` and `flowId` from
+`flow-evidence.json`, captured screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries for all
 three required raw inputs without raw file paths, at least one redacted frame under
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
 per-step input evidence for every step id in the real `step-trace.json`. raw artifact summaries must not
