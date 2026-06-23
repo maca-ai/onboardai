@@ -1,5 +1,5 @@
 import type { DeterministicFixture, FixtureTransition, ScreenObservation } from "@onboardai/fixtures";
-import { validateFlowMarkdown, type FlowDocument, type FlowStep } from "@onboardai/flow";
+import { failClosedMessage, validateFlowMarkdown, type FlowDocument, type FlowStep } from "@onboardai/flow";
 import { renderOverlayGuidance } from "@onboardai/overlay";
 
 export type EvalAccessMode = "screen-observation" | "simulated-low-level-input";
@@ -1458,6 +1458,16 @@ function auditRealStepTrace(
 
     if (typeof entry.overlayConfidence !== "number" || entry.overlayConfidence < 0.75) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} overlayConfidence must be at least 0.75` });
+    }
+
+    if (typeof entry.overlayConfidence === "number" && entry.overlayConfidence < 0.75) {
+      if (entry.overlayMessage !== failClosedMessage) {
+        findings.push({ tool: proof.tool, message: `${path} ${stepLabel} below-threshold overlayMessage must exactly match fail-closed guidance` });
+      }
+
+      if (entry.highlightedAnchorId !== null && entry.highlightedAnchorId !== undefined) {
+        findings.push({ tool: proof.tool, message: `${path} ${stepLabel} below-threshold overlay must not highlight a target` });
+      }
     }
 
     auditOverlayAutomationExposure(proof, path, stepLabel, entry, findings);

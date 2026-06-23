@@ -311,6 +311,11 @@ automation command fields for click, type, submit, approve, delete, or state mut
 `expectedVisibleText` and `matchedVisibleText` must match the referenced `flow.md` step expected visible text,
 and `missingVisibleText` must be an empty array.
 
+if a failed run records any step or event with `overlayConfidence` below `0.75`, the overlay evidence must fail
+closed: `overlayMessage` must be exactly `screen state not recognized. ask a human or restart this step.` and
+`highlightedAnchorId` must be `null` or absent. below-threshold evidence never counts as a successful proof
+step.
+
 `flow-evidence.json` must point to the local `flow.md` used for overlay guidance. the referenced flow must
 parse and validate, match the target tool, match the recorded flow id and terminal business state, and its
 step ids, instruction text, highlight anchors, and manual action targets must match the real `step-trace.json`.

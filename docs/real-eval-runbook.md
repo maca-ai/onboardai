@@ -129,6 +129,7 @@ after eval:
 - [ ] confirm every real-run JSON evidence file uses `schemaVersion: 1`.
 - [ ] confirm `step-trace.json` contains a `steps` array.
 - [ ] confirm every `step-trace.json` step is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `redacted-frame-*.png` under the run directory.
+- [ ] if any failed trace event has overlay confidence below `0.75`, confirm the overlay message is exactly `screen state not recognized. ask a human or restart this step.` and no highlighted anchor id is present.
 - [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.

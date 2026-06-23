@@ -1212,6 +1212,56 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
   assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
 });
 
+test("real target-tool run artifact audit rejects below-threshold highlights in step trace", () => {
+  const proof = realToolProof("odoo");
+  const existing = new Set([
+    "evals/runs/odoo/real-proof/step-trace.json",
+    "evals/runs/odoo/real-proof/final-screen.png",
+    "evals/runs/odoo/real-proof/eval-recording.mp4",
+    "evals/runs/odoo/real-proof/failure-log.md",
+    "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/capture-readiness.json",
+    "evals/runs/odoo/real-proof/screen-input-evidence.json",
+    "evals/runs/odoo/real-proof/outcome-evidence.json",
+    "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0002.png",
+    "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "flows/odoo/qualify-opportunity.flow.md",
+    "captures/normalized/capture-real-odoo-001/manifest.json",
+    "captures/redacted/capture-real-odoo-001/frame-0001.png"
+  ]);
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = stepTraceDocument("odoo");
+        return JSON.stringify({
+          ...trace,
+          steps: [
+            {
+              ...trace.steps[0],
+              success: false,
+              overlayKind: "fail-closed",
+              overlayConfidence: 0.5,
+              overlayMessage: "click the highlighted opportunity anyway.",
+              highlightedAnchorId: "opportunity-card"
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("overlayConfidence must be at least 0.75")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("below-threshold overlayMessage must exactly match fail-closed guidance")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("below-threshold overlay must not highlight a target")), true);
+});
+
 test("real target-tool run artifact audit rejects overlay automation exposure in step trace", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
