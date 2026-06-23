@@ -3,12 +3,15 @@
   "tool": "replace-with-odoo-or-notion",
   "substrate": "real-tool",
   "adapterKind": "native",
+  "adapterName": "replace-with-installed-native-capture-adapter-name",
+  "adapterVersion": "replace-with-installed-native-capture-adapter-version",
   "platform": "replace-with-macos-or-windows",
   "docsVerified": true,
   "verifiedDocReferences": [
     {
       "sourceType": "replace-with-official-docs-or-context7",
       "reference": "replace with exact official docs url or context7 library id",
+      "appliesToAdapterVersion": "replace-with-installed-native-capture-adapter-version",
       "behaviors": [
         "screen-recording",
         "keyboard-event-log",

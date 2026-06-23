@@ -428,12 +428,15 @@ test("proof real-run validates complete real target-tool run artifacts and write
           tool: "odoo",
           substrate: "real-tool",
           adapterKind: "native",
+          adapterName: "onboardai-native-capture",
+          adapterVersion: "0.0.0-local",
           platform: "macos",
           docsVerified: true,
           verifiedDocReferences: [
             {
               sourceType: "context7",
               reference: "/websites/v2_tauri_app",
+              appliesToAdapterVersion: "0.0.0-local",
               behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]
             }
           ],

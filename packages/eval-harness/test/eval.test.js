@@ -1042,6 +1042,8 @@ test("real target-tool run artifact audit rejects unverified native capture read
         return JSON.stringify({
           ...captureReadinessEvidence("odoo"),
           adapterKind: "fixture",
+          adapterName: "",
+          adapterVersion: "",
           platform: "linux",
           docsVerified: false,
           verifiedDocReferences: [
@@ -1072,12 +1074,15 @@ test("real target-tool run artifact audit rejects unverified native capture read
 
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("adapterKind must be native")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("adapterName must be a non-empty string")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("adapterVersion must be a non-empty string")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("platform must be macos or windows")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("docsVerified must be true")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("sourceType must be official-docs or context7")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be a non-empty string")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be an official docs URL")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be a context7 library id")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("appliesToAdapterVersion must match adapterVersion")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsupported behavior clipboard-access")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover keyboard-event-log")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover mouse-event-log")), true);
@@ -1851,12 +1856,15 @@ function captureReadinessEvidence(tool) {
     tool,
     substrate: "real-tool",
     adapterKind: "native",
+    adapterName: "onboardai-native-capture",
+    adapterVersion: "0.0.0-local",
     platform: "macos",
     docsVerified: true,
     verifiedDocReferences: [
       {
         sourceType: "context7",
         reference: "/websites/v2_tauri_app",
+        appliesToAdapterVersion: "0.0.0-local",
         behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]
       }
     ],

@@ -294,14 +294,17 @@ backend, database, dom, mcp, selector, playwright, or computer-use fields.
 for every real `step-trace.json` step with an action target anchor, the matching manifest `inputEvidence`
 entry must include at least one input event with the same `anchorId`.
 
-`capture-readiness.json` must state that the capture adapter is native, macos or windows, official-docs or
-context7 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able to output
-redacted frames, and protected by raw-artifact git ignore. its blockers list must be empty. it must include
+`capture-readiness.json` must state that the capture adapter is native, name the installed native adapter and
+version being used, run on macos or windows, be official-docs or context7 verified, screen-recording capable,
+keyboard-event capable, mouse-event capable, able to output redacted frames, and protected by raw-artifact git
+ignore. its blockers list must be empty. it must include
 `verifiedDocReferences` entries with source type `official-docs` or `context7`, a concrete reference, and
 behavior coverage for `screen-recording`, `keyboard-event-log`, `mouse-event-log`, `redacted-frame-output`,
 and `raw-artifacts-ignored`. `official-docs` references must be `http` or `https` URLs. `context7`
 references must be context7 library ids beginning with `/`. behavior labels outside the required vocabulary
-are rejected. behavior coverage is credited only from references whose source type and reference shape are valid.
+are rejected. each reference must set `appliesToAdapterVersion` to the same value as the top-level
+`adapterVersion`. behavior coverage is credited only from references whose source type, reference shape, and
+adapter-version attribution are valid.
 
 `step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
 step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,

@@ -1533,6 +1533,27 @@ latest results on 2026-06-23:
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 
+latest results on 2026-06-23:
+
+- changed: capture-readiness evidence now requires installed native adapter attribution through `adapterName`, `adapterVersion`, and per-document `appliesToAdapterVersion` matching the top-level adapter version.
+- eval showed: targeted eval-harness coverage rejects capture readiness without adapter name/version and rejects documentation references that do not apply to the installed adapter version; synthetic real-run CLI validation still passes only after the complete dry-run fixture supplies matching adapter attribution; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, fill `capture-readiness.json` with the actual installed native capture adapter name/version plus version-matched official docs or context7 references, then dry-run `proof real-run` before collecting held-out user evidence.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 51 tests, 51 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 92 tests, 92 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 26 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1604,3 +1625,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-23: computer-use/playwright proof ban tightened: deterministic harness policy and normalized manifest input evidence now reject computer-use automation and Playwright selector proof handles.
 - 2026-06-23: explicit screen-input no-automation evidence added: `screen-input-evidence.json` must affirm no Playwright selectors and no computer-use automation were used.
 - 2026-06-23: capture-readiness docs reference gate tightened: official-docs references must be URLs, context7 references must be library ids, malformed references cannot satisfy behavior coverage, and verified behavior labels must use the supported capture vocabulary.
+- 2026-06-23: capture-readiness adapter attribution gate added: real runs must name the installed native capture adapter and version, and every verified documentation reference must apply to that same adapter version.

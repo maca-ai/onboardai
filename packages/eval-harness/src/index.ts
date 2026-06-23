@@ -1362,6 +1362,14 @@ function auditCaptureReadinessEvidence(
     findings.push({ tool: proof.tool, message: `${path} adapterKind must be native` });
   }
 
+  if (typeof parsed.adapterName !== "string" || parsed.adapterName.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} adapterName must be a non-empty string` });
+  }
+
+  if (typeof parsed.adapterVersion !== "string" || parsed.adapterVersion.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} adapterVersion must be a non-empty string` });
+  }
+
   if (parsed.platform !== "macos" && parsed.platform !== "windows") {
     findings.push({ tool: proof.tool, message: `${path} platform must be macos or windows` });
   }
@@ -1379,7 +1387,7 @@ function auditCaptureReadinessEvidence(
     }
   }
 
-  auditVerifiedDocReferences(proof, path, parsed.verifiedDocReferences, findings);
+  auditVerifiedDocReferences(proof, path, parsed.verifiedDocReferences, parsed.adapterVersion, findings);
 
   if (!Array.isArray(parsed.blockers) || parsed.blockers.length !== 0) {
     findings.push({ tool: proof.tool, message: `${path} blockers must be empty` });
@@ -1390,6 +1398,7 @@ function auditVerifiedDocReferences(
   proof: RealToolProofEvidence,
   path: string,
   references: unknown,
+  adapterVersion: unknown,
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
   const requiredBehaviors = new Set(["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]);
@@ -1421,6 +1430,18 @@ function auditVerifiedDocReferences(
       findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].reference must be a context7 library id` });
     } else {
       validReference = validSourceType;
+    }
+
+    if (
+      typeof adapterVersion !== "string" ||
+      adapterVersion.length === 0 ||
+      reference.appliesToAdapterVersion !== adapterVersion
+    ) {
+      findings.push({
+        tool: proof.tool,
+        message: `${path} verifiedDocReferences[${index}].appliesToAdapterVersion must match adapterVersion`
+      });
+      validReference = false;
     }
 
     if (!Array.isArray(reference.behaviors) || reference.behaviors.length === 0) {
