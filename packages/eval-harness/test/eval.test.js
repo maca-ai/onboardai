@@ -1048,7 +1048,17 @@ test("real target-tool run artifact audit rejects unverified native capture read
             {
               sourceType: "blog",
               reference: "",
+              behaviors: ["screen-recording", "clipboard-access"]
+            },
+            {
+              sourceType: "official-docs",
+              reference: "Tauri capture docs",
               behaviors: ["screen-recording"]
+            },
+            {
+              sourceType: "context7",
+              reference: "websites/v2_tauri_app",
+              behaviors: ["mouse-event-log"]
             }
           ],
           keyboardEventLog: false,
@@ -1066,6 +1076,9 @@ test("real target-tool run artifact audit rejects unverified native capture read
   assert.equal(audit.findings.some((finding) => finding.message.includes("docsVerified must be true")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("sourceType must be official-docs or context7")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be a non-empty string")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be an official docs URL")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reference must be a context7 library id")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("unsupported behavior clipboard-access")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover keyboard-event-log")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("verifiedDocReferences must cover mouse-event-log")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("keyboardEventLog must be true")), true);

@@ -1393,6 +1393,7 @@ function auditVerifiedDocReferences(
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
   const requiredBehaviors = new Set(["screen-recording", "keyboard-event-log", "mouse-event-log", "redacted-frame-output", "raw-artifacts-ignored"]);
+  const allowedBehaviors = new Set(requiredBehaviors);
 
   if (!Array.isArray(references) || references.length === 0) {
     findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences must contain official or context7 documentation evidence` });
@@ -1406,12 +1407,20 @@ function auditVerifiedDocReferences(
       return;
     }
 
+    const validSourceType = reference.sourceType === "official-docs" || reference.sourceType === "context7";
     if (reference.sourceType !== "official-docs" && reference.sourceType !== "context7") {
       findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].sourceType must be official-docs or context7` });
     }
 
+    let validReference = false;
     if (typeof reference.reference !== "string" || reference.reference.length === 0) {
       findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].reference must be a non-empty string` });
+    } else if (reference.sourceType === "official-docs" && !/^https?:\/\//.test(reference.reference)) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].reference must be an official docs URL` });
+    } else if (reference.sourceType === "context7" && !reference.reference.startsWith("/")) {
+      findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].reference must be a context7 library id` });
+    } else {
+      validReference = validSourceType;
     }
 
     if (!Array.isArray(reference.behaviors) || reference.behaviors.length === 0) {
@@ -1421,7 +1430,11 @@ function auditVerifiedDocReferences(
 
     reference.behaviors.forEach((behavior) => {
       if (typeof behavior === "string") {
-        coveredBehaviors.add(behavior);
+        if (!allowedBehaviors.has(behavior)) {
+          findings.push({ tool: proof.tool, message: `${path} verifiedDocReferences[${index}].behaviors contains unsupported behavior ${behavior}` });
+        } else if (validReference) {
+          coveredBehaviors.add(behavior);
+        }
       }
     });
   });
