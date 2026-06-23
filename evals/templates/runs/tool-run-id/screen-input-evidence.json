@@ -9,6 +9,8 @@
   "mouseEventLogCaptured": true,
   "hardRedactionCompleted": true,
   "noPrivilegedAccessUsed": true,
+  "noPlaywrightSelectorsUsed": true,
+  "noComputerUseAutomationUsed": true,
   "captureReadinessEvidencePath": "evals/runs/tool/replace-with-run-id/capture-readiness.json",
   "screenRecordingEvidencePath": "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
   "normalizedCaptureManifestPath": "evals/runs/tool/replace-with-run-id/capture-manifest.json",

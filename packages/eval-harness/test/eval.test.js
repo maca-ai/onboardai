@@ -452,6 +452,7 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
       JSON.stringify({
         ...screenInputEvidence("odoo"),
         keyboardEventLogCaptured: false,
+        noPlaywrightSelectorsUsed: false,
         rawCapturePolicy: "shareable",
         normalizedCaptureManifestPath: "captures/raw/odoo/manifest.json",
         redactedFrameEvidencePaths: ["captures/raw/odoo/frame-0001.png"]
@@ -460,6 +461,7 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
 
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("keyboardEventLogCaptured")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("noPlaywrightSelectorsUsed")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("rawCapturePolicy")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
 });
@@ -1821,6 +1823,8 @@ function screenInputEvidence(tool) {
     mouseEventLogCaptured: true,
     hardRedactionCompleted: true,
     noPrivilegedAccessUsed: true,
+    noPlaywrightSelectorsUsed: true,
+    noComputerUseAutomationUsed: true,
     captureReadinessEvidencePath: `evals/runs/${tool}/real-proof/capture-readiness.json`,
     screenRecordingEvidencePath: `evals/runs/${tool}/real-proof/eval-recording.mp4`,
     normalizedCaptureManifestPath: `captures/normalized/capture-real-${tool}-001/manifest.json`,

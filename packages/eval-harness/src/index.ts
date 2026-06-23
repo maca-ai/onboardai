@@ -935,7 +935,9 @@ function auditScreenInputEvidence(
     "keyboardEventLogCaptured",
     "mouseEventLogCaptured",
     "hardRedactionCompleted",
-    "noPrivilegedAccessUsed"
+    "noPrivilegedAccessUsed",
+    "noPlaywrightSelectorsUsed",
+    "noComputerUseAutomationUsed"
   ] as const) {
     if (parsed[field] !== true) {
       findings.push({ tool: proof.tool, message: `${path} ${field} must be true` });

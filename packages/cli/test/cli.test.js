@@ -509,6 +509,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
           mouseEventLogCaptured: true,
           hardRedactionCompleted: true,
           noPrivilegedAccessUsed: true,
+          noPlaywrightSelectorsUsed: true,
+          noComputerUseAutomationUsed: true,
           captureReadinessEvidencePath: `evals/runs/odoo/${runId}/capture-readiness.json`,
           screenRecordingEvidencePath: `evals/runs/odoo/${runId}/eval-recording.mp4`,
           normalizedCaptureManifestPath: `evals/runs/odoo/${runId}/capture-manifest.json`,

@@ -253,9 +253,9 @@ template placeholder text such as `replace-with-*` or `replace with *` in run JS
 referenced normalized capture manifest.
 
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
-redaction, clean seeded data, local-only raw capture, and no privileged proof access were all verified. it
-may reference shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or
-temporary capture paths. redacted frame evidence paths must point to
+redaction, clean seeded data, local-only raw capture, no privileged proof access, no Playwright selector
+proof, and no computer-use automation proof were all verified. it may reference shareable redacted frames and
+normalized manifests, but it must not reference raw, unsafe, or temporary capture paths. redacted frame evidence paths must point to
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` for same-run evidence or
 `captures/redacted/<capture-id>/frame-*.png` for separately materialized shareable redacted capture evidence.
 it must also point to the exact same-run `capture-readiness.json` artifact.
