@@ -851,11 +851,11 @@ test("real target-tool run artifact audit rejects privileged input event evidenc
             },
             {
               stepId: "step-002",
-              inputEvents: [{ kind: "mouse", event: "click", selector: "#qualified-stage" }]
+              inputEvents: [{ kind: "mouse", event: "click", selector: "#qualified-stage", playwrightSelector: "text=Qualified" }]
             },
             {
               stepId: "step-003",
-              inputEvents: [{ kind: "keyboard", event: "" }]
+              inputEvents: [{ kind: "keyboard", event: "", computerUseAction: "type" }]
             }
           ]
         });
@@ -869,6 +869,8 @@ test("real target-tool run artifact audit rejects privileged input event evidenc
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvents[0].kind must be mouse or keyboard")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field apiEndpoint")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field selector")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field playwrightSelector")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must not include privileged proof field computerUseAction")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("inputEvents[0].event must be a non-empty string")), true);
 });
 

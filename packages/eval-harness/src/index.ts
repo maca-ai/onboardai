@@ -11,7 +11,17 @@ export interface EvalHarnessPolicy {
 
 export const deterministicHarnessPolicy: EvalHarnessPolicy = {
   allowed: ["screen-observation", "simulated-low-level-input"],
-  forbidden: ["llm-inference", "dom-inspection", "browser-selectors", "api-access", "backend-access", "database-access", "target-tool-mcp"]
+  forbidden: [
+    "llm-inference",
+    "dom-inspection",
+    "browser-selectors",
+    "playwright-selectors",
+    "api-access",
+    "backend-access",
+    "database-access",
+    "target-tool-mcp",
+    "computer-use-automation"
+  ]
 };
 
 export function assertNoPrivilegedProofAccess(accesses: readonly string[]): void {
@@ -2283,7 +2293,7 @@ function isRawArtifactPathLeak(field: string, value: string): boolean {
 }
 
 function isPrivilegedInputEvidenceField(field: string): boolean {
-  return /(?:api|backend|database|dom|mcp|selector)/i.test(field);
+  return /(?:api|backend|database|dom|mcp|selector|playwright|computerUse|computer-use|computer_use)/i.test(field);
 }
 
 function isAbsolutePath(path: string): boolean {

@@ -290,7 +290,7 @@ proof summaries and must not be used as real held-out target-tool evidence.
 
 each normalized manifest `inputEvidence[].inputEvents[]` entry must be a captured mouse or keyboard event
 with a non-empty event name. input event records must not include privileged proof handles such as api,
-backend, database, dom, mcp, or selector fields.
+backend, database, dom, mcp, selector, playwright, or computer-use fields.
 for every real `step-trace.json` step with an action target anchor, the matching manifest `inputEvidence`
 entry must include at least one input event with the same `anchorId`.
 
