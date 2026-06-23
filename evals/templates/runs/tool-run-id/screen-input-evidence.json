@@ -4,6 +4,8 @@
   "substrate": "real-tool",
   "dataSource": "clean-seeded-demo-data",
   "rawCapturePolicy": "unsafe-to-share-local-only-git-ignored",
+  "captureAdapterName": "replace-with-installed-native-capture-adapter-name",
+  "captureAdapterVersion": "replace-with-installed-native-capture-adapter-version",
   "nativeScreenRecordingCaptured": true,
   "keyboardEventLogCaptured": true,
   "mouseEventLogCaptured": true,

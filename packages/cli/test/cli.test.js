@@ -507,6 +507,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
           substrate: "real-tool",
           dataSource: "clean-seeded-demo-data",
           rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
+          captureAdapterName: "onboardai-native-capture",
+          captureAdapterVersion: "0.0.0-local",
           nativeScreenRecordingCaptured: true,
           keyboardEventLogCaptured: true,
           mouseEventLogCaptured: true,

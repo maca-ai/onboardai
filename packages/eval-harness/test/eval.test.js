@@ -466,6 +466,30 @@ test("real target-tool run artifact audit rejects unsafe or incomplete screen-in
   assert.equal(audit.findings.some((finding) => finding.message.includes("unsafe capture evidence")), true);
 });
 
+test("real target-tool run artifact audit rejects screen-input evidence from a different capture adapter", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          captureAdapterName: "different-native-capture",
+          captureAdapterVersion: "9.9.9"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("captureAdapterName must match capture-readiness adapterName")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("captureAdapterVersion must match capture-readiness adapterVersion")), true);
+});
+
 test("real target-tool run artifact audit rejects unsupported real-run evidence schema versions", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -1836,6 +1860,8 @@ function screenInputEvidence(tool) {
     substrate: "real-tool",
     dataSource: "clean-seeded-demo-data",
     rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
+    captureAdapterName: "onboardai-native-capture",
+    captureAdapterVersion: "0.0.0-local",
     nativeScreenRecordingCaptured: true,
     keyboardEventLogCaptured: true,
     mouseEventLogCaptured: true,

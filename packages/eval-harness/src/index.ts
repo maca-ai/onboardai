@@ -919,6 +919,7 @@ function auditScreenInputEvidence(
     findings.push({ tool: proof.tool, message: `${path} rawCapturePolicy must be unsafe-to-share-local-only-git-ignored` });
   }
 
+  const captureReadinessPath = `${runDir}/capture-readiness.json`;
   auditEvidencePathField(
     proof.tool,
     path,
@@ -929,6 +930,21 @@ function auditScreenInputEvidence(
     references,
     findings
   );
+
+  const captureReadinessAttribution = readCaptureReadinessAttribution(
+    existsPath(captureReadinessPath) ? readText(captureReadinessPath) : null
+  );
+  if (typeof parsed.captureAdapterName !== "string" || parsed.captureAdapterName.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} captureAdapterName must be a non-empty string` });
+  } else if (captureReadinessAttribution && parsed.captureAdapterName !== captureReadinessAttribution.adapterName) {
+    findings.push({ tool: proof.tool, message: `${path} captureAdapterName must match capture-readiness adapterName` });
+  }
+
+  if (typeof parsed.captureAdapterVersion !== "string" || parsed.captureAdapterVersion.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} captureAdapterVersion must be a non-empty string` });
+  } else if (captureReadinessAttribution && parsed.captureAdapterVersion !== captureReadinessAttribution.adapterVersion) {
+    findings.push({ tool: proof.tool, message: `${path} captureAdapterVersion must match capture-readiness adapterVersion` });
+  }
 
   for (const field of [
     "nativeScreenRecordingCaptured",
@@ -1011,6 +1027,32 @@ function auditScreenInputEvidence(
       }
     });
   }
+}
+
+function readCaptureReadinessAttribution(content: string | null): { readonly adapterName: string; readonly adapterVersion: string } | null {
+  if (content === null) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
+
+  if (!isRecord(parsed) || typeof parsed.adapterName !== "string" || typeof parsed.adapterVersion !== "string") {
+    return null;
+  }
+
+  if (parsed.adapterName.length === 0 || parsed.adapterVersion.length === 0) {
+    return null;
+  }
+
+  return {
+    adapterName: parsed.adapterName,
+    adapterVersion: parsed.adapterVersion
+  };
 }
 
 interface NormalizedCaptureManifestAudit {
