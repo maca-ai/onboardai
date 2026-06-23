@@ -29,6 +29,7 @@
 - step trace: evals/runs/notion/fixture-notion-ready-review-001/step-trace.json
 - final screen: evals/runs/notion/fixture-notion-ready-review-001/final-screen.png
 - normalized capture manifest: captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
+- run-local capture manifest: evals/runs/notion/fixture-notion-ready-review-001/capture-manifest.json
 - eval recording marker: evals/runs/notion/fixture-notion-ready-review-001/eval-recording.mp4
 - failure log: evals/runs/notion/fixture-notion-ready-review-001/failure-log.md
 

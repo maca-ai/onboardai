@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { createNormalizedCaptureManifest, normalizeDemonstrationToFlowMarkdown, writeLocalCaptureBundle } from "@onboardai/capture";
+import {
+  createNormalizedCaptureManifest,
+  createNormalizedRunCaptureManifest,
+  normalizeDemonstrationToFlowMarkdown,
+  writeLocalCaptureBundle,
+  type SeniorDemonstration
+} from "@onboardai/capture";
 import {
   auditCaptureTeachGoalStatus,
   auditEvalProofResults,
@@ -54,6 +60,16 @@ if (args[0] === "flow" && args[1] === "validate") {
   } else {
     const artifact = normalizeFixtureCapture(tool);
     console.log(`normalized ${tool} capture to ${artifact.path}`);
+  }
+} else if (args[0] === "capture" && args[1] === "normalize-run") {
+  const tool = args[2];
+  const runId = args[3];
+  if ((tool !== "odoo" && tool !== "notion") || !runId || !isSafeRunId(runId)) {
+    console.error("usage: onboardai capture normalize-run <odoo|notion> <run-id>");
+    process.exitCode = 1;
+  } else {
+    const artifact = normalizeFixtureRunCapture(tool, runId);
+    console.log(`normalized ${tool} fixture run capture to ${artifact.path}`);
   }
 } else if (args[0] === "capture" && args[1] === "materialize") {
   const tool = args[2];
@@ -159,7 +175,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | capture normalize-run <odoo|notion> <run-id> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -191,6 +207,7 @@ function runEval(tool: ToolName): EvalRunResult {
   const fixture = getDeterministicFixture(tool);
   materializeFixtureCapture(tool);
   normalizeFixtureCapture(tool);
+  normalizeFixtureRunCapture(tool, fixture.runId);
   materializeShareableFixtureFrames(tool);
   const markdown = readFileSync(resolveWorkspacePath(fixture.flowPath), "utf8");
   const validation = validateFlowMarkdown(markdown);
@@ -225,6 +242,40 @@ function normalizeFixtureCapture(tool: ToolName): { readonly path: string; reado
   writeFileSync(manifestPath, manifest.json);
 
   return { path: artifact.path, markdown: artifact.markdown };
+}
+
+function normalizeFixtureRunCapture(tool: ToolName, runId: string): { readonly path: string; readonly framePaths: readonly string[] } {
+  if (!isSafeRunId(runId)) {
+    throw new Error("run id must be lowercase kebab-case");
+  }
+
+  const fixture = getDeterministicFixture(tool);
+  const demonstration = withRunLocalFramePaths(getSeniorDemonstration(tool), tool, runId);
+  const artifact = normalizeDemonstrationToFlowMarkdown(demonstration, fixture.flowPath);
+  const manifest = createNormalizedRunCaptureManifest(demonstration, artifact, { tool, runId });
+  const manifestPath = resolveWorkspacePath(manifest.path);
+  const framePaths = manifest.manifest.redactedFrames.map((frame) => frame.path);
+
+  mkdirSync(dirname(manifestPath), { recursive: true });
+  writeFileSync(manifestPath, manifest.json);
+
+  for (const framePath of framePaths) {
+    const absolutePath = resolveWorkspacePath(framePath);
+    mkdirSync(dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, fixturePng());
+  }
+
+  return { path: manifest.path, framePaths };
+}
+
+function withRunLocalFramePaths(demonstration: SeniorDemonstration, tool: ToolName, runId: string): SeniorDemonstration {
+  return {
+    ...demonstration,
+    frames: demonstration.frames.map((frame, index) => ({
+      ...frame,
+      redactedFramePath: `evals/runs/${tool}/${runId}/redacted-frame-${String(index + 1).padStart(4, "0")}.png`
+    }))
+  };
 }
 
 function materializeShareableFixtureFrames(tool: ToolName): void {
@@ -489,11 +540,13 @@ function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): 
     const flowPath = fixture.flowPath;
     const manifestPath = join("captures", "normalized", captureIdForResult(result), "manifest.json");
     const runDir = join("evals", "runs", result.tool, result.runId);
+    const runManifestPath = join(runDir, "capture-manifest.json");
     const reportPath = join("evals", "reports", `${result.tool}-${result.runId}.md`);
     const checklistPath = join("evals", "reviewer-checklists", `${result.tool}-${result.runId}.md`);
 
     references.push({ tool: result.tool, label: "flow", path: flowPath });
     references.push({ tool: result.tool, label: "normalized capture manifest", path: manifestPath });
+    references.push({ tool: result.tool, label: "run-local normalized capture manifest", path: runManifestPath });
     references.push({ tool: result.tool, label: "step trace", path: join(runDir, "step-trace.json") });
     references.push({ tool: result.tool, label: "final screen", path: join(runDir, "final-screen.png") });
     references.push({ tool: result.tool, label: "eval recording marker", path: join(runDir, "eval-recording.mp4") });
@@ -508,15 +561,8 @@ function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): 
       }
     }
 
-    const manifest = JSON.parse(readFileSync(resolveWorkspacePath(manifestPath), "utf8")) as NormalizedManifestEvidence;
-    if (typeof manifest.flowPath === "string") {
-      references.push({ tool: result.tool, label: "manifest flow path", path: manifest.flowPath });
-    }
-    for (const frame of manifest.redactedFrames ?? []) {
-      if (typeof frame.path === "string") {
-        references.push({ tool: result.tool, label: `manifest redacted frame ${String(frame.frameId ?? "unknown")}`, path: frame.path });
-      }
-    }
+    references.push(...extractManifestEvidenceReferences(result.tool, manifestPath));
+    references.push(...extractManifestEvidenceReferences(result.tool, runManifestPath));
 
     for (const entry of result.trace) {
       references.push({ tool: result.tool, label: `trace ${entry.stepId} held-out frame`, path: entry.currentFrame });
@@ -532,6 +578,23 @@ function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): 
 interface NormalizedManifestEvidence {
   readonly flowPath?: unknown;
   readonly redactedFrames?: readonly { readonly frameId?: unknown; readonly path?: unknown }[];
+}
+
+function extractManifestEvidenceReferences(tool: string, manifestPath: string): readonly ShareableEvidencePathReference[] {
+  const references: ShareableEvidencePathReference[] = [];
+  const manifest = JSON.parse(readFileSync(resolveWorkspacePath(manifestPath), "utf8")) as NormalizedManifestEvidence;
+
+  if (typeof manifest.flowPath === "string") {
+    references.push({ tool, label: `${manifestPath} flow path`, path: manifest.flowPath });
+  }
+
+  for (const frame of manifest.redactedFrames ?? []) {
+    if (typeof frame.path === "string") {
+      references.push({ tool, label: `${manifestPath} redacted frame ${String(frame.frameId ?? "unknown")}`, path: frame.path });
+    }
+  }
+
+  return references;
 }
 
 function extractEvidencePathsFromArtifact(tool: string, label: string, artifactPath: string): readonly ShareableEvidencePathReference[] {
@@ -590,6 +653,7 @@ function renderReport(result: EvalRunResult): string {
 - step trace: evals/runs/${result.tool}/${result.runId}/step-trace.json
 - final screen: evals/runs/${result.tool}/${result.runId}/final-screen.png
 - normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
+- run-local capture manifest: evals/runs/${result.tool}/${result.runId}/capture-manifest.json
 - eval recording marker: evals/runs/${result.tool}/${result.runId}/eval-recording.mp4
 - failure log: evals/runs/${result.tool}/${result.runId}/failure-log.md
 
@@ -620,6 +684,7 @@ function renderReviewerChecklist(result: EvalRunResult): string {
 - step trace: evals/runs/${result.tool}/${result.runId}/step-trace.json
 - capture-to-flow mapping: flows/${result.tool}/${result.tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md
 - normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
+- run-local capture manifest: evals/runs/${result.tool}/${result.runId}/capture-manifest.json
 - eval recording: evals/runs/${result.tool}/${result.runId}/eval-recording.mp4
 - failure log: evals/runs/${result.tool}/${result.runId}/failure-log.md
 
@@ -689,6 +754,7 @@ Each fixture eval used only:
 
 - generated \`flow.md\`
 - normalized capture manifest
+- run-local normalized capture manifest
 - materialized redacted capture frame artifacts
 - materialized held-out eval frame artifacts
 - redacted frame references
@@ -753,6 +819,7 @@ function renderToolProofSection(result: EvalRunResult): string {
 - reviewer signoff: ${result.reviewerSignoffResult}
 - flow: flows/${result.tool}/${result.tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md
 - normalized capture manifest: captures/normalized/${captureIdForResult(result)}/manifest.json
+- run-local capture manifest: evals/runs/${result.tool}/${result.runId}/capture-manifest.json
 - eval report: evals/reports/${result.tool}-${result.runId}.md
 - reviewer checklist: evals/reviewer-checklists/${result.tool}-${result.runId}.md
 `;

@@ -339,6 +339,9 @@ record observations here.
 - observation: the real-run artifact gate can audit either legacy normalized manifests or same-run normalized manifests.
   evidence: `auditRealToolRunArtifacts` still accepts existing `captures/normalized/<capture-id>/manifest.json` evidence, and now also accepts `evals/runs/<tool>/<run-id>/capture-manifest.json` when its redacted frame evidence is listed as same-run `redacted-frame-*.png`; it rejects untagged business-sensitive manifest values so hand-written manifests cannot bypass capture-package tagging; no real proof summary files were created.
 
+- observation: fixture proof now exercises run-local normalized capture manifests without converting them into real proof.
+  evidence: `proof fixtures` writes and audits `evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json` and `evals/runs/notion/fixture-notion-ready-review-001/capture-manifest.json`, with 8 same-run redacted frame PNG markers under `evals/runs/.../redacted-frame-*.png`; targeted CLI tests passed 10/10.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -595,20 +598,20 @@ what the eval showed:
 - notion fixture teaching eval passed from a generated normalized flow against held-out eval observations: 3/3 steps, completion rate 1, terminal expected visible text `demo task, status, ready for review`, no terminal missing text, no human help, no privileged access, no invented steps, reviewer checklist accepted.
 - latest targeted capture test suite passed: 15 tests, 15 pass, 0 fail.
 - latest targeted eval-harness test suite passed: 47 tests, 47 pass, 0 fail.
-- latest targeted cli test suite passed: 9 tests, 9 pass, 0 fail.
+- latest targeted cli test suite passed: 10 tests, 10 pass, 0 fail.
 - latest targeted redaction test suite passed: 1 test, 1 pass, 0 fail.
-- latest full test suite passed: 87 tests, 87 pass, 0 fail.
+- latest full test suite passed: 88 tests, 88 pass, 0 fail.
 - latest flow validation passed: 2 flow files validated.
 - latest fixture proof passed: 2/2 tool-like fixture evals.
 - latest proof status command exited 1 as expected because the full goal is not proven: real-tool proof failed 0/2 tools with missing real held-out teaching eval evidence and missing native screen-plus-input capture evidence for both odoo and notion.
 - latest full-goal status remains unproven: `fullGoalProven: false`, `fixtureProofPassed: true`, `realToolProofPassed: false`, `realToolProofs: 0`, `missingRealToolProofs: 2`.
 - latest live real-proof summary check found `evals/reports/real-tool-proof-odoo.json` absent and `evals/reports/real-tool-proof-notion.json` absent.
-- latest shareable artifact safety scan passed: 24 text files scanned with no forbidden secret/email or raw/unsafe/tmp path findings.
+- latest shareable artifact safety scan passed: 26 text files scanned with no forbidden secret/email or raw/unsafe/tmp path findings.
 - latest direct secret/email scan over `flows`, `evals`, `captures/normalized`, and `captures/redacted` found no matches.
 - latest direct raw/unsafe/tmp path scan over `flows`, `evals`, `captures/normalized`, and `captures/redacted` found no matches.
 - latest git-ignore check confirmed sample `captures/raw/`, `captures/unsafe/`, and `captures/tmp/` capture paths are ignored.
 - real-eval preparation does not add real target-tool evidence. It does not prove native screen recording, native keyboard logging, native mouse logging, real overlay behavior, real first-time-user completion, or real senior signoff on odoo or notion.
-- capture artifact pipeline skeleton does not add real odoo or notion proof files; it only defines the local raw-input and shareable normalized-manifest path for future held-out runs.
+- capture artifact pipeline skeleton does not add real odoo or notion proof files; fixture proof now exercises the local raw-input and shareable run-local normalized-manifest path for future held-out runs.
 
 completion rate:
 
@@ -1447,3 +1450,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-22: proof-summary derived-field rejection added: `real-tool-proof-*.json` files containing `runEvidenceAudited` are invalid because that field is created only by the validator after run-directory audit.
 - 2026-06-22: capture-readiness documentation evidence gate added: real-run `capture-readiness.json` must cite official docs or context7 references covering every required native capture behavior.
 - 2026-06-22: held-out outcome evidence path gate added: `outcome-evidence.json` must cite same-run held-out eval artifacts and cannot use senior capture storage as held-out eval proof.
+- 2026-06-23: run-local fixture capture manifest proof added: `proof fixtures` now writes and audits run-local capture manifests plus same-run redacted frame PNG evidence without creating real odoo/notion proof summaries.

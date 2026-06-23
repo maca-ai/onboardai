@@ -13,6 +13,7 @@ test("cli prints usage for empty invocation", () => {
   });
 
   assert.match(output, /onboardai flow validate/);
+  assert.match(output, /capture normalize-run <odoo\|notion> <run-id>/);
   assert.match(output, /proof real-run <odoo\|notion> <run-id>/);
 });
 
@@ -26,7 +27,13 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
 
   assert.match(output, /fixture proof passed: 2\/2 tools/);
   assert.equal(existsSync(new URL("captures/redacted/odoo-qualify-opportunity/frame-0001.png", workspaceRoot)), true);
+  assert.equal(existsSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json", workspaceRoot)), true);
+  assert.equal(existsSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/redacted-frame-0001.png", workspaceRoot)), true);
   assert.equal(existsSync(new URL("evals/fixtures/notion-update-task-status/held-out-frame-0001.png", workspaceRoot)), true);
+  assert.match(
+    readFileSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json", workspaceRoot), "utf8"),
+    /evals\/runs\/odoo\/fixture-odoo-qualify-001\/redacted-frame-0001\.png/
+  );
   assert.equal(audit.shareableEvidence.passed, true);
   assert.equal(audit.summary.missingEvidenceReferences, 0);
   assert.equal(audit.summary.unsafeEvidenceReferences, 0);
@@ -101,6 +108,43 @@ test("proof scan-shareable rejects forbidden secrets and unsafe capture paths", 
     assert.match(result.stderr, /shareable-scan-validation\.md: unsafe capture path/);
   } finally {
     rmSync(badArtifact, { force: true });
+  }
+});
+
+test("capture normalize-run writes fixture run-local manifest without real proof summary", () => {
+  const runId = "fixture-run-local-cli-001";
+  const runDir = new URL(`evals/runs/odoo/${runId}/`, workspaceRoot);
+  const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
+  const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;
+
+  rmSync(runDir, { recursive: true, force: true });
+
+  try {
+    const result = spawnSync("node", ["dist/index.js", "capture", "normalize-run", "odoo", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+    const manifestPath = new URL("capture-manifest.json", runDir);
+    const framePath = new URL("redacted-frame-0001.png", runDir);
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /normalized odoo fixture run capture to evals\/runs\/odoo\/fixture-run-local-cli-001\/capture-manifest\.json/);
+    assert.equal(existsSync(manifestPath), true);
+    assert.equal(existsSync(framePath), true);
+    assert.equal(JSON.stringify(manifest).includes("captures/raw/"), false);
+    assert.equal(manifest.redactedFrames[0].path, `evals/runs/odoo/${runId}/redacted-frame-0001.png`);
+    assert.equal(existsSync(summaryPath), summaryBefore !== null);
+    if (summaryBefore !== null) {
+      assert.equal(readFileSync(summaryPath, "utf8"), summaryBefore);
+    }
+  } finally {
+    rmSync(runDir, { recursive: true, force: true });
+    if (summaryBefore === null) {
+      rmSync(summaryPath, { force: true });
+    } else {
+      writeFileSync(summaryPath, summaryBefore);
+    }
   }
 });
 

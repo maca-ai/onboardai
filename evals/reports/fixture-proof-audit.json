@@ -11,7 +11,7 @@
   "findings": [],
   "shareableEvidence": {
     "passed": true,
-    "referencesAudited": 60,
+    "referencesAudited": 76,
     "findings": [],
     "summary": {
       "missingReferences": 0,
@@ -28,7 +28,7 @@
     "humanHelpIncidents": 0,
     "inventedStepIncidents": 0,
     "privilegedAccessViolations": 0,
-    "evidenceReferencesAudited": 60,
+    "evidenceReferencesAudited": 76,
     "missingEvidenceReferences": 0,
     "unsafeEvidenceReferences": 0,
     "disallowedEvidenceReferences": 0

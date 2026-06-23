@@ -13,7 +13,7 @@
 - fixture proof result: passed
 - machine audit result: passed
 - machine audit findings: none
-- shareable evidence references audited: 60
+- shareable evidence references audited: 76
 - missing shareable evidence references: 0
 - unsafe shareable evidence references: 0
 - disallowed shareable evidence references: 0
@@ -30,6 +30,7 @@ Each fixture eval used only:
 
 - generated `flow.md`
 - normalized capture manifest
+- run-local normalized capture manifest
 - materialized redacted capture frame artifacts
 - materialized held-out eval frame artifacts
 - redacted frame references
@@ -58,6 +59,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - reviewer signoff: accepted
 - flow: flows/odoo/qualify-opportunity.flow.md
 - normalized capture manifest: captures/normalized/capture-fixture-odoo-qualify-001/manifest.json
+- run-local capture manifest: evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json
 - eval report: evals/reports/odoo-fixture-odoo-qualify-001.md
 - reviewer checklist: evals/reviewer-checklists/odoo-fixture-odoo-qualify-001.md
 
@@ -79,6 +81,7 @@ No eval used APIs, backend access, database reads, DOM inspection, browser selec
 - reviewer signoff: accepted
 - flow: flows/notion/update-task-status.flow.md
 - normalized capture manifest: captures/normalized/capture-fixture-notion-ready-review-001/manifest.json
+- run-local capture manifest: evals/runs/notion/fixture-notion-ready-review-001/capture-manifest.json
 - eval report: evals/reports/notion-fixture-notion-ready-review-001.md
 - reviewer checklist: evals/reviewer-checklists/notion-fixture-notion-ready-review-001.md
 

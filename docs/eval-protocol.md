@@ -278,6 +278,10 @@ business record ids detected in the manifest must be listed under `redaction.bus
 capture inputs remain local under ignored paths such as `captures/raw/`, `captures/unsafe/`, and
 `captures/tmp/` until the user manually deletes them.
 
+for clean fixture proof only, `onboardai capture normalize-run <odoo|notion> <run-id>` exercises this
+run-local manifest path from deterministic senior demonstration data. it must not create real odoo/notion
+proof summaries and must not be used as real held-out target-tool evidence.
+
 each normalized manifest `inputEvidence[].inputEvents[]` entry must be a captured mouse or keyboard event
 with a non-empty event name. input event records must not include privileged proof handles such as api,
 backend, database, dom, mcp, or selector fields.
