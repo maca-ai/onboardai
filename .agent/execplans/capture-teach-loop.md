@@ -342,6 +342,9 @@ record observations here.
 - observation: fixture proof now exercises run-local normalized capture manifests without converting them into real proof.
   evidence: `proof fixtures` writes and audits `evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json` and `evals/runs/notion/fixture-notion-ready-review-001/capture-manifest.json`, with 8 same-run redacted frame PNG markers under `evals/runs/.../redacted-frame-*.png`; targeted CLI tests passed 10/10.
 
+- observation: complete real-run CLI dry-run coverage now follows the preferred run-local manifest path.
+  evidence: the `proof real-run` complete-artifact CLI test now points `screen-input-evidence.json` at `evals/runs/odoo/<run-id>/capture-manifest.json` and same-run `redacted-frame-*.png` evidence, while the eval-harness still retains separate coverage for legacy `captures/normalized/<capture-id>/manifest.json` acceptance; targeted CLI tests passed 10/10.
+
 ## decision-log
 
 - decision: use typescript, pnpm, and tauri-first.
@@ -589,7 +592,7 @@ current evidence:
 - eval harness changes: added `packages/eval-harness` policy guard forbidding llm inference, dom, selectors, apis, backend, database, and target-tool mcp access; added screen-state matching from visible text and deterministic eval execution; added explicit terminal visible-text verification and held-out status in eval results; added machine-readable proof audit across both required tools; added shareable evidence path auditing for missing, unsafe, absolute, or disallowed artifact references; added full-goal status auditing and real-proof summary parsing that remain false until real odoo and notion proof evidence exists; added real run artifact auditing for required run files, `capture-readiness.json`, `screen-input-evidence.json`, `step-trace.json`, `reviewer-checklist.md`, and `outcome-evidence.json`; added per-step reviewer signoff checks against the actual real-run trace ids; added normalized capture manifest content validation, real-step input coverage checks, redacted-frame cross-checking, step current-frame PNG checks, redacted capture frame type checks, same-run capture-manifest support, business-sensitive manifest tag auditing, raw artifact path-leak checks, mouse/keyboard-only input event checks, input target-anchor grounding, matched visible-text grounding, outcome count grounding, manifest flow grounding, shareable text redaction checks, terminal outcome text grounding, overlay non-automation trace grounding, failure-log consistency checks, schema-version checks, versioned step-trace document parsing, derived run-evidence-audited full-goal status checks, proof-summary derived-field rejection, and capture-readiness documentation-reference checks for real runs.
 - real eval preparation changes: added a real odoo/notion eval runbook for clean seeded setup, senior capture, naive-user held-out eval, reviewer signoff, and no-privileged-access boundaries; added copyable templates for proof summaries, real run step traces, real run failure logs, real run reviewer checklists, flow evidence, native capture readiness evidence, screen/input evidence, and outcome evidence under `evals/templates/`; tightened proof-summary parsing so incomplete summaries and wrong-tool evidence paths are rejected; wired CLI real proof ingestion so incomplete run directories are not loaded as proof; added `proof real-run` dry-run validation for filled real run directories, guarded `--write-summary` creation for accepted real runs, and `proof real-run init` skeleton setup that remains non-passing until evidence is filled.
 - fixture changes: added odoo-like and notion-like fixture contracts with visible starting text, separate capture and held-out eval observations, four eval screen observations each, three manual transitions each, and terminal business states.
-- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, full-goal proof status, real-run skeleton initialization, and shareable artifact safety scanning.
+- cli changes: added `@onboardai/cli` commands for flow validation/search, deterministic eval evidence generation, shareable fixture frame materialization, audited two-tool fixture proof, guarded real-run summary creation, full-goal proof status, real-run skeleton initialization, and shareable artifact safety scanning; complete real-run dry-run coverage now exercises the preferred same-run `capture-manifest.json` evidence path instead of relying on the legacy normalized-captures layout.
 - proof changes: added `pnpm proof:fixtures`, `pnpm proof:status`, `pnpm proof:scan`, `evals/reports/two-tool-fixture-proof.md`, `evals/reports/fixture-proof-audit.json`, and `evals/reports/full-goal-proof-status.json` to compare both fixture evals, machine-check the proof invariants, audit shareable evidence path integrity, scan shareable text artifacts for safety leaks, separate fixture proof from full-goal proof, ingest optional real-proof summaries, and record limitations.
 
 what the eval showed:
@@ -1390,6 +1393,26 @@ latest results on 2026-06-22:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 
+latest results on 2026-06-23:
+
+- changed: complete CLI coverage for `proof real-run` now validates the preferred same-run capture evidence layout: `screen-input-evidence.json` points to `evals/runs/odoo/<run-id>/capture-manifest.json`, and redacted frame evidence points to `evals/runs/odoo/<run-id>/redacted-frame-*.png`.
+- eval showed: targeted CLI proof validation still accepts a complete synthetic real-run artifact set and still writes `real-tool-proof-odoo.json` only when `--write-summary` is requested; this remains dry-run validation coverage, not real odoo evidence.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, fill same-run capture manifest, redacted frames, final screen, eval recording, step trace, outcome evidence, capture readiness, screen/input evidence, and reviewer checklist from a clean held-out run, then dry-run `proof real-run`.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 88 tests, 88 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 26 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1451,3 +1474,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-22: capture-readiness documentation evidence gate added: real-run `capture-readiness.json` must cite official docs or context7 references covering every required native capture behavior.
 - 2026-06-22: held-out outcome evidence path gate added: `outcome-evidence.json` must cite same-run held-out eval artifacts and cannot use senior capture storage as held-out eval proof.
 - 2026-06-23: run-local fixture capture manifest proof added: `proof fixtures` now writes and audits run-local capture manifests plus same-run redacted frame PNG evidence without creating real odoo/notion proof summaries.
+- 2026-06-23: real-run CLI dry-run fixture updated: complete synthetic real-run validation now exercises same-run `capture-manifest.json` and `redacted-frame-*.png` evidence paths.

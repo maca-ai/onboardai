@@ -240,23 +240,16 @@ test("proof real-run fails closed for a missing real target-tool run directory",
 
 test("proof real-run validates complete real target-tool run artifacts and writes summary only when requested", () => {
   const runId = "real-cli-validation-001";
-  const captureId = "capture-real-cli-validation-001";
   const runDir = new URL(`evals/runs/odoo/${runId}/`, workspaceRoot);
-  const normalizedDir = new URL(`captures/normalized/${captureId}/`, workspaceRoot);
-  const redactedDir = new URL(`captures/redacted/${captureId}/`, workspaceRoot);
   const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
   const summaryExistedBefore = existsSync(summaryPath);
   const summaryBefore = summaryExistedBefore ? readFileSync(summaryPath, "utf8") : null;
 
   rmSync(runDir, { recursive: true, force: true });
-  rmSync(normalizedDir, { recursive: true, force: true });
-  rmSync(redactedDir, { recursive: true, force: true });
   if (!summaryExistedBefore) {
     rmSync(summaryPath, { force: true });
   }
   mkdirSync(runDir, { recursive: true });
-  mkdirSync(normalizedDir, { recursive: true });
-  mkdirSync(redactedDir, { recursive: true });
 
   try {
     writeFileSync(
@@ -431,11 +424,11 @@ test("proof real-run validates complete real target-tool run artifacts and write
       )}\n`
     );
     writeFileSync(
-      new URL("manifest.json", normalizedDir),
+      new URL("capture-manifest.json", runDir),
       `${JSON.stringify(
         {
           schemaVersion: 1,
-          captureId,
+          captureId: `${runId}-capture`,
           flowId: "odoo-qualify-opportunity",
           flowPath: "flows/odoo/qualify-opportunity.flow.md",
           tool: "odoo",
@@ -458,7 +451,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
           redactedFrames: [
             {
               frameId: "frame-0001",
-              path: `captures/redacted/${captureId}/frame-0001.png`,
+              path: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
               visibleText: ["demo opportunity", "qualified"]
             }
           ],
@@ -477,7 +470,6 @@ test("proof real-run validates complete real target-tool run artifacts and write
         2
       )}\n`
     );
-    writeFileSync(new URL("frame-0001.png", redactedDir), "redacted frame marker\n");
     writeFileSync(
       new URL("screen-input-evidence.json", runDir),
       `${JSON.stringify(
@@ -494,8 +486,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
           noPrivilegedAccessUsed: true,
           captureReadinessEvidencePath: `evals/runs/odoo/${runId}/capture-readiness.json`,
           screenRecordingEvidencePath: `evals/runs/odoo/${runId}/eval-recording.mp4`,
-          normalizedCaptureManifestPath: `captures/normalized/${captureId}/manifest.json`,
-          redactedFrameEvidencePaths: [`captures/redacted/${captureId}/frame-0001.png`]
+          normalizedCaptureManifestPath: `evals/runs/odoo/${runId}/capture-manifest.json`,
+          redactedFrameEvidencePaths: [`evals/runs/odoo/${runId}/redacted-frame-0001.png`]
         },
         null,
         2
@@ -528,8 +520,6 @@ test("proof real-run validates complete real target-tool run artifacts and write
     assert.equal(summary.runEvidenceAudited, undefined);
   } finally {
     rmSync(runDir, { recursive: true, force: true });
-    rmSync(normalizedDir, { recursive: true, force: true });
-    rmSync(redactedDir, { recursive: true, force: true });
     if (summaryBefore === null) {
       rmSync(summaryPath, { force: true });
     } else {
