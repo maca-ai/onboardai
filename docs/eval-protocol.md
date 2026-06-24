@@ -246,7 +246,10 @@ pnpm --filter @onboardai/cli onboardai proof real-run init <odoo|notion> <run-id
 ```
 
 the init command creates only editable template files. it does not create a final screen, eval recording,
-redacted frame evidence, normalized capture manifest, live proof summary, or passing real proof.
+redacted frame evidence, live proof summary, or passing real proof. it creates an incomplete
+`capture-manifest.json` skeleton in the run directory so the operator has the preferred artifact shape, but
+the validator rejects it until real redacted frame, input event, timestamp, and placeholder-free evidence is
+filled in.
 
 all copied real-run templates must be fully replaced before proof ingestion. `proof real-run` rejects unfilled
 template placeholder text such as `replace-with-*` or `replace with *` in run JSON, run Markdown, and the
@@ -392,6 +395,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
 /evals/templates/runs/tool-run-id/flow-evidence.json
 /evals/templates/runs/tool-run-id/capture-readiness.json
+/evals/templates/runs/tool-run-id/capture-manifest.json
 /evals/templates/runs/tool-run-id/screen-input-evidence.json
 /evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
@@ -404,6 +408,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/flow-evidence.json
 /evals/runs/<tool>/<run-id>/capture-readiness.json
+/evals/runs/<tool>/<run-id>/capture-manifest.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
 ```

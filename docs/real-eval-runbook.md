@@ -218,12 +218,14 @@ evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
 evals/templates/runs/tool-run-id/flow-evidence.json
 evals/templates/runs/tool-run-id/capture-readiness.json
+evals/templates/runs/tool-run-id/capture-manifest.json
 evals/templates/runs/tool-run-id/screen-input-evidence.json
 evals/templates/runs/tool-run-id/outcome-evidence.json
 ```
 
-the capture normalization pipeline should generate `evals/runs/<tool>/<run-id>/capture-manifest.json` from
-redacted frame and input evidence; do not create it as a placeholder.
+the init command copies a non-passing `capture-manifest.json` skeleton into `evals/runs/<tool>/<run-id>/`.
+replace every placeholder with output from the capture normalization pipeline and real screen-plus-input
+evidence before running proof validation.
 
 do not copy the proof summary template into `evals/reports/real-tool-proof-*.json` until the real run artifacts exist and the reviewer has accepted every taught step.
 the proof summary template still does not prove the run by itself; full-goal status counts it only after the

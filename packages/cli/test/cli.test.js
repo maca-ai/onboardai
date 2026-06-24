@@ -167,9 +167,13 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
     assert.equal(existsSync(new URL("flow-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("capture-readiness.json", runDir)), true);
+    assert.equal(existsSync(new URL("capture-manifest.json", runDir)), true);
     assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
     assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /flows\/notion\/update-task-status\.flow\.md/);
+    assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"tool": "notion"/);
+    assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"flowId": "notion-update-task-status"/);
+    assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/redacted-frame-0001\.png/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/capture-readiness\.json/);
     assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);

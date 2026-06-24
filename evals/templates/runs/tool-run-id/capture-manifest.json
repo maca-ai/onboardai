@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "captureId": "replace-with-capture-id",
+  "flowId": "replace-with-flow-id",
+  "flowPath": "flows/tool/replace-with-flow.flow.md",
+  "tool": "replace-with-odoo-or-notion",
+  "generatedAt": "replace-with-iso-generated-at",
+  "dataClass": "clean-demo",
+  "rawCapturePolicy": "unsafe-to-share-local-only",
+  "redactionPolicy": "hard-secret-redaction-v0",
+  "rawCaptureSummary": {
+    "screenRecordingCaptured": true,
+    "keyboardEventLogCaptured": true,
+    "mouseEventLogCaptured": true,
+    "humanNotesCaptured": false
+  },
+  "rawArtifacts": [
+    {
+      "kind": "screen-recording",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "keyboard-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    },
+    {
+      "kind": "mouse-event-log",
+      "safety": "unsafe-to-share-local-only",
+      "gitPolicy": "excluded-from-git"
+    }
+  ],
+  "redactedFrames": [
+    {
+      "frameId": "frame-0001",
+      "path": "evals/runs/tool/replace-with-run-id/redacted-frame-0001.png",
+      "visibleText": [
+        "replace-with-visible-text-from-redacted-frame"
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "anchorId": "replace-with-action-anchor-id",
+      "frameId": "frame-0001",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1
+    }
+  ],
+  "inputEvidence": [
+    {
+      "stepId": "step-001",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "replace-with-captured-event-name",
+          "anchorId": "replace-with-action-anchor-id"
+        }
+      ]
+    },
+    {
+      "stepId": "step-002",
+      "inputEvents": [
+        {
+          "kind": "keyboard",
+          "event": "replace-with-captured-event-name",
+          "anchorId": "replace-with-action-anchor-id"
+        }
+      ]
+    },
+    {
+      "stepId": "step-003",
+      "inputEvents": [
+        {
+          "kind": "mouse",
+          "event": "replace-with-captured-event-name",
+          "anchorId": "replace-with-action-anchor-id"
+        }
+      ]
+    }
+  ],
+  "redaction": {
+    "replacements": [],
+    "businessSensitiveTags": []
+  }
+}
