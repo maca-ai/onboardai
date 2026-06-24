@@ -93,6 +93,7 @@ export interface NormalizedFlowArtifact {
 export interface NormalizedCaptureManifest {
   readonly schemaVersion: 1;
   readonly captureId: string;
+  readonly runId?: string;
   readonly flowId: string;
   readonly flowPath: string;
   readonly tool: SeniorDemonstration["tool"];
@@ -347,7 +348,11 @@ export function createNormalizedRunCaptureManifest(
 
   const manifestPath = `evals/runs/${options.tool}/${options.runId}/capture-manifest.json`;
   const artifact = createNormalizedCaptureManifest(demonstration, flowArtifact, manifestPath);
-  const validation = validateNormalizedRunCaptureManifest(artifact.manifest, {
+  const manifest = {
+    ...artifact.manifest,
+    runId: options.runId
+  };
+  const validation = validateNormalizedRunCaptureManifest(manifest, {
     tool: options.tool,
     runId: options.runId,
     flowId: demonstration.flowId,
@@ -358,7 +363,11 @@ export function createNormalizedRunCaptureManifest(
     throw new Error(`normalized run capture manifest invalid: ${validation.errors.join("; ")}`);
   }
 
-  return artifact;
+  return {
+    path: artifact.path,
+    manifest,
+    json: `${JSON.stringify(manifest, null, 2)}\n`
+  };
 }
 
 export function validateNormalizedRunCaptureManifest(
@@ -379,6 +388,10 @@ export function validateNormalizedRunCaptureManifest(
 
   if (input.tool !== options.tool) {
     errors.push(`tool must match ${options.tool}`);
+  }
+
+  if (input.runId !== options.runId) {
+    errors.push(`runId must match ${options.runId}`);
   }
 
   if (options.flowId && input.flowId !== options.flowId) {

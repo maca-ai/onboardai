@@ -390,6 +390,7 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
       if (path.endsWith("capture-manifest.json")) {
         return JSON.stringify({
           ...normalizedCaptureManifest("odoo"),
+          runId: "real-proof",
           redactedFrames: [
             {
               frameId: "frame-0001",
@@ -406,6 +407,44 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
 
   assert.equal(audit.passed, true);
   assert.equal(audit.references.some((reference) => reference.path === "evals/runs/odoo/real-proof/capture-manifest.json"), true);
+});
+
+test("real target-tool run artifact audit rejects same-run capture manifests copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          runId: "copied-real-proof",
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["demo"]
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("capture-manifest.json runId must match the run directory")), true);
 });
 
 test("real target-tool run artifact audit rejects untagged business-sensitive manifest values", () => {
@@ -427,6 +466,7 @@ test("real target-tool run artifact audit rejects untagged business-sensitive ma
       if (path.endsWith("capture-manifest.json")) {
         return JSON.stringify({
           ...normalizedCaptureManifest("odoo"),
+          runId: "real-proof",
           redactedFrames: [
             {
               frameId: "frame-0001",
@@ -540,6 +580,7 @@ test("real target-tool run artifact audit rejects step trace frames reused from 
       if (path.endsWith("capture-manifest.json")) {
         return JSON.stringify({
           ...normalizedCaptureManifest("odoo"),
+          runId: "real-proof",
           redactedFrames: [
             {
               frameId: "frame-0001",

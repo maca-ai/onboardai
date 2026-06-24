@@ -157,7 +157,7 @@ after eval:
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json` and `demo-data-evidence.json`, and its `captureAdapterName` and `captureAdapterVersion` match that readiness artifact.
 - [ ] confirm `screen-input-evidence.json` `dataSource` matches `demo-data-evidence.json`.
 - [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.
-- [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, and `dataClass` matching `demo-data-evidence.json`.
+- [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, `dataClass` matching `demo-data-evidence.json`, and, for same-run manifests, `runId` matching the run directory.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] confirm every normalized manifest raw artifact summary has a `captureId` matching the manifest `captureId`, proving the screen and input evidence came from one senior demonstration session.
 - [ ] confirm normalized manifest raw artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context notes.

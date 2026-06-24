@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "captureId": "replace-with-capture-id",
+  "runId": "replace-with-run-id",
   "flowId": "replace-with-flow-id",
   "flowPath": "flows/tool/replace-with-flow.flow.md",
   "tool": "replace-with-odoo-or-notion",

@@ -536,6 +536,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
         {
           schemaVersion: 1,
           captureId: `${runId}-capture`,
+          runId,
           flowId: "odoo-qualify-opportunity",
           flowPath: "flows/odoo/qualify-opportunity.flow.md",
           tool: "odoo",

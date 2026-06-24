@@ -138,6 +138,7 @@ test("run-local normalized capture manifest accepts same-run redacted frame refe
 
   assert.equal(manifest.path, "evals/runs/odoo/real-odoo-qualify-001/capture-manifest.json");
   assert.equal(manifest.manifest.schemaVersion, 1);
+  assert.equal(manifest.manifest.runId, "real-odoo-qualify-001");
   assert.equal(manifest.manifest.redactedFrames[0].path, "evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png");
   assert.equal(manifest.json.includes("captures/raw/"), false);
   assert.equal(manifest.json.includes("file://"), false);
@@ -190,6 +191,7 @@ test("run-local normalized capture manifest validation rejects missing schemaVer
   const manifest = {
     tool: "odoo",
     captureId: "capture-real-odoo-001",
+    runId: "real-odoo-qualify-001",
     flowId: "odoo-qualify-opportunity",
     flowPath: "flows/odoo/qualify-opportunity.flow.md",
     rawCapturePolicy: "unsafe-to-share-local-only",
@@ -212,6 +214,30 @@ test("run-local normalized capture manifest validation rejects missing schemaVer
 
   assert.equal(validation.valid, false);
   assert.equal(validation.errors.some((error) => error.includes("schemaVersion must be 1")), true);
+});
+
+test("run-local normalized capture manifest validation rejects mismatched run id", () => {
+  const runDemonstration = runLocalDemonstration();
+  const flow = normalizeDemonstrationToFlowMarkdown(runDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+  const manifest = createNormalizedRunCaptureManifest(runDemonstration, flow, {
+    tool: "odoo",
+    runId: "real-odoo-qualify-001"
+  });
+  const validation = validateNormalizedRunCaptureManifest(
+    {
+      ...manifest.manifest,
+      runId: "copied-real-run"
+    },
+    {
+      tool: "odoo",
+      runId: "real-odoo-qualify-001",
+      flowId: "odoo-qualify-opportunity",
+      flowPath: "flows/odoo/qualify-opportunity.flow.md"
+    }
+  );
+
+  assert.equal(validation.valid, false);
+  assert.equal(validation.errors.some((error) => error.includes("runId must match real-odoo-qualify-001")), true);
 });
 
 test("run-local normalized capture manifest validation rejects mixed raw artifact capture ids", () => {

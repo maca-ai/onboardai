@@ -1268,6 +1268,11 @@ function auditNormalizedCaptureManifest(
     findings.push({ tool: proof.tool, message: `${manifestPath} captureId must be a lowercase kebab-case id` });
   }
 
+  const runId = realRunIdFromManifestPath(manifestPath);
+  if (runId !== null && parsed.runId !== runId) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} runId must match the run directory` });
+  }
+
   if (parsed.tool !== proof.tool) {
     findings.push({ tool: proof.tool, message: `${manifestPath} tool must match ${proof.tool}` });
   }
@@ -2723,6 +2728,11 @@ function realRunDirFromManifestPath(path: string): string | null {
   }
 
   return path.slice(0, -"/capture-manifest.json".length);
+}
+
+function realRunIdFromManifestPath(path: string): string | null {
+  const match = /^evals\/runs\/(?:odoo|notion)\/([^/]+)\/capture-manifest\.json$/.exec(path);
+  return match ? match[1] : null;
 }
 
 function sameRunFramePrefixFromManifestPath(path: string): string | null {

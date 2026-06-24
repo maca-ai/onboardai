@@ -2100,3 +2100,28 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: run-local normalized capture manifests now declare a top-level `runId` in addition to `captureId`, `flowId`, `flowPath`, and `tool`.
+- changed: run-local manifest validation and the real-run audit reject same-run `capture-manifest.json` artifacts copied from another run directory, while legacy `captures/normalized/<capture-id>/manifest.json` artifacts remain accepted without `runId`.
+- changed: fixture same-run capture manifests, the real-run template, eval protocol, and real-run runbook now document the matching-run requirement.
+- eval showed: targeted capture coverage rejects mismatched run ids; targeted real-run audit coverage rejects copied same-run capture manifests; CLI complete real-run dry-run coverage still accepts a complete synthetic run when `runId` matches.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, run-bound same-session capture manifests, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run and confirm `capture-manifest.json` declares the same `runId` as `evals/runs/<tool>/<run-id>/` before running `proof real-run`.
+- `pnpm --filter @onboardai/capture test`: passed; 18 tests, 18 pass, 0 fail.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 64 tests, 64 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 115 tests, 115 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
