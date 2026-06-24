@@ -1661,6 +1661,29 @@ latest results on 2026-06-24:
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 
+latest results on 2026-06-24:
+
+- changed: real-run step traces now require same-run `held-out-frame-*.png` current frames for naive-user eval evidence, while senior demonstration capture frames remain represented through normalized manifest `redactedFrames`.
+- changed: real-run validation now rejects any step trace current frame that is reused from the normalized capture manifest's senior demonstration redacted frame set.
+- eval showed: the first targeted eval-harness run failed because the new overlap regression used the legacy `captures/normalized/...` manifest path, so the same-run frame was not actually present in the manifest; after switching the regression to a same-run `capture-manifest.json`, targeted eval-harness coverage passed and proves the overlap is rejected.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, same-run held-out eval frames distinct from senior capture manifest frames, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, extract `held-out-frame-*.png` from the held-out eval recording separately from senior capture `redacted-frame-*.png`, then fill and dry-run `proof real-run`.
+- first `pnpm --filter @onboardai/eval-harness test`: failed because the new overlap regression did not yet use a same-run manifest containing the reused frame.
+- second `pnpm --filter @onboardai/eval-harness test`: passed; 58 tests, 58 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 99 tests, 99 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1738,3 +1761,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-23: normalized manifest raw artifact allowlist added: real capture manifests must summarize only screen recording, keyboard event log, mouse event log, and optional human context notes.
 - 2026-06-24: real-run init capture-manifest skeleton added: `proof real-run init` now copies the preferred same-run `capture-manifest.json` template with tool, flow, run, and same-run redacted-frame paths substituted, while leaving evidence placeholders so the skeleton remains non-passing until actual held-out capture artifacts are filled and audited.
 - 2026-06-24: real-run demo-data evidence gate added: real proof now requires same-run `demo-data-evidence.json`, setup evidence paths, no-real-customer-data claims, and data-source/data-class agreement across screen-input evidence and normalized capture manifests.
+- 2026-06-24: held-out real-run frame separation added: real step traces now use `held-out-frame-*.png` current frames and fail if those frames are reused from the senior capture manifest's redacted frame evidence.

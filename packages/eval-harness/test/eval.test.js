@@ -286,6 +286,9 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/redacted-frame-0001.png",
     "evals/runs/odoo/real-proof/redacted-frame-0002.png",
     "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "evals/runs/odoo/real-proof/held-out-frame-0001.png",
+    "evals/runs/odoo/real-proof/held-out-frame-0002.png",
+    "evals/runs/odoo/real-proof/held-out-frame-0003.png",
     "evals/runs/odoo/real-proof/demo-data-screen.png",
     "flows/odoo/qualify-opportunity.flow.md",
     "captures/normalized/capture-real-odoo-001/manifest.json",
@@ -474,8 +477,52 @@ test("real target-tool run artifact audit rejects same-run non-frame step eviden
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a same-run redacted-frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a same-run held-out-frame PNG")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a PNG frame artifact")), true);
+});
+
+test("real target-tool run artifact audit rejects step trace frames reused from senior capture manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].currentFrame = "evals/runs/odoo/real-proof/redacted-frame-0001.png";
+        return JSON.stringify(trace);
+      }
+
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["demo"]
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a same-run held-out-frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("must be held-out eval evidence")), true);
 });
 
 test("real target-tool run artifact audit rejects missing required run artifacts", () => {
@@ -1962,6 +2009,9 @@ function realRunExistingPaths(tool) {
     `evals/runs/${tool}/real-proof/redacted-frame-0001.png`,
     `evals/runs/${tool}/real-proof/redacted-frame-0002.png`,
     `evals/runs/${tool}/real-proof/redacted-frame-0003.png`,
+    `evals/runs/${tool}/real-proof/held-out-frame-0001.png`,
+    `evals/runs/${tool}/real-proof/held-out-frame-0002.png`,
+    `evals/runs/${tool}/real-proof/held-out-frame-0003.png`,
     `evals/runs/${tool}/real-proof/demo-data-screen.png`,
     `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
     `captures/normalized/capture-real-${tool}-001/manifest.json`,
@@ -2112,7 +2162,7 @@ function flowGroundedTrace(tool) {
     title: step.title,
     fromStateId: `state-00${index + 1}`,
     toStateId: `state-00${index + 2}`,
-    currentFrame: `evals/runs/${tool}/real-proof/redacted-frame-000${index + 1}.png`,
+    currentFrame: `evals/runs/${tool}/real-proof/held-out-frame-000${index + 1}.png`,
     expectedVisibleText: step.expectedVisibleText,
     matchedVisibleText: step.expectedVisibleText,
     missingVisibleText: [],

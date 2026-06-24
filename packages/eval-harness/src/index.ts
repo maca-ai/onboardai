@@ -1012,12 +1012,13 @@ function auditScreenInputEvidence(
   if (typeof parsed.normalizedCaptureManifestPath === "string" && existsPath(parsed.normalizedCaptureManifestPath)) {
     const stepTracePath = `${runDir}/step-trace.json`;
     const flowEvidencePath = `${runDir}/flow-evidence.json`;
+    const stepTraceContent = existsPath(stepTracePath) ? readText(stepTracePath) : null;
     manifestAudit = auditNormalizedCaptureManifest(
       proof,
       path,
       parsed.normalizedCaptureManifestPath,
       stepTracePath,
-      existsPath(stepTracePath) ? readText(stepTracePath) : null,
+      stepTraceContent,
       flowEvidencePath,
       existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
       demoDataEvidencePath,
@@ -1027,6 +1028,7 @@ function auditScreenInputEvidence(
       references,
       findings
     );
+    auditHeldOutTraceFramesSeparateFromCaptureManifest(proof, stepTracePath, stepTraceContent, manifestAudit, findings);
   }
 
   if (!Array.isArray(parsed.redactedFrameEvidencePaths) || parsed.redactedFrameEvidencePaths.length === 0) {
@@ -1760,13 +1762,54 @@ function auditRealStepTrace(
       findings
     );
 
-    if (typeof entry.currentFrame === "string" && !entry.currentFrame.startsWith(`${runDir}/redacted-frame-`)) {
-      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a same-run redacted-frame PNG` });
+    if (typeof entry.currentFrame === "string" && !isSameRunHeldOutFramePath(entry.currentFrame, runDir)) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a same-run held-out-frame PNG` });
     }
 
     if (typeof entry.currentFrame === "string" && !entry.currentFrame.endsWith(".png")) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a PNG frame artifact` });
     }
+  });
+}
+
+function auditHeldOutTraceFramesSeparateFromCaptureManifest(
+  proof: RealToolProofEvidence,
+  stepTracePath: string,
+  stepTraceContent: string | null,
+  manifestAudit: NormalizedCaptureManifestAudit,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (stepTraceContent === null) {
+    return;
+  }
+
+  for (const frame of readStepTraceCurrentFrames(proof, stepTracePath, stepTraceContent, findings)) {
+    if (manifestAudit.redactedFramePaths.has(frame.currentFrame)) {
+      findings.push({
+        tool: proof.tool,
+        message: `${stepTracePath} ${frame.stepLabel} currentFrame must be held-out eval evidence, not a senior capture manifest frame`
+      });
+    }
+  }
+}
+
+function readStepTraceCurrentFrames(
+  proof: RealToolProofEvidence,
+  stepTracePath: string,
+  stepTraceContent: string,
+  findings: CaptureTeachGoalStatusFinding[]
+): readonly { readonly stepLabel: string; readonly currentFrame: string }[] {
+  const steps = readStepTraceEntries(proof, stepTracePath, stepTraceContent, "held-out frame separation", findings);
+  if (!steps) {
+    return [];
+  }
+
+  return steps.flatMap((entry, index) => {
+    if (!isRecord(entry) || typeof entry.currentFrame !== "string" || entry.currentFrame.length === 0) {
+      return [];
+    }
+
+    return [{ stepLabel: traceStepLabel(entry, index), currentFrame: entry.currentFrame }];
   });
 }
 
@@ -2529,6 +2572,10 @@ function isRedactedCaptureFramePath(path: string): boolean {
 
 function isSameRunRedactedFramePath(path: string, runDir: string | null): boolean {
   return runDir !== null && path.startsWith(`${runDir}/redacted-frame-`) && path.endsWith(".png") && !path.slice(runDir.length + 1).includes("/");
+}
+
+function isSameRunHeldOutFramePath(path: string, runDir: string | null): boolean {
+  return runDir !== null && path.startsWith(`${runDir}/held-out-frame-`) && path.endsWith(".png") && !path.slice(runDir.length + 1).includes("/");
 }
 
 function isRedactedFrameEvidencePath(path: string, runDir: string | null): boolean {

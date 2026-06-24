@@ -6,7 +6,7 @@
       "title": "replace with taught step title",
       "fromStateId": "replace-with-start-state",
       "toStateId": "replace-with-next-state",
-      "currentFrame": "evals/runs/tool/replace-with-run-id/redacted-frame-0001.png",
+      "currentFrame": "evals/runs/tool/replace-with-run-id/held-out-frame-0001.png",
       "expectedVisibleText": [
         "replace with visible text from flow.md"
       ],

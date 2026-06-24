@@ -323,9 +323,10 @@ adapter-version attribution are valid.
 `step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
 step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,
 `overlayCanAutomateInput: false`, a non-empty highlighted anchor id, a manual-only user action, and a current
-frame path under the same run directory. the current frame path must point to a same-run redacted-frame PNG, for example
-`evals/runs/<tool>/<run-id>/redacted-frame-0001.png`; a same-run log, JSON file, final screen, raw capture,
-unsafe file, or temporary file cannot stand in for step frame evidence. the trace must not include overlay
+frame path under the same run directory. the current frame path must point to a same-run held-out eval PNG, for example
+`evals/runs/<tool>/<run-id>/held-out-frame-0001.png`; a same-run log, JSON file, final screen, senior capture
+frame, raw capture, unsafe file, or temporary file cannot stand in for step frame evidence. held-out step
+frames must not be reused from the normalized capture manifest's senior demonstration redacted frames. the trace must not include overlay
 automation command fields for click, type, submit, approve, delete, or state mutation. each step's
 `expectedVisibleText` and `matchedVisibleText` must match the referenced `flow.md` step expected visible text,
 and `missingVisibleText` must be an empty array.
