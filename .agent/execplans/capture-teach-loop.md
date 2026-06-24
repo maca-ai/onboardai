@@ -1404,6 +1404,29 @@ latest results on 2026-06-22:
 - `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
 - `pnpm proof:scan`: passed; scanned 24 shareable text files.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
+latest results on 2026-06-24:
+
+- changed: real step traces now include post-action success observation fields: `successVisibleText`, `successMatchedVisibleText`, and `successMissingVisibleText`.
+- changed: real-run validation now rejects step traces whose success observation fields do not match the referenced `flow.md` `success-condition.visible-text`, so a passing step must prove both the recognized screen before guidance and the observed screen after the manual action.
+- changed: fixture step-trace evidence, real-run templates, CLI dry-run fixtures, eval protocol, and the real eval runbook now include the post-action success evidence requirement.
+- eval showed: targeted eval-harness coverage rejects ungrounded or partial step success visible text evidence; the complete synthetic real-run fixture still validates, and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, held-out post-action success observations, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, capture held-out before/after frames for each taught step, fill `step-trace.json` with both expected and success visible text evidence, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 60 tests, 60 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 101 tests, 101 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 - forbidden secret scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.

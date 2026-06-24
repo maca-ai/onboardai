@@ -15,6 +15,17 @@
       "status: not started"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "demo task",
+      "status",
+      "not started"
+    ],
+    "successMatchedVisibleText": [
+      "demo task",
+      "status",
+      "not started"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "select the row for demo task.",
@@ -45,6 +56,15 @@
       "ready for review"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "status",
+      "ready for review"
+    ],
+    "successMatchedVisibleText": [
+      "status",
+      "ready for review"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "open the status property.",
@@ -73,6 +93,17 @@
       "ready for review"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "demo task",
+      "status",
+      "ready for review"
+    ],
+    "successMatchedVisibleText": [
+      "demo task",
+      "status",
+      "ready for review"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "select ready for review.",

@@ -15,6 +15,15 @@
       "new"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "demo opportunity",
+      "stage"
+    ],
+    "successMatchedVisibleText": [
+      "demo opportunity",
+      "stage"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "select the opportunity card named demo opportunity.",
@@ -45,6 +54,17 @@
       "qualified"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "demo opportunity",
+      "qualified",
+      "unsaved changes"
+    ],
+    "successMatchedVisibleText": [
+      "demo opportunity",
+      "qualified",
+      "unsaved changes"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "select the qualified stage.",
@@ -75,6 +95,17 @@
       "unsaved changes"
     ],
     "missingVisibleText": [],
+    "successVisibleText": [
+      "demo opportunity",
+      "qualified",
+      "saved"
+    ],
+    "successMatchedVisibleText": [
+      "demo opportunity",
+      "qualified",
+      "saved"
+    ],
+    "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
     "overlayMessage": "save the opportunity so the qualified stage remains visible.",

@@ -48,6 +48,9 @@ export interface StepTraceEntry {
   readonly expectedVisibleText: readonly string[];
   readonly matchedVisibleText: readonly string[];
   readonly missingVisibleText: readonly string[];
+  readonly successVisibleText: readonly string[];
+  readonly successMatchedVisibleText: readonly string[];
+  readonly successMissingVisibleText: readonly string[];
   readonly overlayConfidence: number;
   readonly overlayKind: "instruction" | "fail-closed";
   readonly overlayMessage: string;
@@ -705,6 +708,7 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
     const match = matchScreenState(step, observation);
     overlayConfidencePerStep.push({ stepId: step["step-id"], confidence: match.confidence });
     const overlay = renderOverlayGuidance(step, match.confidence, threshold);
+    const successVisibleText = step["success-condition"]["visible-text"] ?? [];
 
     const traceEntryBase = {
       stepId: step["step-id"],
@@ -714,6 +718,9 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
       expectedVisibleText: step["expected-state"]["visible-text"] ?? [],
       matchedVisibleText: match.matchedVisibleText,
       missingVisibleText: match.missingVisibleText,
+      successVisibleText,
+      successMatchedVisibleText: [],
+      successMissingVisibleText: successVisibleText,
       overlayConfidence: match.confidence,
       overlayKind: overlay.kind,
       overlayMessage: overlay.message,
@@ -753,21 +760,29 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
       break;
     }
 
-    const missingSuccessText = (step["success-condition"]["visible-text"] ?? []).filter(
-      (expected) => !nextObservation.visibleText.map((text) => text.toLowerCase()).includes(expected.toLowerCase())
-    );
+    const nextVisibleTextLower = nextObservation.visibleText.map((text) => text.toLowerCase());
+    const missingSuccessText = successVisibleText.filter((expected) => !nextVisibleTextLower.includes(expected.toLowerCase()));
+    const matchedSuccessText = successVisibleText.filter((expected) => nextVisibleTextLower.includes(expected.toLowerCase()));
     if (missingSuccessText.length > 0) {
       firstStuckStep ??= step["step-id"];
       trace.push({
         ...traceEntryBase,
         toStateId: nextObservation.stateId,
+        successMatchedVisibleText: matchedSuccessText,
+        successMissingVisibleText: missingSuccessText,
         success: false,
         failureReason: `success condition missing visible text: ${missingSuccessText.join(", ")}`
       });
       break;
     }
 
-    trace.push({ ...traceEntryBase, toStateId: nextObservation.stateId, success: true });
+    trace.push({
+      ...traceEntryBase,
+      toStateId: nextObservation.stateId,
+      successMatchedVisibleText: matchedSuccessText,
+      successMissingVisibleText: [],
+      success: true
+    });
     currentStateId = nextObservation.stateId;
     stepsCompleted += 1;
   }
@@ -1984,6 +1999,18 @@ function auditStepTraceGrounding(
 
     if (!arrayEquals(entry.matchedVisibleText, step["expected-state"]["visible-text"] ?? [])) {
       findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} matchedVisibleText must match flow expected visible text` });
+    }
+
+    if (!arrayEquals(entry.successVisibleText, step["success-condition"]["visible-text"] ?? [])) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} successVisibleText must match flow success visible text` });
+    }
+
+    if (!arrayEquals(entry.successMatchedVisibleText, step["success-condition"]["visible-text"] ?? [])) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} successMatchedVisibleText must prove flow success visible text` });
+    }
+
+    if (!Array.isArray(entry.successMissingVisibleText) || entry.successMissingVisibleText.length !== 0) {
+      findings.push({ tool: proof.tool, message: `${stepTracePath} ${stepLabel} successMissingVisibleText must be empty` });
     }
 
     if (entry.highlightedAnchorId !== step.instruction["highlight-anchor-id"]) {

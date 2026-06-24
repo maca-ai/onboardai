@@ -329,7 +329,9 @@ frame, raw capture, unsafe file, or temporary file cannot stand in for step fram
 frames must not be reused from the normalized capture manifest's senior demonstration redacted frames. the trace must not include overlay
 automation command fields for click, type, submit, approve, delete, or state mutation. each step's
 `expectedVisibleText` and `matchedVisibleText` must match the referenced `flow.md` step expected visible text,
-and `missingVisibleText` must be an empty array.
+and `missingVisibleText` must be an empty array. each step must also record post-action success evidence:
+`successVisibleText` and `successMatchedVisibleText` must match that step's `success-condition.visible-text`
+from `flow.md`, and `successMissingVisibleText` must be an empty array.
 
 if a failed run records any step or event with `overlayConfidence` below `0.75`, the overlay evidence must fail
 closed: `overlayMessage` must be exactly `screen state not recognized. ask a human or restart this step.` and

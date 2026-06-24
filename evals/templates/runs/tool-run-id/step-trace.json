@@ -14,6 +14,13 @@
         "replace with same flow.md visible text observed on screen"
       ],
       "missingVisibleText": [],
+      "successVisibleText": [
+        "replace with flow.md success visible text"
+      ],
+      "successMatchedVisibleText": [
+        "replace with same success visible text observed after the manual action"
+      ],
+      "successMissingVisibleText": [],
       "overlayConfidence": 1,
       "overlayKind": "instruction",
       "overlayCanAutomateInput": false,

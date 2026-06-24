@@ -1656,6 +1656,31 @@ test("real target-tool run artifact audit rejects partial matched visible text e
   );
 });
 
+test("real target-tool run artifact audit rejects ungrounded step success visible text evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = stepTraceDocument("odoo");
+        trace.steps[2].successVisibleText = ["demo opportunity", "qualified"];
+        trace.steps[2].successMatchedVisibleText = ["demo opportunity", "qualified"];
+        trace.steps[2].successMissingVisibleText = ["saved"];
+        return JSON.stringify(trace);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successVisibleText must match flow success visible text")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successMatchedVisibleText must prove flow success visible text")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successMissingVisibleText must be empty")), true);
+});
+
 test("real target-tool run artifact audit rejects ungrounded flow evidence and invented trace steps", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -2191,6 +2216,9 @@ function flowGroundedTrace(tool) {
     expectedVisibleText: step.expectedVisibleText,
     matchedVisibleText: step.expectedVisibleText,
     missingVisibleText: [],
+    successVisibleText: step.successVisibleText,
+    successMatchedVisibleText: step.successVisibleText,
+    successMissingVisibleText: [],
     overlayConfidence: 0.9,
     overlayKind: "instruction",
     overlayCanAutomateInput: false,
@@ -2219,6 +2247,7 @@ function flowStepDefinitions(tool) {
         stepId: "step-001",
         title: "open the opportunity",
         expectedVisibleText: ["pipeline", "demo opportunity", "new"],
+        successVisibleText: ["demo opportunity", "stage"],
         overlayMessage: "select the opportunity card named demo opportunity.",
         anchorId: "opportunity-card"
       },
@@ -2226,6 +2255,7 @@ function flowStepDefinitions(tool) {
         stepId: "step-002",
         title: "choose qualified stage",
         expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
+        successVisibleText: ["demo opportunity", "qualified", "unsaved changes"],
         overlayMessage: "select the qualified stage.",
         anchorId: "qualified-stage"
       },
@@ -2233,6 +2263,7 @@ function flowStepDefinitions(tool) {
         stepId: "step-003",
         title: "save the qualified stage",
         expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
+        successVisibleText: ["demo opportunity", "qualified", "saved"],
         overlayMessage: "save the opportunity so the qualified stage remains visible.",
         anchorId: "save-button"
       }
@@ -2244,6 +2275,7 @@ function flowStepDefinitions(tool) {
       stepId: "step-001",
       title: "open the task row",
       expectedVisibleText: ["project tasks", "demo task", "status: not started"],
+      successVisibleText: ["demo task", "status", "not started"],
       overlayMessage: "select the row for demo task.",
       anchorId: "demo-task-row"
     },
@@ -2251,6 +2283,7 @@ function flowStepDefinitions(tool) {
       stepId: "step-002",
       title: "open status property",
       expectedVisibleText: ["demo task", "status", "not started", "ready for review"],
+      successVisibleText: ["status", "ready for review"],
       overlayMessage: "open the status property.",
       anchorId: "status-property"
     },
@@ -2258,6 +2291,7 @@ function flowStepDefinitions(tool) {
       stepId: "step-003",
       title: "choose ready for review",
       expectedVisibleText: ["status", "not started", "ready for review"],
+      successVisibleText: ["demo task", "status", "ready for review"],
       overlayMessage: "select ready for review.",
       anchorId: "ready-for-review-option"
     }
