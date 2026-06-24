@@ -56,6 +56,8 @@ select the row for demo task.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },
@@ -117,6 +119,8 @@ open the status property.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },
@@ -176,6 +180,8 @@ select ready for review.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },

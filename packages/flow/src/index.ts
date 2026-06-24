@@ -84,6 +84,8 @@ const requiredStepFields = [
 ] as const;
 
 export const failClosedMessage = "screen state not recognized. ask a human or restart this step.";
+const allowedGuidanceModes = ["text", "highlight"] as const;
+const requiredForbiddenGuidanceModes = ["click", "type", "submit", "approve", "delete", "automate"] as const;
 
 export function parseFlowMarkdown(markdown: string): FlowDocument {
   if (!markdown.startsWith("---\n")) {
@@ -266,13 +268,20 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
     }
 
     for (const allowed of step.instruction["allowed-guidance"] ?? []) {
-      if (!["text", "highlight"].includes(allowed)) {
+      if (!allowedGuidanceModes.includes(allowed as (typeof allowedGuidanceModes)[number])) {
         errors.push(`step ${index + 1} has unsupported allowed guidance: ${allowed}`);
       }
     }
 
+    const forbiddenGuidance = step.instruction["forbidden-guidance"] ?? [];
+    for (const requiredForbidden of requiredForbiddenGuidanceModes) {
+      if (!forbiddenGuidance.includes(requiredForbidden)) {
+        errors.push(`step ${index + 1} forbidden-guidance must include ${requiredForbidden}`);
+      }
+    }
+
     for (const forbidden of step.instruction["forbidden-guidance"] ?? []) {
-      if (!["click", "type", "submit", "approve", "delete", "automate"].includes(forbidden)) {
+      if (!requiredForbiddenGuidanceModes.includes(forbidden as (typeof requiredForbiddenGuidanceModes)[number])) {
         errors.push(`step ${index + 1} has unexpected forbidden guidance: ${forbidden}`);
       }
     }

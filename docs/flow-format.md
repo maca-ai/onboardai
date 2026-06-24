@@ -96,7 +96,7 @@ example:
     "text": "select the opportunity card named demo opportunity.",
     "highlight-anchor-id": "pipeline-card",
     "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "forbidden-guidance": ["click", "type", "submit", "approve", "delete", "automate"]
   },
   "user-action": {
     "kind": "click",
@@ -133,7 +133,8 @@ empty visible-text arrays or summary booleans for these checks.
 - `highlight`
 
 allowed guidance must never include click, type, submit, approve, delete, automate, or any mode that
-would mutate the target tool. those belong in `instruction.forbidden-guidance`.
+would mutate the target tool. every step must list all six mutating modes in
+`instruction.forbidden-guidance`.
 
 ## required step fields
 

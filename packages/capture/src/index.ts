@@ -519,7 +519,7 @@ function renderStep(demonstration: SeniorDemonstration, step: DemonstrationStep,
       text: step.instructionText,
       "highlight-anchor-id": step.highlightAnchorId,
       "allowed-guidance": ["text", "highlight"],
-      "forbidden-guidance": ["click", "type", "submit", "automate"]
+      "forbidden-guidance": ["click", "type", "submit", "approve", "delete", "automate"]
     },
     "user-action": {
       kind: step.userAction.kind,

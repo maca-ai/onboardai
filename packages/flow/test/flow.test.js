@@ -42,7 +42,7 @@ input-automation-allowed: false
     "text": "select the opportunity card named demo opportunity.",
     "highlight-anchor-id": "pipeline-card",
     "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "forbidden-guidance": ["click", "type", "submit", "approve", "delete", "automate"]
   },
   "user-action": {
     "kind": "click",
@@ -152,6 +152,17 @@ test("a flow with unsupported allowed guidance fails validation", () => {
 
   assert.equal(result.valid, false);
   assert.equal(result.errors.some((error) => error.includes("unsupported allowed guidance: click")), true);
+});
+
+test("a flow missing required forbidden guidance fails validation", () => {
+  const invalidFlow = validFlow.replace(
+    '"forbidden-guidance": ["click", "type", "submit", "approve", "delete", "automate"]',
+    '"forbidden-guidance": ["click", "type", "submit", "approve", "delete"]'
+  );
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("forbidden-guidance must include automate")), true);
 });
 
 test("a flow with a missing anchor source frame fails validation without throwing", () => {

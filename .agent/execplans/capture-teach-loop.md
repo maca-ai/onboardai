@@ -2006,3 +2006,25 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: `flow.md` validation now requires every step's `instruction.forbidden-guidance` to include `click`, `type`, `submit`, `approve`, `delete`, and `automate`, so the no-mutation overlay boundary is explicit in normalized artifacts rather than inferred.
+- changed: generated fixture flows, committed odoo/notion flows, the overlay test fixture, and flow format docs now carry the six required forbidden guidance modes.
+- eval showed: targeted flow coverage passed, checked-in odoo/notion flows still validate, fixture proof still passes for both tools, shareable artifact scans passed, and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, normalized flows that explicitly forbid all mutating overlay guidance modes, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, normalize the senior demonstration into a `flow.md` whose `forbidden-guidance` lists all six mutating modes for every step, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/flow test`: passed; 14 tests, 14 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 108 tests, 108 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.

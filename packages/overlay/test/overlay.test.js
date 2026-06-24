@@ -21,7 +21,7 @@ const step = {
     text: "select the opportunity card named demo opportunity.",
     "highlight-anchor-id": "pipeline-card",
     "allowed-guidance": ["text", "highlight"],
-    "forbidden-guidance": ["click", "type", "submit", "automate"]
+    "forbidden-guidance": ["click", "type", "submit", "approve", "delete", "automate"]
   },
   "user-action": {
     kind: "click",

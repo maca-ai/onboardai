@@ -56,6 +56,8 @@ select the opportunity card named demo opportunity.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },
@@ -116,6 +118,8 @@ select the qualified stage.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },
@@ -177,6 +181,8 @@ save the opportunity so the qualified stage remains visible.
       "click",
       "type",
       "submit",
+      "approve",
+      "delete",
       "automate"
     ]
   },
