@@ -265,6 +265,12 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
       errors.push(`step ${index + 1} instruction asks the system to automate input`);
     }
 
+    for (const allowed of step.instruction["allowed-guidance"] ?? []) {
+      if (!["text", "highlight"].includes(allowed)) {
+        errors.push(`step ${index + 1} has unsupported allowed guidance: ${allowed}`);
+      }
+    }
+
     for (const forbidden of step.instruction["forbidden-guidance"] ?? []) {
       if (!["click", "type", "submit", "approve", "delete", "automate"].includes(forbidden)) {
         errors.push(`step ${index + 1} has unexpected forbidden guidance: ${forbidden}`);

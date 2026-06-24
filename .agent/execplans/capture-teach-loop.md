@@ -1874,6 +1874,7 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-24: single-terminal-flow validation added: every valid `flow.md` must contain exactly one terminal step so real-run outcome evidence has one unambiguous terminal visible-text source.
 - 2026-06-24: flow frontmatter policy validation added: every valid `flow.md` must use supported v0 tool, data-class, raw capture, redaction, confidence, input-automation, and flow-version values.
 - 2026-06-24: per-step visible-text flow validation added: every valid `flow.md` step must include non-empty expected and success visible text so recognition and outcome evidence are screen-grounded.
+- 2026-06-24: allowed-guidance flow validation added: every valid `flow.md` step must limit allowed guidance to text and highlight modes only.
 
 latest results on 2026-06-24:
 
@@ -1976,6 +1977,28 @@ latest results on 2026-06-24:
 - `pnpm lint`: passed.
 - `pnpm typecheck`: passed.
 - `pnpm test`: passed; 106 tests, 106 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: `flow.md` validation now rejects unsupported `instruction.allowed-guidance` values, so a normalized flow cannot claim the overlay may click, type, submit, approve, delete, automate, or expose any other non-text/highlight guidance mode.
+- changed: `docs/flow-format.md` now documents that allowed guidance is limited to `text` and `highlight`, with mutating guidance modes kept in forbidden guidance.
+- eval showed: targeted flow coverage passed, checked-in odoo/notion flows still validate, fixture proof still passes for both tools, and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, normalized flows that only permit text/highlight overlay guidance, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, normalize the senior demonstration into a `flow.md` whose allowed guidance is only text/highlight for every step, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/flow test`: passed; 13 tests, 13 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 107 tests, 107 pass, 0 fail.
 - `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
 - `pnpm proof:scan`: passed; scanned 28 shareable text files.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.

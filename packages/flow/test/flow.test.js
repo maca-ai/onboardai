@@ -146,6 +146,14 @@ test("a flow with an ungrounded user-action target anchor fails validation", () 
   assert.equal(result.errors.some((error) => error.includes("target anchor missing-card is not defined")), true);
 });
 
+test("a flow with unsupported allowed guidance fails validation", () => {
+  const invalidFlow = validFlow.replace('"allowed-guidance": ["text", "highlight"]', '"allowed-guidance": ["text", "click"]');
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("unsupported allowed guidance: click")), true);
+});
+
 test("a flow with a missing anchor source frame fails validation without throwing", () => {
   const invalidFlow = validFlow.replace(
     ',\n        "source-frame": "captures/redacted/capture-2026-06-20-001/frame-0003.png"',

@@ -125,6 +125,16 @@ the expected text is the screen-observed basis for recognizing the current step.
 the screen-observed basis for proving the manual action reached the next state. a flow cannot rely on
 empty visible-text arrays or summary booleans for these checks.
 
+## guidance boundary
+
+`instruction.allowed-guidance` may contain only:
+
+- `text`
+- `highlight`
+
+allowed guidance must never include click, type, submit, approve, delete, automate, or any mode that
+would mutate the target tool. those belong in `instruction.forbidden-guidance`.
+
 ## required step fields
 
 each step json object must include:
