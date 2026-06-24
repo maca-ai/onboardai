@@ -1893,3 +1893,24 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
+latest results on 2026-06-24:
+
+- changed: redaction test coverage now explicitly covers bearer tokens, `secret_key` API secrets, and `sessionid` values, matching the broader shareable-artifact leak classes checked by `proof:scan`.
+- eval showed: targeted redaction coverage passed; fixture proof still passes for both tools; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, run hard redaction on shareable normalized artifacts before proof ingestion, then run `proof:scan` and `proof real-run` dry-run before writing any summary.
+- `pnpm --filter @onboardai/redaction test`: passed; 1 test, 1 pass, 0 fail.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 101 tests, 101 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
