@@ -1509,6 +1509,32 @@ test("real target-tool run artifact audit rejects incomplete step trace and revi
   assert.equal(audit.findings.some((finding) => finding.message.includes("rejected: true")), true);
 });
 
+test("real target-tool run artifact audit rejects step traces copied from another tool, run, or flow", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        return JSON.stringify({
+          ...stepTraceDocument("odoo"),
+          tool: "notion",
+          runId: "copied-real-proof",
+          flowId: "copied-flow"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("step-trace.json tool must match odoo")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("step-trace.json runId must match the run directory")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("step-trace.json flowId must match odoo-qualify-opportunity")), true);
+});
+
 test("real target-tool run artifact audit rejects below-threshold highlights in step trace", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -2273,6 +2299,9 @@ function flowGroundedTrace(tool) {
 function stepTraceDocument(tool) {
   return {
     schemaVersion: 1,
+    tool,
+    runId: "real-proof",
+    flowId: tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status",
     steps: flowGroundedTrace(tool)
   };
 }

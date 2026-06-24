@@ -2005,6 +2005,11 @@ function auditStepTraceGrounding(
     return;
   }
 
+  const traceFlowId = readStepTraceFlowId(readText(stepTracePath));
+  if (traceFlowId !== null && traceFlowId !== flow.frontmatter["flow-id"]) {
+    findings.push({ tool: proof.tool, message: `${stepTracePath} flowId must match ${String(flow.frontmatter["flow-id"])}` });
+  }
+
   if (steps.length !== flow.steps.length) {
     findings.push({ tool: proof.tool, message: `${stepTracePath} must contain exactly the referenced flow steps` });
   }
@@ -2506,6 +2511,7 @@ function readStepTraceEntries(
   }
 
   auditSchemaVersion(proof, path, parsed, findings);
+  auditStepTraceIdentity(proof, path, parsed, findings);
 
   if (!Array.isArray(parsed.steps)) {
     findings.push({ tool: proof.tool, message: `${path} steps must contain a step trace array for ${context}` });
@@ -2513,6 +2519,49 @@ function readStepTraceEntries(
   }
 
   return parsed.steps;
+}
+
+function readStepTraceFlowId(content: string): string | null {
+  try {
+    const parsed: unknown = JSON.parse(content);
+    return isRecord(parsed) && typeof parsed.flowId === "string" ? parsed.flowId : null;
+  } catch {
+    return null;
+  }
+}
+
+function auditStepTraceIdentity(
+  proof: RealToolProofEvidence,
+  path: string,
+  parsed: Record<string, unknown>,
+  findings: CaptureTeachGoalStatusFinding[]
+): { readonly tool: string; readonly runId: string; readonly flowId: string } | null {
+  const runId = realRunIdFromStepTracePath(path);
+  let valid = true;
+
+  const parsedTool = typeof parsed.tool === "string" ? parsed.tool : null;
+  const parsedFlowId = typeof parsed.flowId === "string" ? parsed.flowId : null;
+
+  if (parsedTool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+    valid = false;
+  }
+
+  if (runId === null || parsed.runId !== runId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+    valid = false;
+  }
+
+  if (parsedFlowId === null || parsedFlowId.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} flowId must be a non-empty string` });
+    valid = false;
+  }
+
+  if (!valid || runId === null || parsedTool === null || parsedFlowId === null) {
+    return null;
+  }
+
+  return { tool: parsedTool, runId, flowId: parsedFlowId };
 }
 
 function auditEvidencePathField(
@@ -2590,6 +2639,11 @@ function getRealToolRunDir(proof: RealToolProofEvidence): string | null {
   }
 
   return proof.evidencePath.slice(0, -"/step-trace.json".length);
+}
+
+function realRunIdFromStepTracePath(path: string): string | null {
+  const match = /^evals\/runs\/(?:odoo|notion)\/([^/]+)\/step-trace\.json$/.exec(path);
+  return match ? match[1] : null;
 }
 
 function artifactAuditResult(

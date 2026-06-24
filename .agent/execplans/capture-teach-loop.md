@@ -2052,3 +2052,26 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: real-run `step-trace.json` now has a required top-level identity envelope: `tool`, `runId`, and `flowId`.
+- changed: the real-run gate rejects step traces copied from another tool, run directory, or flow, and fixture trace generation/templates now write the same envelope.
+- eval showed: targeted eval-harness coverage rejects copied trace identity; CLI real-run dry-run coverage still accepts a complete synthetic real-run directory when trace identity matches the run and flow evidence.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, identity-bound step traces, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, keep `step-trace.json` tool/runId/flowId bound to the run directory and `flow-evidence.json`, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 62 tests, 62 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 110 tests, 110 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.

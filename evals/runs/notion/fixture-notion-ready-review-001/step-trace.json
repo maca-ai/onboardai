@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "tool": "notion",
+  "runId": "fixture-notion-ready-review-001",
+  "flowId": "notion-update-task-status",
   "steps": [
     {
       "stepId": "step-001",

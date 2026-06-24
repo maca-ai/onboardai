@@ -130,6 +130,7 @@ after eval:
 
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
 - [ ] confirm every real-run JSON evidence file uses `schemaVersion: 1`.
+- [ ] confirm `step-trace.json` contains matching top-level `tool`, `runId`, and `flowId` values for this run.
 - [ ] confirm `step-trace.json` contains a `steps` array.
 - [ ] confirm every `step-trace.json` step is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, references a current `held-out-frame-*.png` under the run directory, and references a post-action `successFrame` held-out PNG under the run directory.
 - [ ] confirm every `step-trace.json` current frame and success frame was extracted from the held-out eval recording or held-out eval frame sequence, not from the senior demonstration capture manifest.

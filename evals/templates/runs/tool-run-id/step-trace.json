@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "runId": "replace-with-run-id",
+  "flowId": "replace-with-flow-id",
   "steps": [
     {
       "stepId": "step-001",

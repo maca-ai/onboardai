@@ -290,6 +290,9 @@ test("proof real-run validates complete real target-tool run artifacts and write
       `${JSON.stringify(
         {
           schemaVersion: 1,
+          tool: "odoo",
+          runId,
+          flowId: "odoo-qualify-opportunity",
           steps: [
             {
               stepId: "step-001",

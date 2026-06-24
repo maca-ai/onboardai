@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "tool": "odoo",
+  "runId": "fixture-odoo-qualify-001",
+  "flowId": "odoo-qualify-opportunity",
   "steps": [
     {
       "stepId": "step-001",

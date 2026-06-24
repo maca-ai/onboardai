@@ -325,8 +325,10 @@ are rejected. each reference must set `appliesToAdapterVersion` to the same valu
 `adapterVersion`. behavior coverage is credited only from references whose source type, reference shape, and
 adapter-version attribution are valid.
 
-`step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
-step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,
+`step-trace.json` must be an object with `schemaVersion: 1`, the audited `tool`, the same `runId` as its
+`evals/runs/<tool>/<run-id>/` directory, the audited `flowId`, and a `steps` array containing at least one taught
+step. the trace `flowId` must match `flow-evidence.json` and the referenced `flow.md`. every real proof step
+must show successful instruction guidance, overlay confidence at or above `0.75`,
 `overlayCanAutomateInput: false`, a non-empty highlighted anchor id, a manual-only user action, a current
 frame path under the same run directory, and a post-action success frame path under the same run directory.
 both step frame paths must point to same-run held-out eval PNGs, for example
