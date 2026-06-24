@@ -166,3 +166,28 @@ if blocked, stop and report:
 - input that would unlock progress
 
 do not declare success on partial or untested results.
+
+## git remote and push discipline
+
+the canonical remote is:
+
+```text
+https://github.com/maca-ai/onboardai
+```
+
+the active feature branch is:
+
+```text
+codex/capture-teach-foundation
+```
+
+after every implementation run that creates a commit, push the current branch to github.
+
+the final report for a committed implementation run must include:
+
+- git push result
+- upstream tracking branch
+- `git rev-list --left-right --count <upstream>...<branch>` result
+- `git status` summary
+
+do not push secrets, raw captures, unsafe captures, tmp captures, or local environment files.

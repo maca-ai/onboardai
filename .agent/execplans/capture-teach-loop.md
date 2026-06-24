@@ -41,6 +41,9 @@ a user can run the app, capture a short workflow, normalize it into `flow.md`, t
 - no embeddings
 - ripgrep is allowed and preferred for local text search
 - search must exist as a library function and cli command
+- canonical github remote: `https://github.com/maca-ai/onboardai`
+- active feature branch: `codex/capture-teach-foundation`
+- after each implementation run that creates a commit, push the current branch and verify upstream parity before final reporting
 
 ## hard constraints
 
@@ -2216,4 +2219,21 @@ latest results on 2026-06-24:
 - forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: configured canonical github remote `https://github.com/maca-ai/onboardai.git` as `origin` and pushed `codex/capture-teach-foundation`.
+- changed: `agents.md`, `.agent/plans.md`, and this execplan now require future implementation runs that create commits to push the current branch and report push/upstream parity evidence.
+- eval showed: no capture or teaching behavior changed; this was a remote binding and process-discipline gate only.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: before the next feature slice, confirm `git branch -vv` still shows upstream tracking and `git rev-list --left-right --count origin/codex/capture-teach-foundation...codex/capture-teach-foundation` returns `0 0`.
+- initial `git push -u origin codex/capture-teach-foundation`: passed; branch created on github and set to track `origin/codex/capture-teach-foundation`.
+- initial upstream parity check: passed; `git rev-list --left-right --count origin/codex/capture-teach-foundation...codex/capture-teach-foundation` returned `0 0`.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 119 tests, 119 pass, 0 fail.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
 - `git diff --check`: passed.

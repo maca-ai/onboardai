@@ -51,6 +51,24 @@ update the active execplan whenever any of these happen:
 - a blocker is found
 - the next best experiment changes
 
+## repository remote and push discipline
+
+the canonical remote is `https://github.com/maca-ai/onboardai`.
+
+the active feature branch is `codex/capture-teach-foundation`.
+
+after every implementation run that creates a commit, commit on the active feature branch and push that branch
+to github. do not leave committed implementation work only on the local machine.
+
+each final implementation report must include:
+
+- git push result
+- upstream tracking branch
+- `git rev-list --left-right --count <upstream>...<branch>` result
+- `git status` summary
+
+do not commit or push secrets, raw captures, unsafe captures, tmp captures, or local environment files.
+
 ## gate definitions
 
 ### gate 0 - repo foundation
