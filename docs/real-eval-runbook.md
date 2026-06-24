@@ -170,7 +170,7 @@ after eval:
 - [ ] confirm `outcome-evidence.json` `evaluatorRole` is `first-time-user` or `deterministic-mock-user-harness`, not senior demonstrator or senior reviewer.
 - [ ] confirm `outcome-evidence.json` `stepCount` and `stepsCompleted` match the same-run `step-trace.json` step count and successful step count.
 - [ ] confirm `outcome-evidence.json` `terminalBusinessState`, `terminalExpectedVisibleText`, and `terminalMatchedVisibleText` match the referenced `flow.md` terminal business state and terminal success visible text.
-- [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png` and `eval-recording.mp4`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.
+- [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png`, `eval-recording.mp4`, and every `held-out-frame-*.png` current frame from `step-trace.json`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.
 - [ ] confirm real-run shareable text artifacts, the referenced `flow.md`, and the referenced normalized manifest contain no forbidden email addresses, password assignments, token assignments, api key assignments, or session secret assignments.
 - [ ] confirm real-run shareable text artifacts and the referenced normalized manifest contain no unfilled template placeholders such as `replace-with-*` or `replace with *`.
 - [ ] write a report under `evals/reports/`.

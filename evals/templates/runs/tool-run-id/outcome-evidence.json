@@ -29,6 +29,7 @@
   "stepTraceEvidencePath": "evals/runs/tool/replace-with-run-id/step-trace.json",
   "heldOutEvidencePaths": [
     "evals/runs/tool/replace-with-run-id/final-screen.png",
-    "evals/runs/tool/replace-with-run-id/eval-recording.mp4"
+    "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
+    "evals/runs/tool/replace-with-run-id/held-out-frame-0001.png"
   ]
 }

@@ -1811,6 +1811,31 @@ test("real target-tool run artifact audit rejects held-out claims without same-r
   );
 });
 
+test("real target-tool run artifact audit rejects outcome evidence missing held-out step frames", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("outcome-evidence.json")) {
+        return JSON.stringify({
+          ...outcomeEvidence("odoo"),
+          heldOutEvidencePaths: ["evals/runs/odoo/real-proof/final-screen.png", "evals/runs/odoo/real-proof/eval-recording.mp4"]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("heldOutEvidencePaths must include evals/runs/odoo/real-proof/held-out-frame-0001.png")),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects outcome counts not backed by step trace", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -2321,7 +2346,13 @@ function outcomeEvidence(tool) {
     overlayMisreads: [],
     finalScreenEvidencePath: `evals/runs/${tool}/real-proof/final-screen.png`,
     stepTraceEvidencePath: `evals/runs/${tool}/real-proof/step-trace.json`,
-    heldOutEvidencePaths: [`evals/runs/${tool}/real-proof/final-screen.png`, `evals/runs/${tool}/real-proof/eval-recording.mp4`]
+    heldOutEvidencePaths: [
+      `evals/runs/${tool}/real-proof/final-screen.png`,
+      `evals/runs/${tool}/real-proof/eval-recording.mp4`,
+      `evals/runs/${tool}/real-proof/held-out-frame-0001.png`,
+      `evals/runs/${tool}/real-proof/held-out-frame-0002.png`,
+      `evals/runs/${tool}/real-proof/held-out-frame-0003.png`
+    ]
   };
 }
 

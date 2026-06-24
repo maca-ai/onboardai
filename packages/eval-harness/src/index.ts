@@ -2270,7 +2270,17 @@ function auditOutcomeEvidence(
     references,
     findings
   );
-  auditHeldOutEvidencePaths(proof, runDir, path, parsed.heldOutEvidencePaths, existsPath, references, findings);
+  auditHeldOutEvidencePaths(
+    proof,
+    runDir,
+    path,
+    parsed.heldOutEvidencePaths,
+    stepTracePath,
+    stepTraceContent,
+    existsPath,
+    references,
+    findings
+  );
 }
 
 function auditHeldOutEvidencePaths(
@@ -2278,11 +2288,19 @@ function auditHeldOutEvidencePaths(
   runDir: string,
   path: string,
   value: unknown,
+  stepTracePath: string,
+  stepTraceContent: string | null,
   existsPath: (path: string) => boolean,
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
-  const requiredPaths = [`${runDir}/final-screen.png`, `${runDir}/eval-recording.mp4`];
+  const requiredPaths = [
+    `${runDir}/final-screen.png`,
+    `${runDir}/eval-recording.mp4`,
+    ...(stepTraceContent === null
+      ? []
+      : readStepTraceCurrentFrames(proof, stepTracePath, stepTraceContent, findings).map((frame) => frame.currentFrame))
+  ];
 
   if (!Array.isArray(value) || value.length === 0) {
     findings.push({ tool: proof.tool, message: `${path} heldOutEvidencePaths must contain same-run held-out eval evidence paths` });

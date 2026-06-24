@@ -445,7 +445,13 @@ test("proof real-run validates complete real target-tool run artifacts and write
           overlayMisreads: [],
           finalScreenEvidencePath: `evals/runs/odoo/${runId}/final-screen.png`,
           stepTraceEvidencePath: `evals/runs/odoo/${runId}/step-trace.json`,
-          heldOutEvidencePaths: [`evals/runs/odoo/${runId}/final-screen.png`, `evals/runs/odoo/${runId}/eval-recording.mp4`]
+          heldOutEvidencePaths: [
+            `evals/runs/odoo/${runId}/final-screen.png`,
+            `evals/runs/odoo/${runId}/eval-recording.mp4`,
+            `evals/runs/odoo/${runId}/held-out-frame-0001.png`,
+            `evals/runs/odoo/${runId}/held-out-frame-0002.png`,
+            `evals/runs/odoo/${runId}/held-out-frame-0003.png`
+          ]
         },
         null,
         2

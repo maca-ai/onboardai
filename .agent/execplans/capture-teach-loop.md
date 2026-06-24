@@ -1762,3 +1762,26 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-24: real-run init capture-manifest skeleton added: `proof real-run init` now copies the preferred same-run `capture-manifest.json` template with tool, flow, run, and same-run redacted-frame paths substituted, while leaving evidence placeholders so the skeleton remains non-passing until actual held-out capture artifacts are filled and audited.
 - 2026-06-24: real-run demo-data evidence gate added: real proof now requires same-run `demo-data-evidence.json`, setup evidence paths, no-real-customer-data claims, and data-source/data-class agreement across screen-input evidence and normalized capture manifests.
 - 2026-06-24: held-out real-run frame separation added: real step traces now use `held-out-frame-*.png` current frames and fail if those frames are reused from the senior capture manifest's redacted frame evidence.
+- 2026-06-24: held-out outcome frame coverage added: real `outcome-evidence.json` `heldOutEvidencePaths` must include every held-out current frame cited by `step-trace.json`, not just the final screen and eval recording.
+
+latest results on 2026-06-24:
+
+- changed: outcome evidence now derives required held-out evidence from the same-run `step-trace.json`, requiring `final-screen.png`, `eval-recording.mp4`, and every `held-out-frame-*.png` current frame cited by the held-out eval trace.
+- changed: the CLI dry-run fixture, real-run template, eval protocol, and real eval runbook now reflect the stronger held-out frame path requirement.
+- eval showed: targeted eval-harness coverage rejects outcome evidence that omits held-out step-frame paths while still accepting the complete synthetic real-run fixture; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, same-run held-out step frames, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, capture or extract every held-out step frame from the naive-user eval recording, list those frame paths in `outcome-evidence.json`, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 59 tests, 59 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 100 tests, 100 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
