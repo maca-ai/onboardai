@@ -340,7 +340,10 @@ function scanShareableArtifacts(): { readonly passed: boolean; readonly filesSca
     { label: "token", pattern: /\b(?:token|access_token|refresh_token|bearer)\s*[:=]/i },
     { label: "api key", pattern: /\bapi[_-]?key\s*[:=]/i },
     { label: "session secret", pattern: /\bsession[_-]?secret\s*[:=]/i },
-    { label: "unsafe capture path", pattern: /\bcaptures\/(?:raw|unsafe|tmp)\//i }
+    { label: "unsafe capture path", pattern: /\bcaptures\/(?:raw|unsafe|tmp)\//i },
+    { label: "local tmp path", pattern: /(^|[^a-z])(?:\/private)?\/tmp\//i },
+    { label: "file url", pattern: /\bfile:\/\//i },
+    { label: "traversal path", pattern: /(^|[\s"'(])\.\.(?:\/|\\)/i }
   ] as const;
   const findings: string[] = [];
   let filesScanned = 0;
