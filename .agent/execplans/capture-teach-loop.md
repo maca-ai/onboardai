@@ -2171,3 +2171,26 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: real-run `demo-data-evidence.json` now declares a top-level `runId` and the real-run audit rejects demo-data evidence copied from another run directory.
+- changed: the real-run demo-data template, CLI init coverage, eval protocol, and real-run runbook now require `demo-data-evidence.json` `runId` to match `evals/runs/<tool>/<run-id>/`.
+- eval showed: targeted eval-harness coverage rejects copied demo-data evidence; CLI real-run init writes the run id; CLI complete-run dry-run still accepts a synthetic run when demo-data evidence matches the run directory.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, run-bound clean/sanitized demo-data evidence, run-bound outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run and confirm `demo-data-evidence.json`, `outcome-evidence.json`, `screen-input-evidence.json`, `capture-manifest.json`, `step-trace.json`, reviewer checklist, and flow evidence all agree on the same run id before running `proof real-run`.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 67 tests, 67 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 118 tests, 118 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: initially failed while the full test suite's negative-test artifact `evals/reports/shareable-scan-validation.md` existed; rerun after tests completed passed with 28 shareable text files scanned.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.

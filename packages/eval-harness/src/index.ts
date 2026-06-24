@@ -1127,6 +1127,11 @@ function auditDemoDataEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+  }
+
   if (parsed.dataSource !== "clean-seeded-demo-data" && parsed.dataSource !== "sanitized-duplicate-data") {
     findings.push({ tool: proof.tool, message: `${path} dataSource must be clean-seeded-demo-data or sanitized-duplicate-data` });
   }

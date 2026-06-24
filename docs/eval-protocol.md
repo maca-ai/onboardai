@@ -260,10 +260,10 @@ all copied real-run templates must be fully replaced before proof ingestion. `pr
 template placeholder text such as `replace-with-*` or `replace with *` in run JSON, run Markdown, and the
 referenced normalized capture manifest.
 
-`demo-data-evidence.json` must prove the run used `clean-seeded-demo-data` with `clean-demo` data or
-`sanitized-duplicate-data` with `sanitized-duplicate` data, no real customer data, setup completed before
-both senior capture and held-out eval, senior reviewer data-setup acceptance, and at least one same-run
-shareable setup evidence path.
+`demo-data-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, and must prove the run
+used `clean-seeded-demo-data` with `clean-demo` data or `sanitized-duplicate-data` with
+`sanitized-duplicate` data, no real customer data, setup completed before both senior capture and held-out
+eval, senior reviewer data-setup acceptance, and at least one same-run shareable setup evidence path.
 
 `screen-input-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, and must state that
 native screen recording, keyboard logging, mouse logging, hard redaction, clean seeded or sanitized duplicate

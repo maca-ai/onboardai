@@ -77,6 +77,7 @@ before capture:
 - [ ] confirm the target tool is odoo or notion.
 - [ ] confirm the workspace contains only clean seeded demo data or sanitized duplicate data.
 - [ ] write `evals/runs/<tool>/<run-id>/demo-data-evidence.json`.
+- [ ] confirm `demo-data-evidence.json` `runId` matches the run directory.
 - [ ] write at least one same-run shareable setup evidence artifact, such as `evals/runs/<tool>/<run-id>/demo-data-screen.png`.
 - [ ] confirm `demo-data-evidence.json` states no real customer data, setup completed before capture, setup completed before held-out eval, and senior reviewer accepted the data setup.
 - [ ] confirm the raw capture destination is under `captures/raw/` and labeled unsafe-to-share.

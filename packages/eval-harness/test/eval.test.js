@@ -327,6 +327,28 @@ test("real target-tool run artifact audit requires run-local demo data evidence"
   assert.equal(audit.findings.some((finding) => finding.message.includes("demo-data-evidence.json required real run artifact is missing")), true);
 });
 
+test("real target-tool run artifact audit rejects demo-data evidence copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("demo-data-evidence.json")) {
+        return JSON.stringify({
+          ...demoDataEvidence("odoo"),
+          runId: "copied-real-proof"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("demo-data-evidence.json runId must match the run directory")), true);
+});
+
 test("real target-tool run artifact audit rejects screen-input data source mismatches", () => {
   const proof = realToolProof("odoo");
   const existing = realRunExistingPaths("odoo");
@@ -2372,6 +2394,7 @@ function demoDataEvidence(tool) {
   return {
     schemaVersion: 1,
     tool,
+    runId: "real-proof",
     substrate: "real-tool",
     dataSource: "clean-seeded-demo-data",
     dataClass: "clean-demo",
