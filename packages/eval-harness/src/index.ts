@@ -2255,6 +2255,11 @@ function auditOutcomeEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+  }
+
   if (parsed.evaluatorRole !== "first-time-user" && parsed.evaluatorRole !== "deterministic-mock-user-harness") {
     findings.push({ tool: proof.tool, message: `${path} evaluatorRole must be first-time-user or deterministic-mock-user-harness` });
   }

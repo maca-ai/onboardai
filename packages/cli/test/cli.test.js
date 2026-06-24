@@ -206,6 +206,7 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/demo-data-evidence\.json/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/capture-readiness\.json/);
+    assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
     assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);
 
     const validationResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "notion", runId], {
@@ -465,6 +466,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
         {
           schemaVersion: 1,
           tool: "odoo",
+          runId,
           substrate: "real-tool",
           evaluatorRole: "first-time-user",
           completionRate: 1,

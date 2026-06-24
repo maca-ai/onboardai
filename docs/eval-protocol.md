@@ -360,13 +360,13 @@ same tool, run id, and `flow-evidence.json` flow id, contain `- accepted: true`,
 `- rejected: true`, and must include one per-step acceptance line for every step id in `step-trace.json`, for
 example `- step-001: accepted`.
 
-`outcome-evidence.json` must identify the held-out evaluator as `first-time-user` or
-`deterministic-mock-user-harness`, show completion rate `1`, all taught steps completed, terminal business
-state reached, terminal business state matching the referenced `flow.md`, terminal expected and matched
-visible text matching the terminal step's `success-condition.visible-text`, empty terminal missing visible
-text, zero human-help incidents, zero invented-step incidents, no privileged access violations, held-out
-eval evidence, and senior reviewer signoff. its `stepCount` and `stepsCompleted` values must match the same-run
-`step-trace.json` step count and successful step count.
+`outcome-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, identify the held-out
+evaluator as `first-time-user` or `deterministic-mock-user-harness`, show completion rate `1`, all taught steps
+completed, terminal business state reached, terminal business state matching the referenced `flow.md`, terminal
+expected and matched visible text matching the terminal step's `success-condition.visible-text`, empty terminal
+missing visible text, zero human-help incidents, zero invented-step incidents, no privileged access violations,
+held-out eval evidence, and senior reviewer signoff. its `stepCount` and `stepsCompleted` values must match the
+same-run `step-trace.json` step count and successful step count.
 
 `outcome-evidence.json` `heldOutEvidencePaths` must include same-run held-out eval artifacts, including
 `evals/runs/<tool>/<run-id>/final-screen.png`, `evals/runs/<tool>/<run-id>/eval-recording.mp4`, and every
