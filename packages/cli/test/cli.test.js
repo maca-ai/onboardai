@@ -550,10 +550,10 @@ test("proof real-run validates complete real target-tool run artifacts and write
             humanNotesCaptured: true
           },
           rawArtifacts: [
-            { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-            { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-            { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-            { kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+            { captureId: `${runId}-capture`, kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { captureId: `${runId}-capture`, kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { captureId: `${runId}-capture`, kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+            { captureId: `${runId}-capture`, kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
           ],
           redactedFrames: [
             {

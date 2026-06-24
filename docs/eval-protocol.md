@@ -280,7 +280,9 @@ the referenced normalized capture manifest must be valid JSON and must show the 
 capture policy, hard-secret-redaction policy, lowercase kebab-case `captureId`, ISO UTC `generatedAt`,
 `dataClass` matching `demo-data-evidence.json`, matching `flowPath` and `flowId` from
 `flow-evidence.json`, captured screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries for all
-three required raw inputs without raw file paths, at least one redacted frame under
+three required raw inputs without raw file paths, with every raw artifact summary `captureId` matching the
+manifest `captureId` so the screen and input evidence is bound to one senior demonstration session, at least
+one redacted frame under
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
 per-step input evidence for every step id in the real `step-trace.json`. raw artifact summaries must not
 include path-like fields such as `path`,

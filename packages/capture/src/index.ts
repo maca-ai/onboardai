@@ -107,6 +107,7 @@ export interface NormalizedCaptureManifest {
     readonly humanNotesCaptured: boolean;
   };
   readonly rawArtifacts: readonly {
+    readonly captureId: string;
     readonly kind: CaptureInputKind;
     readonly safety: RawCaptureArtifact["safety"];
     readonly gitPolicy: RawCaptureArtifact["gitPolicy"];
@@ -296,6 +297,7 @@ export function createNormalizedCaptureManifest(
       humanNotesCaptured: rawKinds.has("human-context-notes")
     },
     rawArtifacts: demonstration.rawArtifacts.map((artifact) => ({
+      captureId: artifact.captureId,
       kind: artifact.kind,
       safety: artifact.safety,
       gitPolicy: artifact.gitPolicy
@@ -397,7 +399,7 @@ export function validateNormalizedRunCaptureManifest(
 
   validateNoForbiddenManifestValues(input, "$", errors);
   validateBusinessSensitiveTags(input, errors);
-  validateRawArtifactSummaries(input.rawArtifacts, errors);
+  validateRawArtifactSummaries(input.rawArtifacts, input.captureId, errors);
 
   if (!Array.isArray(input.redactedFrames) || input.redactedFrames.length === 0) {
     errors.push("redactedFrames must contain at least one same-run redacted frame");
@@ -430,6 +432,10 @@ function validateDemonstration(demonstration: SeniorDemonstration): void {
   }
 
   for (const artifact of demonstration.rawArtifacts) {
+    if (artifact.captureId !== demonstration.captureId) {
+      throw new Error(`raw capture artifact ${artifact.kind} must belong to capture ${demonstration.captureId}`);
+    }
+
     createRawCaptureArtifact(artifact.captureId, artifact.kind, artifact.path);
   }
 
@@ -708,7 +714,7 @@ function validateBusinessSensitiveTags(input: Record<string, unknown>, errors: s
   }
 }
 
-function validateRawArtifactSummaries(rawArtifacts: unknown, errors: string[]): void {
+function validateRawArtifactSummaries(rawArtifacts: unknown, captureId: unknown, errors: string[]): void {
   if (!Array.isArray(rawArtifacts) || rawArtifacts.length === 0) {
     errors.push("rawArtifacts must contain sanitized raw artifact summaries");
     return;
@@ -724,6 +730,10 @@ function validateRawArtifactSummaries(rawArtifacts: unknown, errors: string[]): 
       if (field.toLowerCase().includes("path")) {
         errors.push(`rawArtifacts[${index}] must not include raw artifact path field ${field}`);
       }
+    }
+
+    if (artifact.captureId !== captureId) {
+      errors.push(`rawArtifacts[${index}].captureId must match manifest captureId`);
     }
 
     if (artifact.safety !== "unsafe-to-share-local-only") {

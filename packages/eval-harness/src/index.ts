@@ -1327,6 +1327,10 @@ function auditNormalizedCaptureManifest(
         return;
       }
 
+      if (artifact.captureId !== parsed.captureId) {
+        findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}].captureId must match manifest captureId` });
+      }
+
       for (const [field, value] of Object.entries(artifact)) {
         if (typeof value === "string" && isRawArtifactPathLeak(field, value)) {
           findings.push({ tool: proof.tool, message: `${manifestPath} rawArtifacts[${index}] must not include raw artifact path field ${field}` });

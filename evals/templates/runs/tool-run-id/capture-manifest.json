@@ -16,16 +16,19 @@
   },
   "rawArtifacts": [
     {
+      "captureId": "replace-with-capture-id",
       "kind": "screen-recording",
       "safety": "unsafe-to-share-local-only",
       "gitPolicy": "excluded-from-git"
     },
     {
+      "captureId": "replace-with-capture-id",
       "kind": "keyboard-event-log",
       "safety": "unsafe-to-share-local-only",
       "gitPolicy": "excluded-from-git"
     },
     {
+      "captureId": "replace-with-capture-id",
       "kind": "mouse-event-log",
       "safety": "unsafe-to-share-local-only",
       "gitPolicy": "excluded-from-git"

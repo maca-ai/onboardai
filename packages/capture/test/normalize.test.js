@@ -95,6 +95,7 @@ test("normalized capture manifest records redacted evidence without raw paths", 
   assert.equal(manifest.manifest.rawCaptureSummary.screenRecordingCaptured, true);
   assert.equal(manifest.manifest.rawCaptureSummary.keyboardEventLogCaptured, true);
   assert.equal(manifest.manifest.rawCaptureSummary.mouseEventLogCaptured, true);
+  assert.equal(manifest.manifest.rawArtifacts.every((artifact) => artifact.captureId === "capture-test-001"), true);
   assert.equal(manifest.manifest.redactedFrames[0].path, "captures/redacted/test/frame-0001.png");
   assert.equal(manifest.json.includes("captures/raw/"), false);
   assert.equal(manifest.json.includes("senior@example.com"), false);
@@ -103,6 +104,19 @@ test("normalized capture manifest records redacted evidence without raw paths", 
   assert.equal(manifest.json.includes("keyboard-event-log"), true);
   assert.equal(manifest.json.includes("mouse-event-log"), true);
   assert.doesNotThrow(() => JSON.parse(manifest.json));
+});
+
+test("normalization rejects raw artifacts from mixed capture sessions", () => {
+  const mixedCapture = {
+    ...demonstration,
+    rawArtifacts: [
+      demonstration.rawArtifacts[0],
+      createRawCaptureArtifact("capture-other-001", "keyboard-event-log", "captures/raw/other/keyboard-events.jsonl"),
+      demonstration.rawArtifacts[2]
+    ]
+  };
+
+  assert.throws(() => normalizeDemonstrationToFlowMarkdown(mixedCapture, "flows/odoo/qualify-opportunity.flow.md"), /capture-test-001/);
 });
 
 test("raw capture input directories are local unsafe and git-ignored by policy", () => {
@@ -175,14 +189,15 @@ test("run-local normalized capture manifest rejects unredacted emails and secret
 test("run-local normalized capture manifest validation rejects missing schemaVersion", () => {
   const manifest = {
     tool: "odoo",
+    captureId: "capture-real-odoo-001",
     flowId: "odoo-qualify-opportunity",
     flowPath: "flows/odoo/qualify-opportunity.flow.md",
     rawCapturePolicy: "unsafe-to-share-local-only",
     redactionPolicy: "hard-secret-redaction-v0",
     rawArtifacts: [
-      { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-      { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-      { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+      { captureId: "capture-real-odoo-001", kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { captureId: "capture-real-odoo-001", kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { captureId: "capture-real-odoo-001", kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
     ],
     redactedFrames: [{ frameId: "start", path: "evals/runs/odoo/real-odoo-qualify-001/redacted-frame-0001.png", visibleText: ["demo"] }],
     inputEvidence: [{ stepId: "step-001", inputEvents: [{ kind: "mouse", event: "click", anchorId: "opportunity-card" }] }],
@@ -197,6 +212,34 @@ test("run-local normalized capture manifest validation rejects missing schemaVer
 
   assert.equal(validation.valid, false);
   assert.equal(validation.errors.some((error) => error.includes("schemaVersion must be 1")), true);
+});
+
+test("run-local normalized capture manifest validation rejects mixed raw artifact capture ids", () => {
+  const runDemonstration = runLocalDemonstration();
+  const flow = normalizeDemonstrationToFlowMarkdown(runDemonstration, "flows/odoo/qualify-opportunity.flow.md");
+  const manifest = createNormalizedRunCaptureManifest(runDemonstration, flow, {
+    tool: "odoo",
+    runId: "real-odoo-qualify-001"
+  });
+  const validation = validateNormalizedRunCaptureManifest(
+    {
+      ...manifest.manifest,
+      rawArtifacts: [
+        manifest.manifest.rawArtifacts[0],
+        { ...manifest.manifest.rawArtifacts[1], captureId: "capture-other-001" },
+        manifest.manifest.rawArtifacts[2]
+      ]
+    },
+    {
+      tool: "odoo",
+      runId: "real-odoo-qualify-001",
+      flowId: "odoo-qualify-opportunity",
+      flowPath: "flows/odoo/qualify-opportunity.flow.md"
+    }
+  );
+
+  assert.equal(validation.valid, false);
+  assert.equal(validation.errors.some((error) => error.includes("rawArtifacts[1].captureId must match manifest captureId")), true);
 });
 
 test("normalized capture manifest tags business-sensitive frame paths", () => {
@@ -255,6 +298,11 @@ function runLocalDemonstration(
   return {
     ...demonstration,
     captureId: "capture-real-odoo-001",
+    rawArtifacts: [
+      createRawCaptureArtifact("capture-real-odoo-001", "screen-recording", "captures/raw/real-odoo-001/recording.mov"),
+      createRawCaptureArtifact("capture-real-odoo-001", "keyboard-event-log", "captures/raw/real-odoo-001/keyboard-events.jsonl"),
+      createRawCaptureArtifact("capture-real-odoo-001", "mouse-event-log", "captures/raw/real-odoo-001/mouse-events.jsonl")
+    ],
     frames: [
       {
         ...demonstration.frames[0],

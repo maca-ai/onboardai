@@ -906,18 +906,20 @@ test("real target-tool run artifact audit rejects raw artifact path leaks in nor
           ...normalizedCaptureManifest("odoo"),
           rawArtifacts: [
             {
+              captureId: "capture-real-odoo-001",
               kind: "screen-recording",
               safety: "unsafe-to-share-local-only",
               gitPolicy: "excluded-from-git",
               rawPath: "captures/raw/real-odoo-001/screen-recording.mp4"
             },
             {
+              captureId: "capture-real-odoo-001",
               kind: "keyboard-event-log",
               safety: "unsafe-to-share-local-only",
               gitPolicy: "excluded-from-git",
               localPath: "/Users/demo/captures/raw/real-odoo-001/keyboard.jsonl"
             },
-            { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+            { captureId: "capture-real-odoo-001", kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
           ]
         });
       }
@@ -929,6 +931,34 @@ test("real target-tool run artifact audit rejects raw artifact path leaks in nor
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[0] must not include raw artifact path field rawPath")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[1] must not include raw artifact path field localPath")), true);
+});
+
+test("real target-tool run artifact audit rejects mixed raw capture sessions in normalized manifests", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        const manifest = normalizedCaptureManifest("odoo");
+        return JSON.stringify({
+          ...manifest,
+          rawArtifacts: [
+            manifest.rawArtifacts[0],
+            { ...manifest.rawArtifacts[1], captureId: "capture-other-001" },
+            manifest.rawArtifacts[2],
+            manifest.rawArtifacts[3]
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("rawArtifacts[1].captureId must match manifest captureId")), true);
 });
 
 test("real target-tool run artifact audit rejects unsupported raw artifact kinds in normalized manifests", () => {
@@ -943,7 +973,7 @@ test("real target-tool run artifact audit rejects unsupported raw artifact kinds
           ...normalizedCaptureManifest("odoo"),
           rawArtifacts: [
             ...normalizedCaptureManifest("odoo").rawArtifacts,
-            { kind: "api-export", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+            { captureId: "capture-real-odoo-001", kind: "api-export", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
           ]
         });
       }
@@ -2395,10 +2425,10 @@ function normalizedCaptureManifest(tool) {
       humanNotesCaptured: true
     },
     rawArtifacts: [
-      { kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-      { kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-      { kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
-      { kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
+      { captureId: `capture-real-${tool}-001`, kind: "screen-recording", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { captureId: `capture-real-${tool}-001`, kind: "keyboard-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { captureId: `capture-real-${tool}-001`, kind: "mouse-event-log", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" },
+      { captureId: `capture-real-${tool}-001`, kind: "human-context-notes", safety: "unsafe-to-share-local-only", gitPolicy: "excluded-from-git" }
     ],
     redactedFrames: [
       {
