@@ -1972,6 +1972,11 @@ function auditFlowEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+  }
+
   auditEvidencePathField(proof.tool, path, "flowPath", parsed.flowPath, "flows/", existsPath, references, findings);
 
   if (typeof parsed.flowPath !== "string" || !existsPath(parsed.flowPath)) {

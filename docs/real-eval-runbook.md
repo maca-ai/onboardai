@@ -138,6 +138,7 @@ after eval:
 - [ ] if any failed trace event has overlay confidence below `0.75`, confirm the overlay message is exactly `screen state not recognized. ask a human or restart this step.` and no highlighted anchor id is present.
 - [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
+- [ ] confirm `flow-evidence.json` `runId` matches the run directory.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
 - [ ] confirm every `step-trace.json` step has `missingVisibleText: []`, `expectedVisibleText` exactly matching that step's `flow.md` expected visible text, and `matchedVisibleText` proving the same visible text was observed.
 - [ ] confirm every `step-trace.json` step has `successMissingVisibleText: []`, `successVisibleText` exactly matching that step's `flow.md` success-condition visible text, `successMatchedVisibleText` proving the same post-action success text was observed, and `successFrame` pointing at the held-out frame where that text was observed.

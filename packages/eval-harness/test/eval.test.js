@@ -1857,6 +1857,28 @@ test("real target-tool run artifact audit rejects ungrounded step success visibl
   assert.equal(audit.findings.some((finding) => finding.message.includes("successMissingVisibleText must be empty")), true);
 });
 
+test("real target-tool run artifact audit rejects flow evidence copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("flow-evidence.json")) {
+        return JSON.stringify({
+          ...flowEvidence("odoo"),
+          runId: "copied-real-proof"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("flow-evidence.json runId must match the run directory")), true);
+});
+
 test("real target-tool run artifact audit rejects ungrounded flow evidence and invented trace steps", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -2507,6 +2529,7 @@ function flowEvidence(tool) {
   return {
     schemaVersion: 1,
     tool,
+    runId: "real-proof",
     substrate: "real-tool",
     flowPath: `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
     flowId: tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status",

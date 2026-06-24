@@ -351,9 +351,10 @@ closed: `overlayMessage` must be exactly `screen state not recognized. ask a hum
 `highlightedAnchorId` must be `null` or absent. below-threshold evidence never counts as a successful proof
 step.
 
-`flow-evidence.json` must point to the local `flow.md` used for overlay guidance. the referenced flow must
-parse and validate, match the target tool, match the recorded flow id and terminal business state, and its
-step ids, instruction text, highlight anchors, and manual action targets must match the real `step-trace.json`.
+`flow-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/` and point to the local
+`flow.md` used for overlay guidance. the referenced flow must parse and validate, match the target tool, match
+the recorded flow id and terminal business state, and its step ids, instruction text, highlight anchors, and
+manual action targets must match the real `step-trace.json`.
 
 `reviewer-checklist.md` must identify the senior reviewer, include an ISO review date, bind the signoff to the
 same tool, run id, and `flow-evidence.json` flow id, contain `- accepted: true`, must not contain

@@ -196,6 +196,7 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.equal(existsSync(new URL("capture-manifest.json", runDir)), true);
     assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
+    assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
     assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /flows\/notion\/update-task-status\.flow\.md/);
     assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
@@ -432,6 +433,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
         {
           schemaVersion: 1,
           tool: "odoo",
+          runId,
           substrate: "real-tool",
           flowPath: "flows/odoo/qualify-opportunity.flow.md",
           flowId: "odoo-qualify-opportunity",
