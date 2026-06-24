@@ -138,6 +138,10 @@ if one passes and the other fails, the project is not complete.
 
 fixture proof runs must also write a machine-readable proof audit that verifies both required tools, completion, held-out eval frames, terminal visible text, no human help, no invented steps, no privileged access, and reviewer signoff.
 
+fixture proof `step-trace.json` artifacts use the same versioned envelope as real-run traces:
+`schemaVersion: 1` with a `steps` array. fixture traces remain deterministic fixture evidence, not real
+target-tool proof, but their structure should stay compatible with the real-run audit contract.
+
 the machine-readable proof audit must also verify shareable evidence path integrity. every referenced flow,
 normalized manifest, redacted capture frame, held-out eval frame, eval run artifact, report, and reviewer
 checklist path must be project-relative, exist on disk, avoid raw/unsafe/tmp capture locations, and live under

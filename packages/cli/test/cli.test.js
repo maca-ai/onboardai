@@ -24,12 +24,20 @@ test("proof fixtures materializes referenced shareable frame artifacts", () => {
   });
   const audit = JSON.parse(readFileSync(new URL("evals/reports/fixture-proof-audit.json", workspaceRoot), "utf8"));
   const goalStatus = JSON.parse(readFileSync(new URL("evals/reports/full-goal-proof-status.json", workspaceRoot), "utf8"));
+  const odooStepTrace = JSON.parse(readFileSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/step-trace.json", workspaceRoot), "utf8"));
+  const notionStepTrace = JSON.parse(
+    readFileSync(new URL("evals/runs/notion/fixture-notion-ready-review-001/step-trace.json", workspaceRoot), "utf8")
+  );
 
   assert.match(output, /fixture proof passed: 2\/2 tools/);
   assert.equal(existsSync(new URL("captures/redacted/odoo-qualify-opportunity/frame-0001.png", workspaceRoot)), true);
   assert.equal(existsSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json", workspaceRoot)), true);
   assert.equal(existsSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/redacted-frame-0001.png", workspaceRoot)), true);
   assert.equal(existsSync(new URL("evals/fixtures/notion-update-task-status/held-out-frame-0001.png", workspaceRoot)), true);
+  assert.equal(odooStepTrace.schemaVersion, 1);
+  assert.equal(odooStepTrace.steps.length, 3);
+  assert.equal(notionStepTrace.schemaVersion, 1);
+  assert.equal(notionStepTrace.steps.length, 3);
   assert.match(
     readFileSync(new URL("evals/runs/odoo/fixture-odoo-qualify-001/capture-manifest.json", workspaceRoot), "utf8"),
     /evals\/runs\/odoo\/fixture-odoo-qualify-001\/redacted-frame-0001\.png/

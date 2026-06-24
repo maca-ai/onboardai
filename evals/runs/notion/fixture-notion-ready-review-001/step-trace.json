@@ -1,122 +1,125 @@
-[
-  {
-    "stepId": "step-001",
-    "title": "open the demo task",
-    "fromStateId": "task-list",
-    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0001.png",
-    "expectedVisibleText": [
-      "project tasks",
-      "demo task",
-      "status: not started"
-    ],
-    "matchedVisibleText": [
-      "project tasks",
-      "demo task",
-      "status: not started"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "demo task",
-      "status",
-      "not started"
-    ],
-    "successMatchedVisibleText": [
-      "demo task",
-      "status",
-      "not started"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "select the row for demo task.",
-    "highlightedAnchorId": "demo-task-row",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "demo-task-row",
-      "manualOnly": true
+{
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "stepId": "step-001",
+      "title": "open the demo task",
+      "fromStateId": "task-list",
+      "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0001.png",
+      "expectedVisibleText": [
+        "project tasks",
+        "demo task",
+        "status: not started"
+      ],
+      "matchedVisibleText": [
+        "project tasks",
+        "demo task",
+        "status: not started"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "demo task",
+        "status",
+        "not started"
+      ],
+      "successMatchedVisibleText": [
+        "demo task",
+        "status",
+        "not started"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "select the row for demo task.",
+      "highlightedAnchorId": "demo-task-row",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "demo-task-row",
+        "manualOnly": true
+      },
+      "toStateId": "task-page",
+      "success": true
     },
-    "toStateId": "task-page",
-    "success": true
-  },
-  {
-    "stepId": "step-002",
-    "title": "open status choices",
-    "fromStateId": "task-page",
-    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0002.png",
-    "expectedVisibleText": [
-      "demo task",
-      "status",
-      "not started",
-      "ready for review"
-    ],
-    "matchedVisibleText": [
-      "demo task",
-      "status",
-      "not started",
-      "ready for review"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "status",
-      "ready for review"
-    ],
-    "successMatchedVisibleText": [
-      "status",
-      "ready for review"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "open the status property.",
-    "highlightedAnchorId": "status-property",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "status-property",
-      "manualOnly": true
+    {
+      "stepId": "step-002",
+      "title": "open status choices",
+      "fromStateId": "task-page",
+      "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0002.png",
+      "expectedVisibleText": [
+        "demo task",
+        "status",
+        "not started",
+        "ready for review"
+      ],
+      "matchedVisibleText": [
+        "demo task",
+        "status",
+        "not started",
+        "ready for review"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "status",
+        "ready for review"
+      ],
+      "successMatchedVisibleText": [
+        "status",
+        "ready for review"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "open the status property.",
+      "highlightedAnchorId": "status-property",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "status-property",
+        "manualOnly": true
+      },
+      "toStateId": "status-menu",
+      "success": true
     },
-    "toStateId": "status-menu",
-    "success": true
-  },
-  {
-    "stepId": "step-003",
-    "title": "choose ready for review",
-    "fromStateId": "status-menu",
-    "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0003.png",
-    "expectedVisibleText": [
-      "status",
-      "not started",
-      "ready for review"
-    ],
-    "matchedVisibleText": [
-      "status",
-      "not started",
-      "ready for review"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "demo task",
-      "status",
-      "ready for review"
-    ],
-    "successMatchedVisibleText": [
-      "demo task",
-      "status",
-      "ready for review"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "select ready for review.",
-    "highlightedAnchorId": "ready-for-review-option",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "ready-for-review-option",
-      "manualOnly": true
-    },
-    "toStateId": "ready-for-review-confirmed",
-    "success": true
-  }
-]
+    {
+      "stepId": "step-003",
+      "title": "choose ready for review",
+      "fromStateId": "status-menu",
+      "currentFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0003.png",
+      "expectedVisibleText": [
+        "status",
+        "not started",
+        "ready for review"
+      ],
+      "matchedVisibleText": [
+        "status",
+        "not started",
+        "ready for review"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "demo task",
+        "status",
+        "ready for review"
+      ],
+      "successMatchedVisibleText": [
+        "demo task",
+        "status",
+        "ready for review"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "select ready for review.",
+      "highlightedAnchorId": "ready-for-review-option",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "ready-for-review-option",
+        "manualOnly": true
+      },
+      "toStateId": "ready-for-review-confirmed",
+      "success": true
+    }
+  ]
+}

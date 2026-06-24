@@ -1407,6 +1407,27 @@ latest results on 2026-06-22:
 
 latest results on 2026-06-24:
 
+- changed: fixture `step-trace.json` artifacts now use the same versioned trace envelope as real-run traces: `schemaVersion: 1` with a `steps` array.
+- changed: `proof fixtures` writes that versioned trace document, CLI coverage asserts the Odoo and Notion fixture traces both have schema version 1 and three steps, and `docs/eval-protocol.md` now documents the fixture trace shape without upgrading fixtures into real proof.
+- eval showed: fixture proof still passes for both tools after regenerating trace evidence; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, versioned same-run step traces, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run and keep the filled `step-trace.json` shape identical to the fixture trace envelope while replacing fixture frames with real held-out screen-plus-input evidence, then dry-run `proof real-run`.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 101 tests, 101 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
+latest results on 2026-06-24:
+
 - changed: deterministic fixture `StepTraceEntry` output now records `overlayCanAutomateInput: false` for every overlay-guided step, matching the real-run trace contract.
 - changed: fixture eval tests now assert every generated trace entry carries non-automation evidence, and committed fixture step-trace artifacts were regenerated through `proof fixtures`.
 - eval showed: targeted eval-harness coverage passes with the stronger fixture trace assertion; no real odoo/notion proof files were created.

@@ -306,7 +306,7 @@ function writeEvalEvidence(result: EvalRunResult): void {
   mkdirSync(reportDir, { recursive: true });
   mkdirSync(checklistDir, { recursive: true });
 
-  writeFileSync(join(runDir, "step-trace.json"), `${JSON.stringify(result.trace, null, 2)}\n`);
+  writeFileSync(join(runDir, "step-trace.json"), `${JSON.stringify({ schemaVersion: 1, steps: result.trace }, null, 2)}\n`);
   writeFileSync(join(runDir, "final-screen.png"), fixturePng());
   writeFileSync(join(runDir, "eval-recording.mp4"), fixtureRecordingMarker(result));
   writeFileSync(join(runDir, "failure-log.md"), renderFailureLog(result));

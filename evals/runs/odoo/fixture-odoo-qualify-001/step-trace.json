@@ -1,124 +1,127 @@
-[
-  {
-    "stepId": "step-001",
-    "title": "open the opportunity",
-    "fromStateId": "pipeline",
-    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0001.png",
-    "expectedVisibleText": [
-      "pipeline",
-      "demo opportunity",
-      "new"
-    ],
-    "matchedVisibleText": [
-      "pipeline",
-      "demo opportunity",
-      "new"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "demo opportunity",
-      "stage"
-    ],
-    "successMatchedVisibleText": [
-      "demo opportunity",
-      "stage"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "select the opportunity card named demo opportunity.",
-    "highlightedAnchorId": "opportunity-card",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "opportunity-card",
-      "manualOnly": true
+{
+  "schemaVersion": 1,
+  "steps": [
+    {
+      "stepId": "step-001",
+      "title": "open the opportunity",
+      "fromStateId": "pipeline",
+      "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0001.png",
+      "expectedVisibleText": [
+        "pipeline",
+        "demo opportunity",
+        "new"
+      ],
+      "matchedVisibleText": [
+        "pipeline",
+        "demo opportunity",
+        "new"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "demo opportunity",
+        "stage"
+      ],
+      "successMatchedVisibleText": [
+        "demo opportunity",
+        "stage"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "select the opportunity card named demo opportunity.",
+      "highlightedAnchorId": "opportunity-card",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "opportunity-card",
+        "manualOnly": true
+      },
+      "toStateId": "opportunity-detail",
+      "success": true
     },
-    "toStateId": "opportunity-detail",
-    "success": true
-  },
-  {
-    "stepId": "step-002",
-    "title": "choose qualified stage",
-    "fromStateId": "opportunity-detail",
-    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0002.png",
-    "expectedVisibleText": [
-      "demo opportunity",
-      "stage",
-      "new",
-      "qualified"
-    ],
-    "matchedVisibleText": [
-      "demo opportunity",
-      "stage",
-      "new",
-      "qualified"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "demo opportunity",
-      "qualified",
-      "unsaved changes"
-    ],
-    "successMatchedVisibleText": [
-      "demo opportunity",
-      "qualified",
-      "unsaved changes"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "select the qualified stage.",
-    "highlightedAnchorId": "qualified-stage",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "qualified-stage",
-      "manualOnly": true
+    {
+      "stepId": "step-002",
+      "title": "choose qualified stage",
+      "fromStateId": "opportunity-detail",
+      "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0002.png",
+      "expectedVisibleText": [
+        "demo opportunity",
+        "stage",
+        "new",
+        "qualified"
+      ],
+      "matchedVisibleText": [
+        "demo opportunity",
+        "stage",
+        "new",
+        "qualified"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "demo opportunity",
+        "qualified",
+        "unsaved changes"
+      ],
+      "successMatchedVisibleText": [
+        "demo opportunity",
+        "qualified",
+        "unsaved changes"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "select the qualified stage.",
+      "highlightedAnchorId": "qualified-stage",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "qualified-stage",
+        "manualOnly": true
+      },
+      "toStateId": "qualified-unsaved",
+      "success": true
     },
-    "toStateId": "qualified-unsaved",
-    "success": true
-  },
-  {
-    "stepId": "step-003",
-    "title": "save the qualified stage",
-    "fromStateId": "qualified-unsaved",
-    "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0003.png",
-    "expectedVisibleText": [
-      "demo opportunity",
-      "stage",
-      "qualified",
-      "unsaved changes"
-    ],
-    "matchedVisibleText": [
-      "demo opportunity",
-      "stage",
-      "qualified",
-      "unsaved changes"
-    ],
-    "missingVisibleText": [],
-    "successVisibleText": [
-      "demo opportunity",
-      "qualified",
-      "saved"
-    ],
-    "successMatchedVisibleText": [
-      "demo opportunity",
-      "qualified",
-      "saved"
-    ],
-    "successMissingVisibleText": [],
-    "overlayConfidence": 1,
-    "overlayKind": "instruction",
-    "overlayCanAutomateInput": false,
-    "overlayMessage": "save the opportunity so the qualified stage remains visible.",
-    "highlightedAnchorId": "save-button",
-    "actionPrimitive": {
-      "kind": "click",
-      "targetAnchorId": "save-button",
-      "manualOnly": true
-    },
-    "toStateId": "qualified-saved",
-    "success": true
-  }
-]
+    {
+      "stepId": "step-003",
+      "title": "save the qualified stage",
+      "fromStateId": "qualified-unsaved",
+      "currentFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0003.png",
+      "expectedVisibleText": [
+        "demo opportunity",
+        "stage",
+        "qualified",
+        "unsaved changes"
+      ],
+      "matchedVisibleText": [
+        "demo opportunity",
+        "stage",
+        "qualified",
+        "unsaved changes"
+      ],
+      "missingVisibleText": [],
+      "successVisibleText": [
+        "demo opportunity",
+        "qualified",
+        "saved"
+      ],
+      "successMatchedVisibleText": [
+        "demo opportunity",
+        "qualified",
+        "saved"
+      ],
+      "successMissingVisibleText": [],
+      "overlayConfidence": 1,
+      "overlayKind": "instruction",
+      "overlayCanAutomateInput": false,
+      "overlayMessage": "save the opportunity so the qualified stage remains visible.",
+      "highlightedAnchorId": "save-button",
+      "actionPrimitive": {
+        "kind": "click",
+        "targetAnchorId": "save-button",
+        "manualOnly": true
+      },
+      "toStateId": "qualified-saved",
+      "success": true
+    }
+  ]
+}
