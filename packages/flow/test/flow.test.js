@@ -157,6 +157,22 @@ test("a flow with a missing anchor source frame fails validation without throwin
   assert.equal(result.errors.some((error) => error.includes("anchor pipeline-card is missing source-frame")), true);
 });
 
+test("a flow step without expected visible text fails validation", () => {
+  const invalidFlow = validFlow.replace('    "visible-text": ["pipeline", "demo opportunity"],\n', "");
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("expected-state.visible-text")), true);
+});
+
+test("a flow step without success visible text fails validation", () => {
+  const invalidFlow = validFlow.replace('"visible-text": ["demo opportunity", "stage"]', '"visible-text": []');
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("success-condition.visible-text")), true);
+});
+
 test("flow search ranks local flow files by parsed flow evidence", () => {
   const files = [
     { path: "flows/odoo/qualify-opportunity.flow.md", content: validFlow },

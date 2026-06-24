@@ -251,6 +251,14 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
   const regionHints = step["expected-state"]?.["screen-region-hints"] ?? [];
   const anchorIds = new Set<string>();
 
+  if (!hasNonEmptyStringArray(step["expected-state"]?.["visible-text"])) {
+    errors.push(`step ${index + 1} expected-state.visible-text must contain at least one screen-visible string`);
+  }
+
+  if (!hasNonEmptyStringArray(step["success-condition"]?.["visible-text"])) {
+    errors.push(`step ${index + 1} success-condition.visible-text must contain at least one screen-visible string`);
+  }
+
   if (step.instruction) {
     const instructionText = step.instruction.text.toLowerCase();
     if (/\bsystem\s+(click|type|submit|approve|delete|automate)\b/.test(instructionText)) {
@@ -302,6 +310,10 @@ function validateStep(step: FlowStep, index: number, errors: string[]): void {
   if (targetAnchorId && !anchorIds.has(targetAnchorId)) {
     errors.push(`step ${index + 1} target anchor ${targetAnchorId} is not defined in screen-region-hints`);
   }
+}
+
+function hasNonEmptyStringArray(value: unknown): boolean {
+  return Array.isArray(value) && value.some((item) => typeof item === "string" && item.trim().length > 0);
 }
 
 function scoreFlowFile(

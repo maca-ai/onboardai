@@ -114,6 +114,17 @@ example:
 }
 ```
 
+## visible text evidence
+
+each step must include at least one non-empty string in both:
+
+- `expected-state.visible-text`
+- `success-condition.visible-text`
+
+the expected text is the screen-observed basis for recognizing the current step. the success text is
+the screen-observed basis for proving the manual action reached the next state. a flow cannot rely on
+empty visible-text arrays or summary booleans for these checks.
+
 ## required step fields
 
 each step json object must include:
