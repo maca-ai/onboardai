@@ -230,8 +230,8 @@ addresses, password assignments, token assignments, api key assignments, and ses
 the real run invalid.
 
 real-run JSON evidence files must use `schemaVersion: 1`. this applies to `step-trace.json`,
-`flow-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`, `outcome-evidence.json`, and the
-referenced normalized capture manifest.
+`flow-evidence.json`, `demo-data-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`,
+`outcome-evidence.json`, and the referenced normalized capture manifest.
 
 `failure-log.md` must state `no failure observed` for a passing real run and must independently confirm the
 passing invariants with exact true result lines for `passed`, `terminal state reached`, `zero human help`,
@@ -255,19 +255,25 @@ all copied real-run templates must be fully replaced before proof ingestion. `pr
 template placeholder text such as `replace-with-*` or `replace with *` in run JSON, run Markdown, and the
 referenced normalized capture manifest.
 
+`demo-data-evidence.json` must prove the run used `clean-seeded-demo-data` with `clean-demo` data or
+`sanitized-duplicate-data` with `sanitized-duplicate` data, no real customer data, setup completed before
+both senior capture and held-out eval, senior reviewer data-setup acceptance, and at least one same-run
+shareable setup evidence path.
+
 `screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
-redaction, clean seeded data, local-only raw capture, no privileged proof access, no Playwright selector
-proof, and no computer-use automation proof were all verified by the same installed adapter named in
-`capture-readiness.json`. its `captureAdapterName` and `captureAdapterVersion` must match that same-run
-readiness artifact. it may reference shareable redacted frames and normalized manifests, but it must not
-reference raw, unsafe, or temporary capture paths. redacted frame evidence paths must point to
+redaction, clean seeded or sanitized duplicate data, local-only raw capture, no privileged proof access, no
+Playwright selector proof, and no computer-use automation proof were all verified by the same installed
+adapter named in `capture-readiness.json`. its `captureAdapterName` and `captureAdapterVersion` must match
+that same-run readiness artifact, and its `dataSource` must match `demo-data-evidence.json`. it may reference
+shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or temporary
+capture paths. redacted frame evidence paths must point to
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` for same-run evidence or
 `captures/redacted/<capture-id>/frame-*.png` for separately materialized shareable redacted capture evidence.
-it must also point to the exact same-run `capture-readiness.json` artifact.
+it must also point to the exact same-run `capture-readiness.json` and `demo-data-evidence.json` artifacts.
 
 the referenced normalized capture manifest must be valid JSON and must show the same tool, local-only raw
 capture policy, hard-secret-redaction policy, lowercase kebab-case `captureId`, ISO UTC `generatedAt`,
-`dataClass` of `clean-demo` or `sanitized-duplicate`, matching `flowPath` and `flowId` from
+`dataClass` matching `demo-data-evidence.json`, matching `flowPath` and `flowId` from
 `flow-evidence.json`, captured screen recording, keyboard event log, mouse event log, sanitized raw artifact summaries for all
 three required raw inputs without raw file paths, at least one redacted frame under
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
@@ -394,6 +400,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
 /evals/templates/runs/tool-run-id/flow-evidence.json
+/evals/templates/runs/tool-run-id/demo-data-evidence.json
 /evals/templates/runs/tool-run-id/capture-readiness.json
 /evals/templates/runs/tool-run-id/capture-manifest.json
 /evals/templates/runs/tool-run-id/screen-input-evidence.json
@@ -407,6 +414,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
 /evals/runs/<tool>/<run-id>/flow-evidence.json
+/evals/runs/<tool>/<run-id>/demo-data-evidence.json
 /evals/runs/<tool>/<run-id>/capture-readiness.json
 /evals/runs/<tool>/<run-id>/capture-manifest.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json

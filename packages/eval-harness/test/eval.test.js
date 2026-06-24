@@ -279,12 +279,14 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
     "evals/runs/odoo/real-proof/flow-evidence.json",
+    "evals/runs/odoo/real-proof/demo-data-evidence.json",
     "evals/runs/odoo/real-proof/capture-readiness.json",
     "evals/runs/odoo/real-proof/screen-input-evidence.json",
     "evals/runs/odoo/real-proof/outcome-evidence.json",
     "evals/runs/odoo/real-proof/redacted-frame-0001.png",
     "evals/runs/odoo/real-proof/redacted-frame-0002.png",
     "evals/runs/odoo/real-proof/redacted-frame-0003.png",
+    "evals/runs/odoo/real-proof/demo-data-screen.png",
     "flows/odoo/qualify-opportunity.flow.md",
     "captures/normalized/capture-real-odoo-001/manifest.json",
     "captures/redacted/capture-real-odoo-001/frame-0001.png"
@@ -297,10 +299,68 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
 
   assert.equal(audit.passed, true);
   assert.equal(audit.runDir, "evals/runs/odoo/real-proof");
-  assert.equal(audit.summary.requiredArtifacts, 9);
+  assert.equal(audit.summary.requiredArtifacts, 10);
   assert.equal(audit.summary.missingArtifacts, 0);
   assert.equal(audit.findings.length, 0);
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
+});
+
+test("real target-tool run artifact audit requires run-local demo data evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.delete("evals/runs/odoo/real-proof/demo-data-evidence.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => realRunArtifactContent(path, "odoo")
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("demo-data-evidence.json required real run artifact is missing")), true);
+});
+
+test("real target-tool run artifact audit rejects screen-input data source mismatches", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          dataSource: "sanitized-duplicate-data"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("dataSource must match demo-data-evidence dataSource")), true);
+});
+
+test("real target-tool run artifact audit rejects manifest data class mismatches", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          dataClass: "sanitized-duplicate"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("dataClass must match")), true);
 });
 
 test("real target-tool run artifact audit accepts same-run normalized capture manifests", () => {
@@ -426,8 +486,8 @@ test("real target-tool run artifact audit rejects missing required run artifacts
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.summary.requiredArtifacts, 9);
-  assert.equal(audit.summary.missingArtifacts, 8);
+  assert.equal(audit.summary.requiredArtifacts, 10);
+  assert.equal(audit.summary.missingArtifacts, 9);
   assert.equal(audit.findings.some((finding) => finding.message.includes("final-screen.png")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json")), true);
 });
@@ -1895,12 +1955,14 @@ function realRunExistingPaths(tool) {
     `evals/runs/${tool}/real-proof/failure-log.md`,
     `evals/runs/${tool}/real-proof/reviewer-checklist.md`,
     `evals/runs/${tool}/real-proof/flow-evidence.json`,
+    `evals/runs/${tool}/real-proof/demo-data-evidence.json`,
     `evals/runs/${tool}/real-proof/capture-readiness.json`,
     `evals/runs/${tool}/real-proof/screen-input-evidence.json`,
     `evals/runs/${tool}/real-proof/outcome-evidence.json`,
     `evals/runs/${tool}/real-proof/redacted-frame-0001.png`,
     `evals/runs/${tool}/real-proof/redacted-frame-0002.png`,
     `evals/runs/${tool}/real-proof/redacted-frame-0003.png`,
+    `evals/runs/${tool}/real-proof/demo-data-screen.png`,
     `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
     `captures/normalized/capture-real-${tool}-001/manifest.json`,
     `captures/redacted/capture-real-${tool}-001/frame-0001.png`
@@ -1913,6 +1975,7 @@ function screenInputEvidence(tool) {
     tool,
     substrate: "real-tool",
     dataSource: "clean-seeded-demo-data",
+    demoDataEvidencePath: `evals/runs/${tool}/real-proof/demo-data-evidence.json`,
     rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
     captureAdapterName: "onboardai-native-capture",
     captureAdapterVersion: "0.0.0-local",
@@ -2004,6 +2067,10 @@ function realRunArtifactContent(path, tool) {
     return JSON.stringify(flowEvidence(tool));
   }
 
+  if (path.endsWith("demo-data-evidence.json")) {
+    return JSON.stringify(demoDataEvidence(tool));
+  }
+
   if (path.endsWith("capture-readiness.json")) {
     return JSON.stringify(captureReadinessEvidence(tool));
   }
@@ -2021,6 +2088,21 @@ function realRunArtifactContent(path, tool) {
   }
 
   return JSON.stringify(screenInputEvidence(tool));
+}
+
+function demoDataEvidence(tool) {
+  return {
+    schemaVersion: 1,
+    tool,
+    substrate: "real-tool",
+    dataSource: "clean-seeded-demo-data",
+    dataClass: "clean-demo",
+    noRealCustomerData: true,
+    setupCompletedBeforeCapture: true,
+    setupCompletedBeforeHeldOutEval: true,
+    seniorReviewerAcceptedDataSetup: true,
+    setupEvidencePaths: [`evals/runs/${tool}/real-proof/demo-data-screen.png`]
+  };
 }
 
 function flowGroundedTrace(tool) {

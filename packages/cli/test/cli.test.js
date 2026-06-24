@@ -166,15 +166,19 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.match(initResult.stdout, /initialized real run notion\/real-init-validation-001/);
     assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
     assert.equal(existsSync(new URL("flow-evidence.json", runDir)), true);
+    assert.equal(existsSync(new URL("demo-data-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("capture-readiness.json", runDir)), true);
     assert.equal(existsSync(new URL("capture-manifest.json", runDir)), true);
     assert.equal(existsSync(new URL("screen-input-evidence.json", runDir)), true);
     assert.equal(existsSync(new URL("outcome-evidence.json", runDir)), true);
     assert.match(readFileSync(new URL("flow-evidence.json", runDir), "utf8"), /flows\/notion\/update-task-status\.flow\.md/);
+    assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /"tool": "notion"/);
+    assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/demo-data-screen\.png/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"flowId": "notion-update-task-status"/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/redacted-frame-0001\.png/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /"tool": "notion"/);
+    assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/demo-data-evidence\.json/);
     assert.match(readFileSync(new URL("screen-input-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/capture-readiness\.json/);
     assert.match(readFileSync(new URL("outcome-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/step-trace\.json/);
 
@@ -335,6 +339,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     writeFileSync(new URL("redacted-frame-0001.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("redacted-frame-0002.png", runDir), "held-out redacted frame marker\n");
     writeFileSync(new URL("redacted-frame-0003.png", runDir), "held-out redacted frame marker\n");
+    writeFileSync(new URL("demo-data-screen.png", runDir), "clean seeded demo data screen marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(
       new URL("failure-log.md", runDir),
@@ -385,6 +390,25 @@ test("proof real-run validates complete real target-tool run artifacts and write
           flowId: "odoo-qualify-opportunity",
           terminalBusinessState: "demo opportunity visible with stage qualified",
           stepIds: ["step-001", "step-002", "step-003"]
+        },
+        null,
+        2
+      )}\n`
+    );
+    writeFileSync(
+      new URL("demo-data-evidence.json", runDir),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          tool: "odoo",
+          substrate: "real-tool",
+          dataSource: "clean-seeded-demo-data",
+          dataClass: "clean-demo",
+          noRealCustomerData: true,
+          setupCompletedBeforeCapture: true,
+          setupCompletedBeforeHeldOutEval: true,
+          seniorReviewerAcceptedDataSetup: true,
+          setupEvidencePaths: [`evals/runs/odoo/${runId}/demo-data-screen.png`]
         },
         null,
         2
@@ -510,6 +534,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
           tool: "odoo",
           substrate: "real-tool",
           dataSource: "clean-seeded-demo-data",
+          demoDataEvidencePath: `evals/runs/odoo/${runId}/demo-data-evidence.json`,
           rawCapturePolicy: "unsafe-to-share-local-only-git-ignored",
           captureAdapterName: "onboardai-native-capture",
           captureAdapterVersion: "0.0.0-local",
@@ -536,7 +561,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 9\/9 required artifacts/);
+    assert.match(result.stdout, /real run odoo\/real-cli-validation-001 valid: 10\/10 required artifacts/);
     assert.equal(existsSync(summaryPath), summaryExistedBefore);
 
     const writeResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId, "--write-summary"], {
@@ -546,7 +571,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     const summary = JSON.parse(readFileSync(summaryPath, "utf8"));
 
     assert.equal(writeResult.status, 0);
-    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 9\/9 required artifacts/);
+    assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 10\/10 required artifacts/);
     assert.match(writeResult.stdout, /wrote evals\/reports\/real-tool-proof-odoo\.json/);
     assert.equal(summary.tool, "odoo");
     assert.equal(summary.substrate, "real-tool");

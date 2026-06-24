@@ -418,6 +418,7 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
     "failure-log.md",
     "reviewer-checklist.md",
     "flow-evidence.json",
+    "demo-data-evidence.json",
     "capture-readiness.json",
     "capture-manifest.json",
     "screen-input-evidence.json",

@@ -3,6 +3,7 @@
   "tool": "replace-with-odoo-or-notion",
   "substrate": "real-tool",
   "dataSource": "clean-seeded-demo-data",
+  "demoDataEvidencePath": "evals/runs/tool/replace-with-run-id/demo-data-evidence.json",
   "rawCapturePolicy": "unsafe-to-share-local-only-git-ignored",
   "captureAdapterName": "replace-with-installed-native-capture-adapter-name",
   "captureAdapterVersion": "replace-with-installed-native-capture-adapter-version",

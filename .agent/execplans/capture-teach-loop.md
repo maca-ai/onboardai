@@ -1638,6 +1638,29 @@ latest results on 2026-06-24:
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 
+latest results on 2026-06-24:
+
+- changed: real-run artifact validation now requires `demo-data-evidence.json` under the same run directory, plus a same-run setup evidence path, before clean seeded or sanitized duplicate data claims can contribute to real proof.
+- changed: `screen-input-evidence.json` now points to `demo-data-evidence.json` and its `dataSource` must match; normalized capture manifest `dataClass` must also match the demo data artifact.
+- eval showed: targeted eval-harness coverage rejects missing demo-data evidence, screen-input data-source mismatches, and capture-manifest data-class mismatches while preserving complete synthetic dry-run acceptance; no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, same-run clean/sanitized demo data setup evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init` for one real target tool, fill `demo-data-evidence.json` with the actual clean/sanitized setup evidence before capture and held-out eval, then fill the remaining native capture, overlay trace, outcome, and reviewer artifacts and dry-run `proof real-run`.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 57 tests, 57 pass, 0 fail.
+- first `pnpm --filter @onboardai/cli test`: failed because a stale assertion expected 9 required artifacts after the new demo data artifact raised the real-run gate to 10 required artifacts.
+- second `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 98 tests, 98 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
 ## idempotence-and-recovery
 
 repo initialization is safe only once. if `.git` already exists, do not re-run `git init`; record that the repo was already initialized.
@@ -1714,3 +1737,4 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-23: normalized manifest identity gate added: real capture manifests must have a safe capture id, ISO generation timestamp, and clean or sanitized data class.
 - 2026-06-23: normalized manifest raw artifact allowlist added: real capture manifests must summarize only screen recording, keyboard event log, mouse event log, and optional human context notes.
 - 2026-06-24: real-run init capture-manifest skeleton added: `proof real-run init` now copies the preferred same-run `capture-manifest.json` template with tool, flow, run, and same-run redacted-frame paths substituted, while leaving evidence placeholders so the skeleton remains non-passing until actual held-out capture artifacts are filled and audited.
+- 2026-06-24: real-run demo-data evidence gate added: real proof now requires same-run `demo-data-evidence.json`, setup evidence paths, no-real-customer-data claims, and data-source/data-class agreement across screen-input evidence and normalized capture manifests.

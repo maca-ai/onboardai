@@ -513,6 +513,7 @@ export function auditRealToolRunArtifacts(
     { label: "failure log", path: `${runDir}/failure-log.md` },
     { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
     { label: "flow evidence", path: `${runDir}/flow-evidence.json` },
+    { label: "demo data evidence", path: `${runDir}/demo-data-evidence.json` },
     { label: "capture readiness evidence", path: `${runDir}/capture-readiness.json` },
     { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` },
     { label: "outcome evidence", path: `${runDir}/outcome-evidence.json` }
@@ -535,6 +536,7 @@ export function auditRealToolRunArtifacts(
   }
 
   const screenInputEvidencePath = `${runDir}/screen-input-evidence.json`;
+  const demoDataEvidencePath = `${runDir}/demo-data-evidence.json`;
   if (existsPath(screenInputEvidencePath)) {
     if (!readText) {
       findings.push({ tool: proof.tool, message: `${screenInputEvidencePath} cannot be validated without file contents` });
@@ -543,6 +545,17 @@ export function auditRealToolRunArtifacts(
       auditShareableTextRedaction(proof.tool, screenInputEvidencePath, content, findings);
       auditRealRunTemplatePlaceholders(proof.tool, screenInputEvidencePath, content, findings);
       auditScreenInputEvidence(proof, runDir, screenInputEvidencePath, content, existsPath, readText, references, findings);
+    }
+  }
+
+  if (existsPath(demoDataEvidencePath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${demoDataEvidencePath} cannot be validated without file contents` });
+    } else {
+      const content = readText(demoDataEvidencePath);
+      auditShareableTextRedaction(proof.tool, demoDataEvidencePath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, demoDataEvidencePath, content, findings);
+      auditDemoDataEvidence(proof, runDir, demoDataEvidencePath, content, existsPath, references, findings);
     }
   }
 
@@ -911,9 +924,24 @@ function auditScreenInputEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
-  if (parsed.dataSource !== "clean-seeded-demo-data") {
-    findings.push({ tool: proof.tool, message: `${path} dataSource must be clean-seeded-demo-data` });
+  const demoDataEvidencePath = `${runDir}/demo-data-evidence.json`;
+  const demoDataSummary = readDemoDataEvidenceSummary(existsPath(demoDataEvidencePath) ? readText(demoDataEvidencePath) : null);
+  if (parsed.dataSource !== "clean-seeded-demo-data" && parsed.dataSource !== "sanitized-duplicate-data") {
+    findings.push({ tool: proof.tool, message: `${path} dataSource must be clean-seeded-demo-data or sanitized-duplicate-data` });
+  } else if (demoDataSummary && parsed.dataSource !== demoDataSummary.dataSource) {
+    findings.push({ tool: proof.tool, message: `${path} dataSource must match demo-data-evidence dataSource` });
   }
+
+  auditEvidencePathField(
+    proof.tool,
+    path,
+    "demoDataEvidencePath",
+    parsed.demoDataEvidencePath,
+    `${runDir}/demo-data-evidence.json`,
+    existsPath,
+    references,
+    findings
+  );
 
   if (parsed.rawCapturePolicy !== "unsafe-to-share-local-only-git-ignored") {
     findings.push({ tool: proof.tool, message: `${path} rawCapturePolicy must be unsafe-to-share-local-only-git-ignored` });
@@ -992,6 +1020,8 @@ function auditScreenInputEvidence(
       existsPath(stepTracePath) ? readText(stepTracePath) : null,
       flowEvidencePath,
       existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
+      demoDataEvidencePath,
+      existsPath(demoDataEvidencePath) ? readText(demoDataEvidencePath) : null,
       existsPath,
       readText,
       references,
@@ -1027,6 +1057,121 @@ function auditScreenInputEvidence(
       }
     });
   }
+}
+
+interface DemoDataEvidenceSummary {
+  readonly dataSource: "clean-seeded-demo-data" | "sanitized-duplicate-data";
+  readonly dataClass: "clean-demo" | "sanitized-duplicate";
+}
+
+function auditDemoDataEvidence(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  auditSchemaVersion(proof, path, parsed, findings);
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== "odoo" && parsed.tool !== "notion") {
+    findings.push({ tool: proof.tool, message: `${path} tool must be odoo or notion` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  if (parsed.dataSource !== "clean-seeded-demo-data" && parsed.dataSource !== "sanitized-duplicate-data") {
+    findings.push({ tool: proof.tool, message: `${path} dataSource must be clean-seeded-demo-data or sanitized-duplicate-data` });
+  }
+
+  if (parsed.dataClass !== "clean-demo" && parsed.dataClass !== "sanitized-duplicate") {
+    findings.push({ tool: proof.tool, message: `${path} dataClass must be clean-demo or sanitized-duplicate` });
+  }
+
+  if (parsed.dataSource === "clean-seeded-demo-data" && parsed.dataClass !== "clean-demo") {
+    findings.push({ tool: proof.tool, message: `${path} clean-seeded-demo-data must use dataClass clean-demo` });
+  }
+
+  if (parsed.dataSource === "sanitized-duplicate-data" && parsed.dataClass !== "sanitized-duplicate") {
+    findings.push({ tool: proof.tool, message: `${path} sanitized-duplicate-data must use dataClass sanitized-duplicate` });
+  }
+
+  for (const field of [
+    "noRealCustomerData",
+    "setupCompletedBeforeCapture",
+    "setupCompletedBeforeHeldOutEval",
+    "seniorReviewerAcceptedDataSetup"
+  ] as const) {
+    if (parsed[field] !== true) {
+      findings.push({ tool: proof.tool, message: `${path} ${field} must be true` });
+    }
+  }
+
+  if (!Array.isArray(parsed.setupEvidencePaths) || parsed.setupEvidencePaths.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} setupEvidencePaths must contain at least one same-run shareable evidence path` });
+  } else {
+    parsed.setupEvidencePaths.forEach((evidencePath, index) => {
+      auditEvidencePathField(
+        proof.tool,
+        path,
+        `setupEvidencePaths[${index}]`,
+        evidencePath,
+        `${runDir}/`,
+        existsPath,
+        references,
+        findings
+      );
+    });
+  }
+}
+
+function readDemoDataEvidenceSummary(content: string | null): DemoDataEvidenceSummary | null {
+  if (content === null) {
+    return null;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
+
+  if (!isRecord(parsed)) {
+    return null;
+  }
+
+  if (
+    (parsed.dataSource !== "clean-seeded-demo-data" && parsed.dataSource !== "sanitized-duplicate-data") ||
+    (parsed.dataClass !== "clean-demo" && parsed.dataClass !== "sanitized-duplicate")
+  ) {
+    return null;
+  }
+
+  return {
+    dataSource: parsed.dataSource,
+    dataClass: parsed.dataClass
+  };
 }
 
 function readCaptureReadinessAttribution(content: string | null): { readonly adapterName: string; readonly adapterVersion: string } | null {
@@ -1068,6 +1213,8 @@ function auditNormalizedCaptureManifest(
   stepTraceContent: string | null,
   flowEvidencePath: string,
   flowEvidenceContent: string | null,
+  demoDataEvidencePath: string,
+  demoDataEvidenceContent: string | null,
   existsPath: (path: string) => boolean,
   readText: (path: string) => string,
   references: ShareableEvidencePathReference[],
@@ -1109,6 +1256,11 @@ function auditNormalizedCaptureManifest(
 
   if (parsed.dataClass !== "clean-demo" && parsed.dataClass !== "sanitized-duplicate") {
     findings.push({ tool: proof.tool, message: `${manifestPath} dataClass must be clean-demo or sanitized-duplicate` });
+  }
+
+  const demoDataSummary = readDemoDataEvidenceSummary(demoDataEvidenceContent);
+  if (demoDataSummary && parsed.dataClass !== demoDataSummary.dataClass) {
+    findings.push({ tool: proof.tool, message: `${manifestPath} dataClass must match ${demoDataEvidencePath} dataClass` });
   }
 
   const flowEvidenceSummary = readFlowEvidenceSummary(proof, flowEvidencePath, flowEvidenceContent, findings);

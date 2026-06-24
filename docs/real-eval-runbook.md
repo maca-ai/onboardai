@@ -76,6 +76,9 @@ before capture:
 
 - [ ] confirm the target tool is odoo or notion.
 - [ ] confirm the workspace contains only clean seeded demo data or sanitized duplicate data.
+- [ ] write `evals/runs/<tool>/<run-id>/demo-data-evidence.json`.
+- [ ] write at least one same-run shareable setup evidence artifact, such as `evals/runs/<tool>/<run-id>/demo-data-screen.png`.
+- [ ] confirm `demo-data-evidence.json` states no real customer data, setup completed before capture, setup completed before held-out eval, and senior reviewer accepted the data setup.
 - [ ] confirm the raw capture destination is under `captures/raw/` and labeled unsafe-to-share.
 - [ ] confirm screen recording is enabled.
 - [ ] confirm keyboard event logging is enabled.
@@ -147,10 +150,11 @@ after eval:
 - [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, installed adapter name and version, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
 - [ ] confirm `capture-readiness.json` `verifiedDocReferences` cites official docs URLs or context7 library ids covering screen recording, keyboard event logging, mouse event logging, redacted frame output, and raw artifact ignore behavior, with `appliesToAdapterVersion` matching the installed `adapterVersion`.
-- [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with matching installed adapter name and version, native screen, keyboard, mouse, redaction, clean-data, local-raw-capture, no-privileged-access, no-Playwright-selector, and no-computer-use-automation confirmations.
-- [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json` and its `captureAdapterName` and `captureAdapterVersion` match that readiness artifact.
+- [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with matching installed adapter name and version, native screen, keyboard, mouse, redaction, clean/sanitized data, local-raw-capture, no-privileged-access, no-Playwright-selector, and no-computer-use-automation confirmations.
+- [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json` and `demo-data-evidence.json`, and its `captureAdapterName` and `captureAdapterVersion` match that readiness artifact.
+- [ ] confirm `screen-input-evidence.json` `dataSource` matches `demo-data-evidence.json`.
 - [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.
-- [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, and `dataClass` of `clean-demo` or `sanitized-duplicate`.
+- [ ] confirm the referenced normalized capture manifest has a lowercase kebab-case `captureId`, ISO UTC `generatedAt`, and `dataClass` matching `demo-data-evidence.json`.
 - [ ] confirm the referenced normalized capture manifest contains sanitized raw artifact summaries for screen recording, keyboard event log, and mouse event log, includes no raw file paths, and lists redacted frame plus per-step input evidence for every step id in `step-trace.json`.
 - [ ] confirm normalized manifest raw artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context notes.
 - [ ] confirm the referenced normalized capture manifest `flowPath` and `flowId` match `flow-evidence.json`.
@@ -217,6 +221,7 @@ evals/templates/runs/tool-run-id/step-trace.json
 evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
 evals/templates/runs/tool-run-id/flow-evidence.json
+evals/templates/runs/tool-run-id/demo-data-evidence.json
 evals/templates/runs/tool-run-id/capture-readiness.json
 evals/templates/runs/tool-run-id/capture-manifest.json
 evals/templates/runs/tool-run-id/screen-input-evidence.json

@@ -8,7 +8,7 @@
 - date:
 - evaluator:
 - substrate: real-tool
-- data source: clean seeded demo data
+- data source: clean seeded demo data or sanitized duplicate data
 
 ## result
 

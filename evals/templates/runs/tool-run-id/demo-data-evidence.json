@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "substrate": "real-tool",
+  "dataSource": "clean-seeded-demo-data",
+  "dataClass": "clean-demo",
+  "noRealCustomerData": true,
+  "setupCompletedBeforeCapture": true,
+  "setupCompletedBeforeHeldOutEval": true,
+  "seniorReviewerAcceptedDataSetup": true,
+  "setupEvidencePaths": [
+    "evals/runs/tool/replace-with-run-id/demo-data-screen.png"
+  ]
+}
