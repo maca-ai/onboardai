@@ -1407,6 +1407,28 @@ latest results on 2026-06-22:
 
 latest results on 2026-06-24:
 
+- changed: `proof:scan` now rejects bearer-token text, `secret_key` style api secrets, and `sessionid` or `session_id` leaks in shareable text artifacts, aligning the built-in scan more closely with redaction's forbidden secret classes.
+- changed: CLI scan regression coverage now includes bearer token, secret key, and session id examples alongside email, password, token assignment, raw capture, local tmp, file URL, and traversal leaks.
+- eval showed: the first standalone `proof:scan` run was invalid because it raced with the CLI test's temporary negative scan fixture; rerunning after the test cleanup passed. Fixture proof still passes for both tools and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, shareable evidence that passes the stricter bearer/api/session scan, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, fill same-run evidence, run `proof:scan` before `proof real-run`, and verify no shareable real-run text leaks bearer tokens, secret keys, session ids, local paths, raw capture references, emails, or other secrets.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- first `pnpm proof:scan`: invalid concurrent run; failed because it observed the CLI test's temporary negative scan artifact.
+- second `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 101 tests, 101 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+
+latest results on 2026-06-24:
+
 - changed: `proof:scan` now rejects local tmp paths, `file://` URLs, and traversal paths in shareable text artifacts, in addition to forbidden secrets and raw/unsafe/tmp capture references.
 - changed: CLI scan regression coverage now seeds a shareable report with an email, password, token, raw capture path, local tmp path, file URL, and traversal path and requires the scan to reject every class.
 - eval showed: fixture proof still passes for both tools and the hardened shareable scan passes the current committed artifacts; no real odoo/notion proof files were created.

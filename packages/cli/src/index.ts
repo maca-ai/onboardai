@@ -337,9 +337,9 @@ function scanShareableArtifacts(): { readonly passed: boolean; readonly filesSca
   const rules = [
     { label: "email address", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
     { label: "password", pattern: /\b(?:password|passwd|pwd)\s*[:=]/i },
-    { label: "token", pattern: /\b(?:token|access_token|refresh_token|bearer)\s*[:=]/i },
-    { label: "api key", pattern: /\bapi[_-]?key\s*[:=]/i },
-    { label: "session secret", pattern: /\bsession[_-]?secret\s*[:=]/i },
+    { label: "token", pattern: /\b(?:token|access_token|refresh_token)\s*[:=]|\bbearer\s+["']?[A-Za-z0-9._~+/=-]{12,}/i },
+    { label: "api key", pattern: /\b(?:api[_-]?key|secret[_-]?key)\s*[:=]/i },
+    { label: "session secret", pattern: /\b(?:session[_-]?secret|sessionid|session_id)\s*[:=]/i },
     { label: "unsafe capture path", pattern: /\bcaptures\/(?:raw|unsafe|tmp)\//i },
     { label: "local tmp path", pattern: /(^|[^a-z])(?:\/private)?\/tmp\//i },
     { label: "file url", pattern: /\bfile:\/\//i },

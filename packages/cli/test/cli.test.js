@@ -103,6 +103,9 @@ test("proof scan-shareable rejects forbidden secrets and unsafe capture paths", 
       "email: reviewer@example.com",
       "password: hunter2",
       "token: sk-live-1234567890",
+      "authorization: Bearer sk-live-abcdefghijkl",
+      "secret_key=abcdef1234567890",
+      "sessionid=local-session-secret",
       "raw: captures/raw/demo/frame-0001.png",
       "tmp: /tmp/onboardai/frame.png",
       "file-url: file:///tmp/onboardai/frame.png",
@@ -122,6 +125,8 @@ test("proof scan-shareable rejects forbidden secrets and unsafe capture paths", 
     assert.match(result.stderr, /shareable-scan-validation\.md: email address/);
     assert.match(result.stderr, /shareable-scan-validation\.md: password/);
     assert.match(result.stderr, /shareable-scan-validation\.md: token/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: api key/);
+    assert.match(result.stderr, /shareable-scan-validation\.md: session secret/);
     assert.match(result.stderr, /shareable-scan-validation\.md: unsafe capture path/);
     assert.match(result.stderr, /shareable-scan-validation\.md: local tmp path/);
     assert.match(result.stderr, /shareable-scan-validation\.md: file url/);
