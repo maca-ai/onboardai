@@ -53,6 +53,7 @@ export interface StepTraceEntry {
   readonly successMissingVisibleText: readonly string[];
   readonly overlayConfidence: number;
   readonly overlayKind: "instruction" | "fail-closed";
+  readonly overlayCanAutomateInput: false;
   readonly overlayMessage: string;
   readonly highlightedAnchorId: string | null;
   readonly actionPrimitive: {
@@ -723,6 +724,7 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
       successMissingVisibleText: successVisibleText,
       overlayConfidence: match.confidence,
       overlayKind: overlay.kind,
+      overlayCanAutomateInput: overlay.canAutomateInput,
       overlayMessage: overlay.message,
       highlightedAnchorId: overlay.highlight?.["anchor-id"] ?? null,
       actionPrimitive: {

@@ -31,6 +31,7 @@ test("odoo-like fixture eval reaches the terminal business state without privile
   assert.deepEqual(result.terminalMissingVisibleText, []);
   assert.deepEqual(result.terminalExpectedVisibleText, ["demo opportunity", "stage", "qualified", "saved"]);
   assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
+  assert.equal(result.trace.every((entry) => entry.overlayCanAutomateInput === false), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
 
@@ -49,6 +50,7 @@ test("notion-like fixture eval reaches the terminal business state without privi
   assert.deepEqual(result.terminalMissingVisibleText, []);
   assert.deepEqual(result.terminalExpectedVisibleText, ["demo task", "status", "ready for review"]);
   assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
+  assert.equal(result.trace.every((entry) => entry.overlayCanAutomateInput === false), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
 

@@ -28,6 +28,7 @@
     "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
+    "overlayCanAutomateInput": false,
     "overlayMessage": "select the row for demo task.",
     "highlightedAnchorId": "demo-task-row",
     "actionPrimitive": {
@@ -67,6 +68,7 @@
     "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
+    "overlayCanAutomateInput": false,
     "overlayMessage": "open the status property.",
     "highlightedAnchorId": "status-property",
     "actionPrimitive": {
@@ -106,6 +108,7 @@
     "successMissingVisibleText": [],
     "overlayConfidence": 1,
     "overlayKind": "instruction",
+    "overlayCanAutomateInput": false,
     "overlayMessage": "select ready for review.",
     "highlightedAnchorId": "ready-for-review-option",
     "actionPrimitive": {
