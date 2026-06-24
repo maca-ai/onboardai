@@ -37,6 +37,7 @@
         "manualOnly": true
       },
       "toStateId": "opportunity-detail",
+      "successFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0002.png",
       "success": true
     },
     {
@@ -79,6 +80,7 @@
         "manualOnly": true
       },
       "toStateId": "qualified-unsaved",
+      "successFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0003.png",
       "success": true
     },
     {
@@ -121,6 +123,7 @@
         "manualOnly": true
       },
       "toStateId": "qualified-saved",
+      "successFrame": "evals/fixtures/odoo-qualify-opportunity/held-out-frame-0004.png",
       "success": true
     }
   ]

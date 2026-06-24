@@ -31,6 +31,7 @@ test("odoo-like fixture eval reaches the terminal business state without privile
   assert.deepEqual(result.terminalMissingVisibleText, []);
   assert.deepEqual(result.terminalExpectedVisibleText, ["demo opportunity", "stage", "qualified", "saved"]);
   assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
+  assert.equal(result.trace.every((entry) => entry.successFrame?.startsWith("evals/fixtures/")), true);
   assert.equal(result.trace.every((entry) => entry.overlayCanAutomateInput === false), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
@@ -50,6 +51,7 @@ test("notion-like fixture eval reaches the terminal business state without privi
   assert.deepEqual(result.terminalMissingVisibleText, []);
   assert.deepEqual(result.terminalExpectedVisibleText, ["demo task", "status", "ready for review"]);
   assert.equal(result.trace.every((entry) => entry.currentFrame.startsWith("evals/fixtures/")), true);
+  assert.equal(result.trace.every((entry) => entry.successFrame?.startsWith("evals/fixtures/")), true);
   assert.equal(result.trace.every((entry) => entry.overlayCanAutomateInput === false), true);
   assert.deepEqual(result.overlayConfidencePerStep.map((entry) => entry.confidence), [1, 1, 1]);
 });
@@ -291,6 +293,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/held-out-frame-0001.png",
     "evals/runs/odoo/real-proof/held-out-frame-0002.png",
     "evals/runs/odoo/real-proof/held-out-frame-0003.png",
+    "evals/runs/odoo/real-proof/held-out-frame-0004.png",
     "evals/runs/odoo/real-proof/demo-data-screen.png",
     "flows/odoo/qualify-opportunity.flow.md",
     "captures/normalized/capture-real-odoo-001/manifest.json",
@@ -483,6 +486,34 @@ test("real target-tool run artifact audit rejects same-run non-frame step eviden
   assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a PNG frame artifact")), true);
 });
 
+test("real target-tool run artifact audit rejects missing or non-frame step success evidence", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.delete("evals/runs/odoo/real-proof/held-out-frame-0004.png");
+  existing.add("evals/runs/odoo/real-proof/success-log.md");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("step-trace.json")) {
+        const trace = stepTraceDocument("odoo");
+        trace.steps[0].successFrame = "evals/runs/odoo/real-proof/success-log.md";
+        return JSON.stringify(trace);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successFrame must point to a same-run held-out-frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successFrame must point to a PNG frame artifact")), true);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("heldOutEvidencePaths must include evals/runs/odoo/real-proof/success-log.md")),
+    true
+  );
+});
+
 test("real target-tool run artifact audit rejects step trace frames reused from senior capture manifests", () => {
   const proof = realToolProof("odoo");
   const existing = realRunExistingPaths("odoo");
@@ -494,6 +525,7 @@ test("real target-tool run artifact audit rejects step trace frames reused from 
       if (path.endsWith("step-trace.json")) {
         const trace = stepTraceDocument("odoo");
         trace.steps[0].currentFrame = "evals/runs/odoo/real-proof/redacted-frame-0001.png";
+        trace.steps[1].successFrame = "evals/runs/odoo/real-proof/redacted-frame-0001.png";
         return JSON.stringify(trace);
       }
 
@@ -524,6 +556,7 @@ test("real target-tool run artifact audit rejects step trace frames reused from 
 
   assert.equal(audit.passed, false);
   assert.equal(audit.findings.some((finding) => finding.message.includes("currentFrame must point to a same-run held-out-frame PNG")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("successFrame must point to a same-run held-out-frame PNG")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("must be held-out eval evidence")), true);
 });
 
@@ -2064,6 +2097,7 @@ function realRunExistingPaths(tool) {
     `evals/runs/${tool}/real-proof/held-out-frame-0001.png`,
     `evals/runs/${tool}/real-proof/held-out-frame-0002.png`,
     `evals/runs/${tool}/real-proof/held-out-frame-0003.png`,
+    `evals/runs/${tool}/real-proof/held-out-frame-0004.png`,
     `evals/runs/${tool}/real-proof/demo-data-screen.png`,
     `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
     `captures/normalized/capture-real-${tool}-001/manifest.json`,
@@ -2215,6 +2249,7 @@ function flowGroundedTrace(tool) {
     fromStateId: `state-00${index + 1}`,
     toStateId: `state-00${index + 2}`,
     currentFrame: `evals/runs/${tool}/real-proof/held-out-frame-000${index + 1}.png`,
+    successFrame: `evals/runs/${tool}/real-proof/held-out-frame-000${index + 2}.png`,
     expectedVisibleText: step.expectedVisibleText,
     matchedVisibleText: step.expectedVisibleText,
     missingVisibleText: [],
@@ -2387,7 +2422,8 @@ function outcomeEvidence(tool) {
       `evals/runs/${tool}/real-proof/eval-recording.mp4`,
       `evals/runs/${tool}/real-proof/held-out-frame-0001.png`,
       `evals/runs/${tool}/real-proof/held-out-frame-0002.png`,
-      `evals/runs/${tool}/real-proof/held-out-frame-0003.png`
+      `evals/runs/${tool}/real-proof/held-out-frame-0003.png`,
+      `evals/runs/${tool}/real-proof/held-out-frame-0004.png`
     ]
   };
 }

@@ -2028,3 +2028,27 @@ latest results on 2026-06-24:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: real-run `step-trace.json` validation now requires every successful step to include a post-action `successFrame` pointing at a same-run `held-out-frame-*.png`, so success visible text is backed by held-out screen evidence rather than summary fields alone.
+- changed: `outcome-evidence.json` `heldOutEvidencePaths` now derives and requires both current frames and success frames from the same-run step trace, and rejects success frames reused from senior capture manifest redacted frames.
+- changed: fixture traces now preserve success-frame evidence, fixture proof reports now audit 82 shareable evidence references, and real-run templates/runbooks/protocol docs now tell operators to collect success frames.
+- eval showed: targeted eval-harness coverage rejects missing or non-frame success evidence; CLI real-run dry-run coverage still accepts a complete synthetic real-run directory only when success frames and held-out evidence paths are present.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, per-step held-out current and success frames, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, extract both pre-action current frames and post-action success frames from the held-out eval recording for every taught step, list all of them in `outcome-evidence.json`, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 61 tests, 61 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 109 tests, 109 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.

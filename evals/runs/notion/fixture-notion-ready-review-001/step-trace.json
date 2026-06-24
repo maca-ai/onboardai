@@ -39,6 +39,7 @@
         "manualOnly": true
       },
       "toStateId": "task-page",
+      "successFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0002.png",
       "success": true
     },
     {
@@ -79,6 +80,7 @@
         "manualOnly": true
       },
       "toStateId": "status-menu",
+      "successFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0003.png",
       "success": true
     },
     {
@@ -119,6 +121,7 @@
         "manualOnly": true
       },
       "toStateId": "ready-for-review-confirmed",
+      "successFrame": "evals/fixtures/notion-update-task-status/held-out-frame-0004.png",
       "success": true
     }
   ]

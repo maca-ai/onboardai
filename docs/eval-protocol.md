@@ -327,14 +327,16 @@ adapter-version attribution are valid.
 
 `step-trace.json` must be an object with `schemaVersion: 1` and a `steps` array containing at least one taught
 step. every real proof step must show successful instruction guidance, overlay confidence at or above `0.75`,
-`overlayCanAutomateInput: false`, a non-empty highlighted anchor id, a manual-only user action, and a current
-frame path under the same run directory. the current frame path must point to a same-run held-out eval PNG, for example
+`overlayCanAutomateInput: false`, a non-empty highlighted anchor id, a manual-only user action, a current
+frame path under the same run directory, and a post-action success frame path under the same run directory.
+both step frame paths must point to same-run held-out eval PNGs, for example
 `evals/runs/<tool>/<run-id>/held-out-frame-0001.png`; a same-run log, JSON file, final screen, senior capture
 frame, raw capture, unsafe file, or temporary file cannot stand in for step frame evidence. held-out step
 frames must not be reused from the normalized capture manifest's senior demonstration redacted frames. the trace must not include overlay
 automation command fields for click, type, submit, approve, delete, or state mutation. each step's
 `expectedVisibleText` and `matchedVisibleText` must match the referenced `flow.md` step expected visible text,
 and `missingVisibleText` must be an empty array. each step must also record post-action success evidence:
+`successFrame` must point to the held-out frame where the post-action state was observed.
 `successVisibleText` and `successMatchedVisibleText` must match that step's `success-condition.visible-text`
 from `flow.md`, and `successMissingVisibleText` must be an empty array.
 
@@ -362,9 +364,9 @@ eval evidence, and senior reviewer signoff. its `stepCount` and `stepsCompleted`
 
 `outcome-evidence.json` `heldOutEvidencePaths` must include same-run held-out eval artifacts, including
 `evals/runs/<tool>/<run-id>/final-screen.png`, `evals/runs/<tool>/<run-id>/eval-recording.mp4`, and every
-`held-out-frame-*.png` current frame cited by `step-trace.json`. these paths must exist under the same run
-directory and must not point to `captures/`, raw, unsafe, tmp, absolute, or traversal paths. capture artifacts
-can prove the senior demonstration, but they cannot prove the held-out naive-user eval outcome.
+`held-out-frame-*.png` current and success frame cited by `step-trace.json`. these paths must exist under the
+same run directory and must not point to `captures/`, raw, unsafe, tmp, absolute, or traversal paths. capture
+artifacts can prove the senior demonstration, but they cannot prove the held-out naive-user eval outcome.
 
 validate a filled real run directory before creating the live proof summary:
 

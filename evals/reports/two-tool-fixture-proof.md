@@ -13,7 +13,7 @@
 - fixture proof result: passed
 - machine audit result: passed
 - machine audit findings: none
-- shareable evidence references audited: 76
+- shareable evidence references audited: 82
 - missing shareable evidence references: 0
 - unsafe shareable evidence references: 0
 - disallowed shareable evidence references: 0

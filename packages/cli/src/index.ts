@@ -571,6 +571,9 @@ function collectShareableEvidenceReferences(results: readonly EvalRunResult[]): 
 
     for (const entry of result.trace) {
       references.push({ tool: result.tool, label: `trace ${entry.stepId} held-out frame`, path: entry.currentFrame });
+      if (entry.successFrame) {
+        references.push({ tool: result.tool, label: `trace ${entry.stepId} success frame`, path: entry.successFrame });
+      }
     }
 
     references.push(...extractEvidencePathsFromArtifact(result.tool, "eval report reference", reportPath));

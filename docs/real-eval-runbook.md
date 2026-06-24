@@ -131,14 +131,14 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/step-trace.json`.
 - [ ] confirm every real-run JSON evidence file uses `schemaVersion: 1`.
 - [ ] confirm `step-trace.json` contains a `steps` array.
-- [ ] confirm every `step-trace.json` step is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, and references a current `held-out-frame-*.png` under the run directory.
-- [ ] confirm every `step-trace.json` current frame was extracted from the held-out eval recording or held-out eval frame sequence, not from the senior demonstration capture manifest.
+- [ ] confirm every `step-trace.json` step is successful, has overlay confidence at or above `0.75`, records `overlayCanAutomateInput: false`, includes a highlighted anchor id, uses manual-only user action, references a current `held-out-frame-*.png` under the run directory, and references a post-action `successFrame` held-out PNG under the run directory.
+- [ ] confirm every `step-trace.json` current frame and success frame was extracted from the held-out eval recording or held-out eval frame sequence, not from the senior demonstration capture manifest.
 - [ ] if any failed trace event has overlay confidence below `0.75`, confirm the overlay message is exactly `screen state not recognized. ask a human or restart this step.` and no highlighted anchor id is present.
 - [ ] confirm `step-trace.json` contains no overlay automation command fields for click, type, submit, approve, delete, or state mutation.
 - [ ] write `evals/runs/<tool>/<run-id>/flow-evidence.json` pointing to the normalized `flow.md` used for overlay guidance.
 - [ ] confirm every `step-trace.json` step id, overlay message, highlighted anchor id, action kind, and target anchor matches the referenced `flow.md`.
 - [ ] confirm every `step-trace.json` step has `missingVisibleText: []`, `expectedVisibleText` exactly matching that step's `flow.md` expected visible text, and `matchedVisibleText` proving the same visible text was observed.
-- [ ] confirm every `step-trace.json` step has `successMissingVisibleText: []`, `successVisibleText` exactly matching that step's `flow.md` success-condition visible text, and `successMatchedVisibleText` proving the same post-action success text was observed.
+- [ ] confirm every `step-trace.json` step has `successMissingVisibleText: []`, `successVisibleText` exactly matching that step's `flow.md` success-condition visible text, `successMatchedVisibleText` proving the same post-action success text was observed, and `successFrame` pointing at the held-out frame where that text was observed.
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
@@ -171,7 +171,7 @@ after eval:
 - [ ] confirm `outcome-evidence.json` `evaluatorRole` is `first-time-user` or `deterministic-mock-user-harness`, not senior demonstrator or senior reviewer.
 - [ ] confirm `outcome-evidence.json` `stepCount` and `stepsCompleted` match the same-run `step-trace.json` step count and successful step count.
 - [ ] confirm `outcome-evidence.json` `terminalBusinessState`, `terminalExpectedVisibleText`, and `terminalMatchedVisibleText` match the referenced `flow.md` terminal business state and terminal success visible text.
-- [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png`, `eval-recording.mp4`, and every `held-out-frame-*.png` current frame from `step-trace.json`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.
+- [ ] confirm `outcome-evidence.json` `heldOutEvidencePaths` includes same-run `final-screen.png`, `eval-recording.mp4`, and every `held-out-frame-*.png` current frame and success frame from `step-trace.json`, and does not point to capture storage, raw, unsafe, tmp, absolute, or traversal paths.
 - [ ] confirm real-run shareable text artifacts, the referenced `flow.md`, and the referenced normalized manifest contain no forbidden email addresses, password assignments, token assignments, api key assignments, or session secret assignments.
 - [ ] confirm real-run shareable text artifacts and the referenced normalized manifest contain no unfilled template placeholders such as `replace-with-*` or `replace with *`.
 - [ ] write a report under `evals/reports/`.

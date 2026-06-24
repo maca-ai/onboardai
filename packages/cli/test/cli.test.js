@@ -297,6 +297,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
               fromStateId: "state-001",
               toStateId: "state-002",
               currentFrame: `evals/runs/odoo/${runId}/held-out-frame-0001.png`,
+              successFrame: `evals/runs/odoo/${runId}/held-out-frame-0002.png`,
               expectedVisibleText: ["pipeline", "demo opportunity", "new"],
               matchedVisibleText: ["pipeline", "demo opportunity", "new"],
               missingVisibleText: [],
@@ -321,6 +322,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
               fromStateId: "state-002",
               toStateId: "state-003",
               currentFrame: `evals/runs/odoo/${runId}/held-out-frame-0002.png`,
+              successFrame: `evals/runs/odoo/${runId}/held-out-frame-0003.png`,
               expectedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
               matchedVisibleText: ["demo opportunity", "stage", "new", "qualified"],
               missingVisibleText: [],
@@ -345,6 +347,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
               fromStateId: "state-003",
               toStateId: "state-004",
               currentFrame: `evals/runs/odoo/${runId}/held-out-frame-0003.png`,
+              successFrame: `evals/runs/odoo/${runId}/held-out-frame-0004.png`,
               expectedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
               matchedVisibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"],
               missingVisibleText: [],
@@ -376,6 +379,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     writeFileSync(new URL("held-out-frame-0001.png", runDir), "held-out eval frame marker\n");
     writeFileSync(new URL("held-out-frame-0002.png", runDir), "held-out eval frame marker\n");
     writeFileSync(new URL("held-out-frame-0003.png", runDir), "held-out eval frame marker\n");
+    writeFileSync(new URL("held-out-frame-0004.png", runDir), "held-out eval frame marker\n");
     writeFileSync(new URL("demo-data-screen.png", runDir), "clean seeded demo data screen marker\n");
     writeFileSync(new URL("eval-recording.mp4", runDir), "real eval recording marker\n");
     writeFileSync(
@@ -484,7 +488,8 @@ test("proof real-run validates complete real target-tool run artifacts and write
             `evals/runs/odoo/${runId}/eval-recording.mp4`,
             `evals/runs/odoo/${runId}/held-out-frame-0001.png`,
             `evals/runs/odoo/${runId}/held-out-frame-0002.png`,
-            `evals/runs/odoo/${runId}/held-out-frame-0003.png`
+            `evals/runs/odoo/${runId}/held-out-frame-0003.png`,
+            `evals/runs/odoo/${runId}/held-out-frame-0004.png`
           ]
         },
         null,

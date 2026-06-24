@@ -45,6 +45,7 @@ export interface StepTraceEntry {
   readonly fromStateId: string;
   readonly toStateId?: string;
   readonly currentFrame: string;
+  readonly successFrame?: string;
   readonly expectedVisibleText: readonly string[];
   readonly matchedVisibleText: readonly string[];
   readonly missingVisibleText: readonly string[];
@@ -770,6 +771,7 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
       trace.push({
         ...traceEntryBase,
         toStateId: nextObservation.stateId,
+        successFrame: nextObservation.frame,
         successMatchedVisibleText: matchedSuccessText,
         successMissingVisibleText: missingSuccessText,
         success: false,
@@ -781,6 +783,7 @@ export function runDeterministicEval(flow: FlowDocument, fixture: DeterministicF
     trace.push({
       ...traceEntryBase,
       toStateId: nextObservation.stateId,
+      successFrame: nextObservation.frame,
       successMatchedVisibleText: matchedSuccessText,
       successMissingVisibleText: [],
       success: true
@@ -1786,6 +1789,25 @@ function auditRealStepTrace(
     if (typeof entry.currentFrame === "string" && !entry.currentFrame.endsWith(".png")) {
       findings.push({ tool: proof.tool, message: `${path} ${stepLabel} currentFrame must point to a PNG frame artifact` });
     }
+
+    auditEvidencePathField(
+      proof.tool,
+      path,
+      `${stepLabel} successFrame`,
+      entry.successFrame,
+      `${runDir}/`,
+      existsPath,
+      references,
+      findings
+    );
+
+    if (typeof entry.successFrame === "string" && !isSameRunHeldOutFramePath(entry.successFrame, runDir)) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} successFrame must point to a same-run held-out-frame PNG` });
+    }
+
+    if (typeof entry.successFrame === "string" && !entry.successFrame.endsWith(".png")) {
+      findings.push({ tool: proof.tool, message: `${path} ${stepLabel} successFrame must point to a PNG frame artifact` });
+    }
   });
 }
 
@@ -1800,33 +1822,41 @@ function auditHeldOutTraceFramesSeparateFromCaptureManifest(
     return;
   }
 
-  for (const frame of readStepTraceCurrentFrames(proof, stepTracePath, stepTraceContent, findings)) {
-    if (manifestAudit.redactedFramePaths.has(frame.currentFrame)) {
+  for (const frame of readStepTraceHeldOutFrames(proof, stepTracePath, stepTraceContent, findings)) {
+    if (manifestAudit.redactedFramePaths.has(frame.path)) {
       findings.push({
         tool: proof.tool,
-        message: `${stepTracePath} ${frame.stepLabel} currentFrame must be held-out eval evidence, not a senior capture manifest frame`
+        message: `${stepTracePath} ${frame.stepLabel} ${frame.field} must be held-out eval evidence, not a senior capture manifest frame`
       });
     }
   }
 }
 
-function readStepTraceCurrentFrames(
+function readStepTraceHeldOutFrames(
   proof: RealToolProofEvidence,
   stepTracePath: string,
   stepTraceContent: string,
   findings: CaptureTeachGoalStatusFinding[]
-): readonly { readonly stepLabel: string; readonly currentFrame: string }[] {
+): readonly { readonly stepLabel: string; readonly field: "currentFrame" | "successFrame"; readonly path: string }[] {
   const steps = readStepTraceEntries(proof, stepTracePath, stepTraceContent, "held-out frame separation", findings);
   if (!steps) {
     return [];
   }
 
   return steps.flatMap((entry, index) => {
-    if (!isRecord(entry) || typeof entry.currentFrame !== "string" || entry.currentFrame.length === 0) {
+    if (!isRecord(entry)) {
       return [];
     }
 
-    return [{ stepLabel: traceStepLabel(entry, index), currentFrame: entry.currentFrame }];
+    const frames: { stepLabel: string; field: "currentFrame" | "successFrame"; path: string }[] = [];
+    const stepLabel = traceStepLabel(entry, index);
+    if (typeof entry.currentFrame === "string" && entry.currentFrame.length > 0) {
+      frames.push({ stepLabel, field: "currentFrame", path: entry.currentFrame });
+    }
+    if (typeof entry.successFrame === "string" && entry.successFrame.length > 0) {
+      frames.push({ stepLabel, field: "successFrame", path: entry.successFrame });
+    }
+    return frames;
   });
 }
 
@@ -2328,7 +2358,7 @@ function auditHeldOutEvidencePaths(
     `${runDir}/eval-recording.mp4`,
     ...(stepTraceContent === null
       ? []
-      : readStepTraceCurrentFrames(proof, stepTracePath, stepTraceContent, findings).map((frame) => frame.currentFrame))
+      : readStepTraceHeldOutFrames(proof, stepTracePath, stepTraceContent, findings).map((frame) => frame.path))
   ];
 
   if (!Array.isArray(value) || value.length === 0) {
