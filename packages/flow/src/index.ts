@@ -67,6 +67,7 @@ const requiredFrontmatter = [
   "tool",
   "terminal-business-state",
   "confidence-threshold",
+  "data-class",
   "raw-capture-policy",
   "redaction-policy",
   "input-automation-allowed"
@@ -118,8 +119,28 @@ export function validateFlowMarkdown(markdown: string): FlowValidationResult {
     }
   }
 
+  if (document.frontmatter["flow-version"] !== 1) {
+    errors.push("flow-version must be 1");
+  }
+
+  if (document.frontmatter.tool !== "odoo" && document.frontmatter.tool !== "notion") {
+    errors.push("tool must be odoo or notion");
+  }
+
   if (document.frontmatter["confidence-threshold"] !== 0.75) {
     errors.push("confidence-threshold must be 0.75");
+  }
+
+  if (document.frontmatter["data-class"] !== "clean-demo" && document.frontmatter["data-class"] !== "sanitized-duplicate") {
+    errors.push("data-class must be clean-demo or sanitized-duplicate");
+  }
+
+  if (document.frontmatter["raw-capture-policy"] !== "unsafe-to-share-local-only") {
+    errors.push("raw-capture-policy must be unsafe-to-share-local-only");
+  }
+
+  if (document.frontmatter["redaction-policy"] !== "hard-secret-redaction-v0") {
+    errors.push("redaction-policy must be hard-secret-redaction-v0");
   }
 
   if (document.frontmatter["input-automation-allowed"] !== false) {

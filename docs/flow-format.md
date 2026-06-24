@@ -48,6 +48,16 @@ supports-overlay-highlights: true
 input-automation-allowed: false
 ```
 
+for v0 validation:
+
+- `flow-version` must be `1`
+- `tool` must be `odoo` or `notion`
+- `data-class` must be `clean-demo` or `sanitized-duplicate`
+- `raw-capture-policy` must be `unsafe-to-share-local-only`
+- `redaction-policy` must be `hard-secret-redaction-v0`
+- `confidence-threshold` must be `0.75`
+- `input-automation-allowed` must be `false`
+
 ## step markdown
 
 each step should have:

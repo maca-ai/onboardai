@@ -77,6 +77,37 @@ test("an invalid flow.md fails validation", () => {
   assert.equal(result.errors.some((error) => error.includes("success-condition")), true);
 });
 
+test("unsupported flow frontmatter policy values fail validation", () => {
+  const cases = [
+    {
+      markdown: validFlow.replace("flow-version: 1", "flow-version: 2"),
+      error: "flow-version must be 1"
+    },
+    {
+      markdown: validFlow.replace("tool: odoo", "tool: crm"),
+      error: "tool must be odoo or notion"
+    },
+    {
+      markdown: validFlow.replace("data-class: clean-demo", "data-class: live-customer-data"),
+      error: "data-class must be clean-demo or sanitized-duplicate"
+    },
+    {
+      markdown: validFlow.replace("raw-capture-policy: unsafe-to-share-local-only", "raw-capture-policy: shareable"),
+      error: "raw-capture-policy must be unsafe-to-share-local-only"
+    },
+    {
+      markdown: validFlow.replace("redaction-policy: hard-secret-redaction-v0", "redaction-policy: none"),
+      error: "redaction-policy must be hard-secret-redaction-v0"
+    }
+  ];
+
+  for (const testCase of cases) {
+    const result = validateFlowMarkdown(testCase.markdown);
+    assert.equal(result.valid, false);
+    assert.equal(result.errors.some((error) => error.includes(testCase.error)), true);
+  }
+});
+
 test("a flow with no terminal step fails validation", () => {
   const invalidFlow = validFlow.replace('"terminal": true', '"terminal": false');
   const result = validateFlowMarkdown(invalidFlow);

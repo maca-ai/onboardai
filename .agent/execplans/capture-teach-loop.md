@@ -1872,6 +1872,7 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-24: held-out real-run frame separation added: real step traces now use `held-out-frame-*.png` current frames and fail if those frames are reused from the senior capture manifest's redacted frame evidence.
 - 2026-06-24: held-out outcome frame coverage added: real `outcome-evidence.json` `heldOutEvidencePaths` must include every held-out current frame cited by `step-trace.json`, not just the final screen and eval recording.
 - 2026-06-24: single-terminal-flow validation added: every valid `flow.md` must contain exactly one terminal step so real-run outcome evidence has one unambiguous terminal visible-text source.
+- 2026-06-24: flow frontmatter policy validation added: every valid `flow.md` must use supported v0 tool, data-class, raw capture, redaction, confidence, input-automation, and flow-version values.
 
 latest results on 2026-06-24:
 
@@ -1930,6 +1931,28 @@ latest results on 2026-06-24:
 - `pnpm lint`: passed.
 - `pnpm typecheck`: passed.
 - `pnpm test`: passed; 103 tests, 103 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: `flow.md` validation now rejects unsupported frontmatter policy values for `flow-version`, `tool`, `data-class`, `raw-capture-policy`, and `redaction-policy`, in addition to the existing confidence and input-automation gates.
+- changed: `docs/flow-format.md` now lists the exact v0 frontmatter values required for valid normalized flows.
+- eval showed: targeted flow coverage passed, checked-in odoo/notion flows still validate, fixture proof still passes for both tools, and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, normalized flows whose frontmatter is constrained to the v0 proof contract, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, normalize the senior demonstration into a `flow.md` that passes the stricter frontmatter policy gate, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/flow test`: passed; 10 tests, 10 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 104 tests, 104 pass, 0 fail.
 - `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
 - `pnpm proof:scan`: passed; scanned 28 shareable text files.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
