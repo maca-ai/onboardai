@@ -349,6 +349,28 @@ test("real target-tool run artifact audit rejects screen-input data source misma
   assert.equal(audit.findings.some((finding) => finding.message.includes("dataSource must match demo-data-evidence dataSource")), true);
 });
 
+test("real target-tool run artifact audit rejects screen-input evidence copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          runId: "copied-real-proof"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json runId must match the run directory")), true);
+});
+
 test("real target-tool run artifact audit rejects manifest data class mismatches", () => {
   const proof = realToolProof("odoo");
   const existing = realRunExistingPaths("odoo");
@@ -2206,6 +2228,7 @@ function screenInputEvidence(tool) {
   return {
     schemaVersion: 1,
     tool,
+    runId: "real-proof",
     substrate: "real-tool",
     dataSource: "clean-seeded-demo-data",
     demoDataEvidencePath: `evals/runs/${tool}/real-proof/demo-data-evidence.json`,

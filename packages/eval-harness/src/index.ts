@@ -944,6 +944,11 @@ function auditScreenInputEvidence(
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
   }
 
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+  }
+
   const demoDataEvidencePath = `${runDir}/demo-data-evidence.json`;
   const demoDataSummary = readDemoDataEvidenceSummary(existsPath(demoDataEvidencePath) ? readText(demoDataEvidencePath) : null);
   if (parsed.dataSource !== "clean-seeded-demo-data" && parsed.dataSource !== "sanitized-duplicate-data") {

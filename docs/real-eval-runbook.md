@@ -154,6 +154,7 @@ after eval:
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, installed adapter name and version, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
 - [ ] confirm `capture-readiness.json` `verifiedDocReferences` cites official docs URLs or context7 library ids covering screen recording, keyboard event logging, mouse event logging, redacted frame output, and raw artifact ignore behavior, with `appliesToAdapterVersion` matching the installed `adapterVersion`.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with matching installed adapter name and version, native screen, keyboard, mouse, redaction, clean/sanitized data, local-raw-capture, no-privileged-access, no-Playwright-selector, and no-computer-use-automation confirmations.
+- [ ] confirm `screen-input-evidence.json` `runId` matches the run directory.
 - [ ] confirm `screen-input-evidence.json` points to the same-run `capture-readiness.json` and `demo-data-evidence.json`, and its `captureAdapterName` and `captureAdapterVersion` match that readiness artifact.
 - [ ] confirm `screen-input-evidence.json` `dataSource` matches `demo-data-evidence.json`.
 - [ ] write the normalized capture manifest to `evals/runs/<tool>/<run-id>/capture-manifest.json` unless an older `captures/normalized/<capture-id>/manifest.json` artifact is intentionally being audited.

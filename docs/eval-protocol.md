@@ -265,13 +265,14 @@ referenced normalized capture manifest.
 both senior capture and held-out eval, senior reviewer data-setup acceptance, and at least one same-run
 shareable setup evidence path.
 
-`screen-input-evidence.json` must state that native screen recording, keyboard logging, mouse logging, hard
-redaction, clean seeded or sanitized duplicate data, local-only raw capture, no privileged proof access, no
-Playwright selector proof, and no computer-use automation proof were all verified by the same installed
-adapter named in `capture-readiness.json`. its `captureAdapterName` and `captureAdapterVersion` must match
-that same-run readiness artifact, and its `dataSource` must match `demo-data-evidence.json`. it may reference
-shareable redacted frames and normalized manifests, but it must not reference raw, unsafe, or temporary
-capture paths. redacted frame evidence paths must point to
+`screen-input-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, and must state that
+native screen recording, keyboard logging, mouse logging, hard redaction, clean seeded or sanitized duplicate
+data, local-only raw capture, no privileged proof access, no Playwright selector proof, and no computer-use
+automation proof were all verified by the same installed adapter named in `capture-readiness.json`. its
+`captureAdapterName` and `captureAdapterVersion` must match that same-run readiness artifact, and its
+`dataSource` must match `demo-data-evidence.json`. it may reference shareable redacted frames and normalized
+manifests, but it must not reference raw, unsafe, or temporary capture paths. redacted frame evidence paths
+must point to
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` for same-run evidence or
 `captures/redacted/<capture-id>/frame-*.png` for separately materialized shareable redacted capture evidence.
 it must also point to the exact same-run `capture-readiness.json` and `demo-data-evidence.json` artifacts.
