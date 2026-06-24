@@ -130,6 +130,11 @@ export function validateFlowMarkdown(markdown: string): FlowValidationResult {
     errors.push("flow must include at least one embedded json step");
   }
 
+  const terminalStepCount = document.steps.filter((step) => step["success-condition"]?.terminal === true).length;
+  if (terminalStepCount !== 1) {
+    errors.push("flow must include exactly one terminal step");
+  }
+
   document.steps.forEach((step, index) => validateStep(step, index, errors));
 
   if (containsForbiddenPersistedSecret(markdown)) {

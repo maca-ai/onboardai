@@ -116,6 +116,14 @@ each step json object must include:
 - `success-condition`
 - `fallback`
 
+## terminal rule
+
+each `flow.md` must include exactly one step with `success-condition.terminal: true`.
+
+that terminal step's `success-condition.visible-text` is the screen-observed evidence for the
+frontmatter `terminal-business-state`. real-run `outcome-evidence.json` must match this terminal
+visible text instead of using a summary boolean alone.
+
 ## anchor rules
 
 anchors must reference redacted frames, not raw frames.

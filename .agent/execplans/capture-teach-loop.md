@@ -1871,6 +1871,7 @@ do not finalize external packages until context7 or official docs verify behavio
 - 2026-06-24: real-run demo-data evidence gate added: real proof now requires same-run `demo-data-evidence.json`, setup evidence paths, no-real-customer-data claims, and data-source/data-class agreement across screen-input evidence and normalized capture manifests.
 - 2026-06-24: held-out real-run frame separation added: real step traces now use `held-out-frame-*.png` current frames and fail if those frames are reused from the senior capture manifest's redacted frame evidence.
 - 2026-06-24: held-out outcome frame coverage added: real `outcome-evidence.json` `heldOutEvidencePaths` must include every held-out current frame cited by `step-trace.json`, not just the final screen and eval recording.
+- 2026-06-24: single-terminal-flow validation added: every valid `flow.md` must contain exactly one terminal step so real-run outcome evidence has one unambiguous terminal visible-text source.
 
 latest results on 2026-06-24:
 
@@ -1909,6 +1910,28 @@ latest results on 2026-06-24:
 - `pnpm test`: passed; 101 tests, 101 pass, 0 fail.
 - `pnpm flow:validate`: passed; validated 2 flow files.
 - `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-24:
+
+- changed: base `flow.md` validation now requires exactly one `success-condition.terminal: true` step; the minimal flow test now uses its only step as the terminal step, and new regressions reject zero-terminal and multi-terminal flows.
+- changed: `docs/flow-format.md` now documents the single terminal rule and its relationship to `outcome-evidence.json` terminal visible-text matching.
+- eval showed: targeted flow coverage passed, checked-in odoo/notion flows still validate, fixture proof still passes for both tools, and no real odoo/notion proof files were created.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts, one-terminal normalized flows from real senior demonstrations, redacted shareable evidence, terminal outcome evidence, and senior reviewer acceptance.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: initialize one real target-tool run, generate or fill a real-demonstration `flow.md` with exactly one terminal step, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/flow test`: passed; 9 tests, 9 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 103 tests, 103 pass, 0 fail.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
 - `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
 - forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.

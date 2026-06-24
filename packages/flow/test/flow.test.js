@@ -51,7 +51,7 @@ input-automation-allowed: false
   },
   "success-condition": {
     "visible-text": ["demo opportunity", "stage"],
-    "terminal": false
+    "terminal": true
   },
   "fallback": {
     "below-confidence-message": "screen state not recognized. ask a human or restart this step.",
@@ -75,6 +75,28 @@ test("an invalid flow.md fails validation", () => {
 
   assert.equal(result.valid, false);
   assert.equal(result.errors.some((error) => error.includes("success-condition")), true);
+});
+
+test("a flow with no terminal step fails validation", () => {
+  const invalidFlow = validFlow.replace('"terminal": true', '"terminal": false');
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("exactly one terminal step")), true);
+});
+
+test("a flow with multiple terminal steps fails validation", () => {
+  const secondStep = validFlow
+    .match(/```json[\s\S]*?```/)?.[0]
+    .replace('"step-id": "step-001"', '"step-id": "step-002"')
+    .replace('"title": "open the opportunity"', '"title": "save the opportunity"');
+  assert.equal(typeof secondStep, "string");
+
+  const invalidFlow = `${validFlow}\n${secondStep}`;
+  const result = validateFlowMarkdown(invalidFlow);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.errors.some((error) => error.includes("exactly one terminal step")), true);
 });
 
 test("a flow with an ungrounded highlight anchor fails validation", () => {
