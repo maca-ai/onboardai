@@ -484,6 +484,7 @@ function writeRealToolProofSummary(tool: ToolName, runId: string): string {
 function realToolProofForRun(tool: ToolName, runId: string): RealToolProofEvidence {
   return {
     tool,
+    runId,
     substrate: "real-tool",
     heldOutTeachingEvalPassed: true,
     nativeScreenPlusInputCaptureVerified: true,

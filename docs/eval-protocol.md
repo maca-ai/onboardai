@@ -194,6 +194,7 @@ each file must contain one proof object:
 ```json
 {
   "tool": "odoo",
+  "runId": "<run-id>",
   "substrate": "real-tool",
   "heldOutTeachingEvalPassed": true,
   "nativeScreenPlusInputCaptureVerified": true,
@@ -212,7 +213,8 @@ this summary is only a pointer plus claims. it is not sufficient proof until
 
 the `evidencePath` must exist on disk under `evals/runs/<tool>/<run-id>/step-trace.json`. the proof object is
 only a summary pointer; it does not replace the required run artifacts, native screen-plus-input capture
-evidence, reviewer checklist, or no-privileged-access audit evidence.
+evidence, reviewer checklist, or no-privileged-access audit evidence. the proof object `runId` must match the
+run directory named in `evidencePath`, so copied proof summaries from another run are rejected.
 
 before a real proof summary is accepted, the derived run directory must contain:
 

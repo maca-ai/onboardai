@@ -146,6 +146,7 @@ export interface ShareableEvidencePathAuditResult {
 
 export interface RealToolProofEvidence {
   readonly tool: string;
+  readonly runId: string;
   readonly substrate: "real-tool";
   readonly heldOutTeachingEvalPassed: boolean;
   readonly nativeScreenPlusInputCaptureVerified: boolean;
@@ -446,6 +447,10 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
     findings.push({ tool, message: `${sourcePath} tool must be odoo or notion` });
   }
 
+  if (typeof input.runId !== "string" || input.runId.length === 0) {
+    findings.push({ tool, message: `${sourcePath} runId must be a non-empty string` });
+  }
+
   if (typeof input.evidencePath !== "string" || input.evidencePath.length === 0) {
     findings.push({ tool, message: `${sourcePath} evidencePath must be a non-empty string` });
   } else {
@@ -460,6 +465,11 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
     if (!input.evidencePath.endsWith("/step-trace.json")) {
       findings.push({ tool, message: `${sourcePath} evidencePath must point to a step-trace.json artifact` });
     }
+
+    const evidenceRunId = realRunIdFromStepTracePath(input.evidencePath);
+    if (typeof input.runId === "string" && input.runId.length > 0 && input.runId !== evidenceRunId) {
+      findings.push({ tool, message: `${sourcePath} runId must match evidencePath run directory` });
+    }
   }
 
   if (findings.length > 0) {
@@ -468,6 +478,7 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
 
   const proof = input as {
     readonly tool: string;
+    readonly runId: string;
     readonly heldOutTeachingEvalPassed: boolean;
     readonly nativeScreenPlusInputCaptureVerified: boolean;
     readonly terminalBusinessStateReached: boolean;
@@ -482,6 +493,7 @@ export function parseRealToolProofEvidenceFile(input: unknown, sourcePath: strin
     proofs: [
       {
         tool: proof.tool,
+        runId: proof.runId,
         substrate: "real-tool",
         heldOutTeachingEvalPassed: proof.heldOutTeachingEvalPassed,
         nativeScreenPlusInputCaptureVerified: proof.nativeScreenPlusInputCaptureVerified,
@@ -509,6 +521,11 @@ export function auditRealToolRunArtifacts(
   if (!runDir) {
     findings.push({ tool: proof.tool, message: `${proof.evidencePath} must point to evals/runs/${proof.tool}/<run-id>/step-trace.json` });
     return artifactAuditResult(null, references, findings, 0);
+  }
+
+  const runId = realRunIdFromStepTracePath(proof.evidencePath);
+  if (proof.runId !== runId) {
+    findings.push({ tool: proof.tool, message: `${proof.evidencePath} runId must match real proof summary runId` });
   }
 
   const requiredArtifacts = [
@@ -897,12 +914,16 @@ function auditSingleRealToolProof(proof: RealToolProofEvidence, findings: Captur
   if (!proof.noPrivilegedAccess) findings.push({ tool: proof.tool, message: "privileged access was used during real target-tool eval" });
   if (!proof.seniorReviewerSignoff) findings.push({ tool: proof.tool, message: "senior reviewer did not sign off real target-tool steps" });
   if (!proof.evidencePath.startsWith("evals/runs/")) findings.push({ tool: proof.tool, message: "real target-tool evidence path must live under evals/runs" });
+  if (proof.runId !== realRunIdFromStepTracePath(proof.evidencePath)) {
+    findings.push({ tool: proof.tool, message: "real target-tool proof runId must match evidence path run directory" });
+  }
 }
 
 function isPassingRealToolProof(proof: RealToolProofEvidence): boolean {
   return (
     proof.substrate === "real-tool" &&
     (proof as Partial<AuditedRealToolProofEvidence>).runEvidenceAudited === true &&
+    proof.runId === realRunIdFromStepTracePath(proof.evidencePath) &&
     proof.heldOutTeachingEvalPassed &&
     proof.nativeScreenPlusInputCaptureVerified &&
     proof.terminalBusinessStateReached &&

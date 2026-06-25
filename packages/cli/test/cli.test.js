@@ -645,6 +645,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
     assert.match(writeResult.stdout, /real run odoo\/real-cli-validation-001 valid: 10\/10 required artifacts/);
     assert.match(writeResult.stdout, /wrote evals\/reports\/real-tool-proof-odoo\.json/);
     assert.equal(summary.tool, "odoo");
+    assert.equal(summary.runId, runId);
     assert.equal(summary.substrate, "real-tool");
     assert.equal(summary.evidencePath, `evals/runs/odoo/${runId}/step-trace.json`);
     assert.equal(summary.heldOutTeachingEvalPassed, true);

@@ -186,6 +186,7 @@ test("real proof evidence file parser accepts a complete real target proof contr
   assert.equal(parsed.proofs.length, 1);
   assert.equal(parsed.findings.length, 0);
   assert.equal(parsed.proofs[0].tool, "odoo");
+  assert.equal(parsed.proofs[0].runId, "real-proof");
   assert.equal(parsed.proofs[0].nativeScreenPlusInputCaptureVerified, true);
 });
 
@@ -236,6 +237,7 @@ test("real proof evidence file parser rejects incomplete summaries and misplaced
 
   assert.equal(parsed.proofs.length, 0);
   assert.equal(parsed.findings.some((finding) => finding.message.includes("seniorReviewerSignoff")), true);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("runId")), true);
   assert.equal(parsed.findings.some((finding) => finding.message.includes("evals/runs/odoo")), true);
   assert.equal(parsed.findings.some((finding) => finding.message.includes("step-trace.json")), true);
 });
@@ -251,6 +253,19 @@ test("real proof evidence file parser rejects a summary pointing at the wrong ta
 
   assert.equal(parsed.proofs.length, 0);
   assert.equal(parsed.findings.some((finding) => finding.message.includes("evals/runs/odoo")), true);
+});
+
+test("real proof evidence file parser rejects a summary whose run id does not match evidence path", () => {
+  const parsed = parseRealToolProofEvidenceFile(
+    {
+      ...realToolProof("odoo"),
+      runId: "copied-real-proof"
+    },
+    "evals/reports/real-tool-proof-odoo.json"
+  );
+
+  assert.equal(parsed.proofs.length, 0);
+  assert.equal(parsed.findings.some((finding) => finding.message.includes("runId must match evidencePath run directory")), true);
 });
 
 test("full goal status rejects incomplete real proof summaries without weakening fixture proof", () => {
@@ -2303,6 +2318,7 @@ function passingFixtureAudit() {
 function realToolProof(tool) {
   return {
     tool,
+    runId: "real-proof",
     substrate: "real-tool",
     heldOutTeachingEvalPassed: true,
     nativeScreenPlusInputCaptureVerified: true,
