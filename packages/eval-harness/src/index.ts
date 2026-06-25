@@ -1433,6 +1433,18 @@ function auditNormalizedCaptureManifest(
     });
   }
 
+  if (runId !== null && flowEvidenceSummary) {
+    auditSameRunManifestCoversFlowSourceFrames(
+      proof,
+      manifestPath,
+      flowEvidenceSummary.flowPath,
+      result.redactedFramePaths,
+      existsPath,
+      readText,
+      findings
+    );
+  }
+
   if (!Array.isArray(parsed.inputEvidence) || parsed.inputEvidence.length === 0) {
     findings.push({ tool: proof.tool, message: `${manifestPath} inputEvidence must contain per-step input evidence` });
   } else {
@@ -1507,6 +1519,43 @@ function auditNormalizedCaptureManifest(
   }
 
   return result;
+}
+
+function auditSameRunManifestCoversFlowSourceFrames(
+  proof: RealToolProofEvidence,
+  manifestPath: string,
+  flowPath: string,
+  redactedFramePaths: ReadonlySet<string>,
+  existsPath: (path: string) => boolean,
+  readText: (path: string) => string,
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  if (!existsPath(flowPath)) {
+    return;
+  }
+
+  const validation = validateFlowMarkdown(readText(flowPath));
+  if (!validation.valid || !validation.document) {
+    return;
+  }
+
+  for (const sourceFrame of flowSourceFramePaths(validation.document)) {
+    if (!redactedFramePaths.has(sourceFrame)) {
+      findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames must include flow source frame ${sourceFrame}` });
+    }
+  }
+}
+
+function flowSourceFramePaths(flow: FlowDocument): readonly string[] {
+  return [
+    ...new Set(
+      flow.steps.flatMap((step) =>
+        (step["expected-state"]["screen-region-hints"] ?? []).flatMap((hint) =>
+          typeof hint["source-frame"] === "string" && hint["source-frame"].length > 0 ? [hint["source-frame"]] : []
+        )
+      )
+    )
+  ];
 }
 
 function auditManifestBusinessSensitiveTags(

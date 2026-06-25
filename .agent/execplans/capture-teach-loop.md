@@ -2331,3 +2331,27 @@ latest results on 2026-06-25:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-25:
+
+- changed: same-run `evals/runs/<tool>/<run-id>/capture-manifest.json` artifacts must now list every redacted `source-frame` referenced by the taught `flow.md` screen-region hints.
+- changed: the real-run audit rejects same-run capture manifests that name the right flow id/path but omit the actual flow source frames, preventing a manifest from being paired with unrelated visual evidence.
+- changed: CLI complete-run fixture coverage and docs now include the required flow source frames in same-run normalized capture manifests.
+- eval showed: targeted eval-harness coverage rejects a same-run capture manifest missing `captures/redacted/odoo-qualify-opportunity/frame-0001.png`; same-run manifest acceptance still passes when all taught source frames are listed.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on real odoo and notion run directories with native screen-plus-input capture/eval artifacts whose same-run manifests include the taught flow source frames.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init <tool> --generate-run-id`, normalize a real senior demonstration so the same-run manifest includes every `flow.md` source frame, then dry-run `proof real-run` before writing any summary.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 72 tests, 72 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 11 tests, 11 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 124 tests, 124 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 28 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.

@@ -626,6 +626,21 @@ test("proof real-run validates complete real target-tool run artifacts and write
               frameId: "frame-0001",
               path: `evals/runs/odoo/${runId}/redacted-frame-0001.png`,
               visibleText: ["demo opportunity", "qualified"]
+            },
+            {
+              frameId: "source-frame-0001",
+              path: "captures/redacted/odoo-qualify-opportunity/frame-0001.png",
+              visibleText: ["pipeline", "demo opportunity", "new"]
+            },
+            {
+              frameId: "source-frame-0002",
+              path: "captures/redacted/odoo-qualify-opportunity/frame-0002.png",
+              visibleText: ["demo opportunity", "stage", "new", "qualified"]
+            },
+            {
+              frameId: "source-frame-0003",
+              path: "captures/redacted/odoo-qualify-opportunity/frame-0003.png",
+              visibleText: ["demo opportunity", "stage", "qualified", "unsaved changes"]
             }
           ],
           anchors: [],

@@ -455,7 +455,12 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
               frameId: "frame-0001",
               path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
               visibleText: ["demo"]
-            }
+            },
+            ...sourceFramePathsForTool("odoo").map((path, index) => ({
+              frameId: `source-frame-000${index + 1}`,
+              path,
+              visibleText: ["demo"]
+            }))
           ]
         });
       }
@@ -466,6 +471,49 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
 
   assert.equal(audit.passed, true);
   assert.equal(audit.references.some((reference) => reference.path === "evals/runs/odoo/real-proof/capture-manifest.json"), true);
+});
+
+test("real target-tool run artifact audit rejects same-run capture manifests missing flow source frames", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          runId: "real-proof",
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["demo"]
+            }
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes("capture-manifest.json redactedFrames must include flow source frame captures/redacted/odoo-qualify-opportunity/frame-0001.png")
+    ),
+    true
+  );
 });
 
 test("real target-tool run artifact audit rejects same-run capture manifests copied from another run", () => {
@@ -2366,8 +2414,14 @@ function realRunExistingPaths(tool) {
     `evals/runs/${tool}/real-proof/demo-data-screen.png`,
     `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`,
     `captures/normalized/capture-real-${tool}-001/manifest.json`,
-    `captures/redacted/capture-real-${tool}-001/frame-0001.png`
+    `captures/redacted/capture-real-${tool}-001/frame-0001.png`,
+    ...sourceFramePathsForTool(tool)
   ]);
+}
+
+function sourceFramePathsForTool(tool) {
+  const flowId = tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status";
+  return [1, 2, 3].map((index) => `captures/redacted/${flowId}/frame-000${index}.png`);
 }
 
 function screenInputEvidence(tool) {

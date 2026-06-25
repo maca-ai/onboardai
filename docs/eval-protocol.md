@@ -296,7 +296,10 @@ three required raw inputs without raw file paths, with every raw artifact summar
 manifest `captureId` so the screen and input evidence is bound to one senior demonstration session, at least
 one redacted frame under
 `evals/runs/<tool>/<run-id>/redacted-frame-*.png` or `captures/redacted/<capture-id>/frame-*.png`, and
-per-step input evidence for every step id in the real `step-trace.json`. raw artifact summaries must not
+per-step input evidence for every step id in the real `step-trace.json`. when the manifest is the same-run
+`evals/runs/<tool>/<run-id>/capture-manifest.json` artifact, its `redactedFrames` must also include every
+`source-frame` referenced by the taught `flow.md` screen-region hints, so the flow anchors are grounded in the
+same normalized capture evidence. raw artifact summaries must not
 include path-like fields such as `path`,
 `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references. raw
 artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context
