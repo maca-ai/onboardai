@@ -14,6 +14,7 @@ test("cli prints usage for empty invocation", () => {
 
   assert.match(output, /onboardai flow validate/);
   assert.match(output, /capture normalize-run <odoo\|notion> <run-id>/);
+  assert.match(output, /proof real-run init <odoo\|notion> <run-id\|--generate-run-id>/);
   assert.match(output, /proof real-run <odoo\|notion> <run-id>/);
 });
 
@@ -251,6 +252,52 @@ test("proof real-run init rejects unsafe run ids", () => {
   assert.equal(result.status, 1);
   assert.match(result.stderr, /usage: onboardai proof real-run init/);
   assert.equal(existsSync(new URL("evals/runs/bad/", workspaceRoot)), false);
+});
+
+test("proof real-run init can generate a safe real target-tool run id", () => {
+  const summaryPath = new URL("evals/reports/real-tool-proof-odoo.json", workspaceRoot);
+  const summaryBefore = existsSync(summaryPath) ? readFileSync(summaryPath, "utf8") : null;
+  let runDir = null;
+
+  try {
+    const initResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "init", "odoo", "--generate-run-id"], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(initResult.status, 0);
+    const match = /initialized real run odoo\/(odoo-real-eval-\d{8}t\d{6}z(?:-\d+)?):/.exec(initResult.stdout);
+    assert.notEqual(match, null);
+    const runId = match[1];
+    runDir = new URL(`evals/runs/odoo/${runId}/`, workspaceRoot);
+
+    assert.equal(/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(runId), true);
+    assert.equal(existsSync(new URL("step-trace.json", runDir)), true);
+    assert.match(readFileSync(new URL("step-trace.json", runDir), "utf8"), new RegExp(`"runId": "${runId}"`));
+    assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), new RegExp(`evals/runs/odoo/${runId}/redacted-frame-0001\\.png`));
+
+    const validationResult = spawnSync("node", ["dist/index.js", "proof", "real-run", "odoo", runId], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(validationResult.status, 1);
+    assert.match(validationResult.stderr, /final-screen\.png/);
+    assert.match(validationResult.stderr, /eval-recording\.mp4/);
+    assert.equal(existsSync(summaryPath), summaryBefore !== null);
+    if (summaryBefore !== null) {
+      assert.equal(readFileSync(summaryPath, "utf8"), summaryBefore);
+    }
+  } finally {
+    if (runDir !== null) {
+      rmSync(runDir, { recursive: true, force: true });
+    }
+    if (summaryBefore === null) {
+      rmSync(summaryPath, { force: true });
+    } else {
+      writeFileSync(summaryPath, summaryBefore);
+    }
+  }
 });
 
 test("proof real-run fails closed for a missing real target-tool run directory", () => {

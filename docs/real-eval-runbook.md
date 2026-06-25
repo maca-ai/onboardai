@@ -35,6 +35,12 @@ initialize editable run templates with:
 pnpm --filter @onboardai/cli onboardai proof real-run init <tool> <run-id>
 ```
 
+or let the CLI choose a safe unused run id:
+
+```sh
+pnpm --filter @onboardai/cli onboardai proof real-run init <tool> --generate-run-id
+```
+
 this creates the JSON and Markdown skeleton files only. it must still fail `proof real-run` until the real held-out
 screen-plus-input evidence, redacted frames, reviewer acceptance, and outcome evidence are filled in.
 

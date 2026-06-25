@@ -253,6 +253,13 @@ create the editable run skeleton from templates with:
 pnpm --filter @onboardai/cli onboardai proof real-run init <odoo|notion> <run-id>
 ```
 
+when an operator does not already have a stable run id, generate a safe unused id and initialize the same
+editable skeleton with:
+
+```sh
+pnpm --filter @onboardai/cli onboardai proof real-run init <odoo|notion> --generate-run-id
+```
+
 the init command creates only editable template files. it does not create a final screen, eval recording,
 redacted frame evidence, live proof summary, or passing real proof. it creates an incomplete
 `capture-manifest.json` skeleton in the run directory so the operator has the preferred artifact shape, but

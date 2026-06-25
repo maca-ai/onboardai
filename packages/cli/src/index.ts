@@ -140,9 +140,11 @@ if (args[0] === "flow" && args[1] === "validate") {
   }
 } else if (args[0] === "proof" && args[1] === "real-run" && args[2] === "init") {
   const tool = args[3];
-  const runId = args[4];
-  if ((tool !== "odoo" && tool !== "notion") || !runId || !isSafeRunId(runId)) {
-    console.error("usage: onboardai proof real-run init <odoo|notion> <run-id>");
+  const generatedRunIdRequested = args[4] === "--generate-run-id";
+  const runId = tool === "odoo" || tool === "notion" ? (generatedRunIdRequested ? generateRealRunId(tool) : args[4]) : args[4];
+  const hasUnsupportedInitArg = args.length > 5;
+  if ((tool !== "odoo" && tool !== "notion") || !runId || !isSafeRunId(runId) || hasUnsupportedInitArg) {
+    console.error("usage: onboardai proof real-run init <odoo|notion> <run-id|--generate-run-id>");
     process.exitCode = 1;
   } else {
     try {
@@ -175,7 +177,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | capture normalize-run <odoo|notion> <run-id> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | capture normalize-run <odoo|notion> <run-id> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id|--generate-run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {
@@ -445,6 +447,24 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
   }
 
   return created;
+}
+
+function generateRealRunId(tool: ToolName, now: Date = new Date()): string {
+  const timestamp = now
+    .toISOString()
+    .slice(0, 19)
+    .replace(/[-:]/g, "")
+    .replace("T", "t");
+  const base = `${tool}-real-eval-${timestamp}z`;
+
+  for (let suffix = 0; suffix < 100; suffix += 1) {
+    const runId = suffix === 0 ? base : `${base}-${suffix + 1}`;
+    if (!existsSync(resolveWorkspacePath(join("evals", "runs", tool, runId)))) {
+      return runId;
+    }
+  }
+
+  throw new Error(`could not generate an unused real run id for ${tool}`);
 }
 
 function isSafeRunId(runId: string): boolean {
