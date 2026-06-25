@@ -176,6 +176,7 @@ after eval:
 - [ ] confirm normalized manifest raw artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context notes.
 - [ ] confirm the referenced normalized capture manifest `flowPath` and `flowId` match `flow-evidence.json`.
 - [ ] if using same-run `capture-manifest.json`, confirm its `redactedFrames` list includes every `source-frame` path referenced by the taught `flow.md` screen-region hints.
+- [ ] if using same-run `capture-manifest.json`, confirm each listed flow source frame `visibleText` includes the corresponding `flow.md` step expected visible text.
 - [ ] confirm normalized manifest raw artifact summaries do not contain path-like fields such as `path`, `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references.
 - [ ] confirm normalized manifest shareable text fields contain no emails, password assignments, token assignments, api keys, or session secrets.
 - [ ] confirm normalized manifest `redaction.businessSensitiveTags` lists any remaining customer names, browser urls, local file paths, internal object names, or business record ids detected in manifest text.

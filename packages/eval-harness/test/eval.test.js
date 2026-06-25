@@ -459,7 +459,7 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
             ...sourceFramePathsForTool("odoo").map((path, index) => ({
               frameId: `source-frame-000${index + 1}`,
               path,
-              visibleText: ["demo"]
+              visibleText: flowStepDefinitions("odoo")[index].expectedVisibleText
             }))
           ]
         });
@@ -511,6 +511,56 @@ test("real target-tool run artifact audit rejects same-run capture manifests mis
   assert.equal(
     audit.findings.some((finding) =>
       finding.message.includes("capture-manifest.json redactedFrames must include flow source frame captures/redacted/odoo-qualify-opportunity/frame-0001.png")
+    ),
+    true
+  );
+});
+
+test("real target-tool run artifact audit rejects same-run source frames missing expected visible text", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.add("evals/runs/odoo/real-proof/capture-manifest.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("screen-input-evidence.json")) {
+        return JSON.stringify({
+          ...screenInputEvidence("odoo"),
+          normalizedCaptureManifestPath: "evals/runs/odoo/real-proof/capture-manifest.json",
+          redactedFrameEvidencePaths: ["evals/runs/odoo/real-proof/redacted-frame-0001.png"]
+        });
+      }
+
+      if (path.endsWith("capture-manifest.json")) {
+        return JSON.stringify({
+          ...normalizedCaptureManifest("odoo"),
+          runId: "real-proof",
+          redactedFrames: [
+            {
+              frameId: "frame-0001",
+              path: "evals/runs/odoo/real-proof/redacted-frame-0001.png",
+              visibleText: ["demo"]
+            },
+            ...sourceFramePathsForTool("odoo").map((path, index) => ({
+              frameId: `source-frame-000${index + 1}`,
+              path,
+              visibleText: index === 0 ? ["pipeline", "demo opportunity"] : flowStepDefinitions("odoo")[index].expectedVisibleText
+            }))
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) =>
+      finding.message.includes(
+        "capture-manifest.json redactedFrames for flow source frame captures/redacted/odoo-qualify-opportunity/frame-0001.png must include expected visible text new for step step-001"
+      )
     ),
     true
   );

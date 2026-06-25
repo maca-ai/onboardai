@@ -1263,6 +1263,7 @@ function readCaptureReadinessAttribution(content: string | null): { readonly ada
 interface NormalizedCaptureManifestAudit {
   readonly manifestPath: string;
   readonly redactedFramePaths: Set<string>;
+  readonly redactedFrameVisibleTextByPath: Map<string, readonly string[]>;
 }
 
 function auditNormalizedCaptureManifest(
@@ -1280,7 +1281,7 @@ function auditNormalizedCaptureManifest(
   references: ShareableEvidencePathReference[],
   findings: CaptureTeachGoalStatusFinding[]
 ): NormalizedCaptureManifestAudit {
-  const result: NormalizedCaptureManifestAudit = { manifestPath, redactedFramePaths: new Set<string>() };
+  const result: NormalizedCaptureManifestAudit = { manifestPath, redactedFramePaths: new Set<string>(), redactedFrameVisibleTextByPath: new Map<string, readonly string[]>() };
   const manifestContent = readText(manifestPath);
   auditShareableTextRedaction(proof.tool, manifestPath, manifestContent, findings);
   auditRealRunTemplatePlaceholders(proof.tool, manifestPath, manifestContent, findings);
@@ -1426,6 +1427,12 @@ function auditNormalizedCaptureManifest(
       );
       if (typeof frame.path === "string") {
         result.redactedFramePaths.add(frame.path);
+        if (Array.isArray(frame.visibleText) && frame.visibleText.every((text) => typeof text === "string")) {
+          result.redactedFrameVisibleTextByPath.set(frame.path, frame.visibleText);
+        } else {
+          findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}].visibleText must contain screen-visible strings` });
+        }
+
         if (!isRedactedFrameEvidencePath(frame.path, realRunDirFromManifestPath(manifestPath))) {
           findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames[${index}].path must point to a captures/redacted or same-run redacted frame PNG` });
         }
@@ -1439,6 +1446,7 @@ function auditNormalizedCaptureManifest(
       manifestPath,
       flowEvidenceSummary.flowPath,
       result.redactedFramePaths,
+      result.redactedFrameVisibleTextByPath,
       existsPath,
       readText,
       findings
@@ -1526,6 +1534,7 @@ function auditSameRunManifestCoversFlowSourceFrames(
   manifestPath: string,
   flowPath: string,
   redactedFramePaths: ReadonlySet<string>,
+  redactedFrameVisibleTextByPath: ReadonlyMap<string, readonly string[]>,
   existsPath: (path: string) => boolean,
   readText: (path: string) => string,
   findings: CaptureTeachGoalStatusFinding[]
@@ -1539,23 +1548,51 @@ function auditSameRunManifestCoversFlowSourceFrames(
     return;
   }
 
-  for (const sourceFrame of flowSourceFramePaths(validation.document)) {
-    if (!redactedFramePaths.has(sourceFrame)) {
-      findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames must include flow source frame ${sourceFrame}` });
+  for (const sourceFrame of flowSourceFramesByStep(validation.document)) {
+    if (!redactedFramePaths.has(sourceFrame.path)) {
+      findings.push({ tool: proof.tool, message: `${manifestPath} redactedFrames must include flow source frame ${sourceFrame.path}` });
+      continue;
+    }
+
+    const visibleText = redactedFrameVisibleTextByPath.get(sourceFrame.path) ?? [];
+    const missing = missingVisibleText(sourceFrame.expectedVisibleText, visibleText);
+    if (missing.length > 0) {
+      findings.push({
+        tool: proof.tool,
+        message: `${manifestPath} redactedFrames for flow source frame ${sourceFrame.path} must include expected visible text ${missing.join(", ")} for step ${sourceFrame.stepId}`
+      });
     }
   }
 }
 
-function flowSourceFramePaths(flow: FlowDocument): readonly string[] {
-  return [
-    ...new Set(
-      flow.steps.flatMap((step) =>
-        (step["expected-state"]["screen-region-hints"] ?? []).flatMap((hint) =>
-          typeof hint["source-frame"] === "string" && hint["source-frame"].length > 0 ? [hint["source-frame"]] : []
-        )
-      )
-    )
-  ];
+function flowSourceFramesByStep(
+  flow: FlowDocument
+): readonly { readonly path: string; readonly stepId: string; readonly expectedVisibleText: readonly string[] }[] {
+  const seen = new Set<string>();
+  const sourceFrames: { readonly path: string; readonly stepId: string; readonly expectedVisibleText: readonly string[] }[] = [];
+
+  for (const step of flow.steps) {
+    for (const hint of step["expected-state"]["screen-region-hints"] ?? []) {
+      const path = hint["source-frame"];
+      if (typeof path !== "string" || path.length === 0) {
+        continue;
+      }
+
+      const key = `${step["step-id"]}:${path}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      sourceFrames.push({
+        path,
+        stepId: step["step-id"],
+        expectedVisibleText: step["expected-state"]["visible-text"] ?? []
+      });
+    }
+  }
+
+  return sourceFrames;
 }
 
 function auditManifestBusinessSensitiveTags(

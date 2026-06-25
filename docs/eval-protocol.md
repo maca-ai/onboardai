@@ -299,7 +299,9 @@ one redacted frame under
 per-step input evidence for every step id in the real `step-trace.json`. when the manifest is the same-run
 `evals/runs/<tool>/<run-id>/capture-manifest.json` artifact, its `redactedFrames` must also include every
 `source-frame` referenced by the taught `flow.md` screen-region hints, so the flow anchors are grounded in the
-same normalized capture evidence. raw artifact summaries must not
+same normalized capture evidence. each listed source frame's `visibleText` must include that step's
+`expected-state.visible-text`, proving the normalized capture frame contains the screen text used for
+recognition. raw artifact summaries must not
 include path-like fields such as `path`,
 `rawPath`, or `localPath`, absolute local paths, `file://` paths, or raw/unsafe/tmp capture references. raw
 artifact kinds are limited to screen recording, keyboard event log, mouse event log, and optional human context
