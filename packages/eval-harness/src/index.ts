@@ -572,7 +572,7 @@ export function auditRealToolRunArtifacts(
       const content = readText(captureReadinessPath);
       auditShareableTextRedaction(proof.tool, captureReadinessPath, content, findings);
       auditRealRunTemplatePlaceholders(proof.tool, captureReadinessPath, content, findings);
-      auditCaptureReadinessEvidence(proof, captureReadinessPath, content, findings);
+      auditCaptureReadinessEvidence(proof, runDir, captureReadinessPath, content, findings);
     }
   }
 
@@ -1580,6 +1580,7 @@ function readFlowEvidenceSummary(
 
 function auditCaptureReadinessEvidence(
   proof: RealToolProofEvidence,
+  runDir: string,
   path: string,
   content: string,
   findings: CaptureTeachGoalStatusFinding[]
@@ -1609,6 +1610,11 @@ function auditCaptureReadinessEvidence(
 
   if (parsed.tool !== proof.tool) {
     findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
   }
 
   if (parsed.adapterKind !== "native") {

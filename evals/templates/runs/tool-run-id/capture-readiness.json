@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "tool": "replace-with-odoo-or-notion",
+  "runId": "replace-with-run-id",
   "substrate": "real-tool",
   "adapterKind": "native",
   "adapterName": "replace-with-installed-native-capture-adapter-name",

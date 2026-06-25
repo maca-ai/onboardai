@@ -154,6 +154,7 @@ after eval:
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, installed adapter name and version, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
+- [ ] confirm `capture-readiness.json` `runId` matches the run directory.
 - [ ] confirm `capture-readiness.json` `verifiedDocReferences` cites official docs URLs or context7 library ids covering screen recording, keyboard event logging, mouse event logging, redacted frame output, and raw artifact ignore behavior, with `appliesToAdapterVersion` matching the installed `adapterVersion`.
 - [ ] write `evals/runs/<tool>/<run-id>/screen-input-evidence.json` with matching installed adapter name and version, native screen, keyboard, mouse, redaction, clean/sanitized data, local-raw-capture, no-privileged-access, no-Playwright-selector, and no-computer-use-automation confirmations.
 - [ ] confirm `screen-input-evidence.json` `runId` matches the run directory.

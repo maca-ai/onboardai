@@ -201,6 +201,7 @@ test("proof real-run init creates a non-passing real target-tool run skeleton", 
     assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
     assert.match(readFileSync(new URL("demo-data-evidence.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/demo-data-screen\.png/);
+    assert.match(readFileSync(new URL("capture-readiness.json", runDir), "utf8"), /"runId": "real-init-validation-001"/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"tool": "notion"/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /"flowId": "notion-update-task-status"/);
     assert.match(readFileSync(new URL("capture-manifest.json", runDir), "utf8"), /evals\/runs\/notion\/real-init-validation-001\/redacted-frame-0001\.png/);
@@ -512,6 +513,7 @@ test("proof real-run validates complete real target-tool run artifacts and write
         {
           schemaVersion: 1,
           tool: "odoo",
+          runId,
           substrate: "real-tool",
           adapterKind: "native",
           adapterName: "onboardai-native-capture",

@@ -1425,6 +1425,28 @@ test("real target-tool run artifact audit rejects unverified native capture read
   assert.equal(audit.findings.some((finding) => finding.message.includes("blockers must be empty")), true);
 });
 
+test("real target-tool run artifact audit rejects capture readiness copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("capture-readiness.json")) {
+        return JSON.stringify({
+          ...captureReadinessEvidence("odoo"),
+          runId: "copied-real-proof"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("capture-readiness.json runId must match the run directory")), true);
+});
+
 test("real target-tool run artifact audit rejects unfilled template placeholders", () => {
   const proof = realToolProof("odoo");
   const existing = realRunExistingPaths("odoo");
@@ -2319,6 +2341,7 @@ function captureReadinessEvidence(tool) {
   return {
     schemaVersion: 1,
     tool,
+    runId: "real-proof",
     substrate: "real-tool",
     adapterKind: "native",
     adapterName: "onboardai-native-capture",

@@ -317,10 +317,10 @@ backend, database, dom, mcp, selector, playwright, or computer-use fields.
 for every real `step-trace.json` step with an action target anchor, the matching manifest `inputEvidence`
 entry must include at least one input event with the same `anchorId`.
 
-`capture-readiness.json` must state that the capture adapter is native, name the installed native adapter and
-version being used, run on macos or windows, be official-docs or context7 verified, screen-recording capable,
-keyboard-event capable, mouse-event capable, able to output redacted frames, and protected by raw-artifact git
-ignore. its blockers list must be empty. it must include
+`capture-readiness.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, state that the capture
+adapter is native, name the installed native adapter and version being used, run on macos or windows, be
+official-docs or context7 verified, screen-recording capable, keyboard-event capable, mouse-event capable, able
+to output redacted frames, and protected by raw-artifact git ignore. its blockers list must be empty. it must include
 `verifiedDocReferences` entries with source type `official-docs` or `context7`, a concrete reference, and
 behavior coverage for `screen-recording`, `keyboard-event-log`, `mouse-event-log`, `redacted-frame-output`,
 and `raw-artifacts-ignored`. `official-docs` references must be `http` or `https` URLs. `context7`
