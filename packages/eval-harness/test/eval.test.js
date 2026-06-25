@@ -899,6 +899,48 @@ test("real target-tool run artifact audit rejects incomplete passing failure log
   assert.equal(audit.findings.some((finding) => finding.message.includes("no privileged access is true")), true);
 });
 
+test("real target-tool run artifact audit rejects failure logs copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("failure-log.md")) {
+        return [
+          "# failure log",
+          "",
+          "## run",
+          "",
+          "- tool: notion",
+          "- flow id: notion-update-task-status",
+          "- run id: copied-real-proof",
+          "",
+          "## result",
+          "",
+          "- passed: true",
+          "- terminal state reached: true",
+          "- zero human help: true",
+          "- no invented steps: true",
+          "- no privileged access: true",
+          "",
+          "## observed failure",
+          "",
+          "no failure observed",
+          ""
+        ].join("\n");
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("failure-log.md failure log tool must match odoo")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("failure-log.md failure log run id must match real-proof")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("failure-log.md failure log flow id must match odoo-qualify-opportunity")), true);
+});
+
 test("real target-tool run artifact audit rejects empty normalized capture manifests", () => {
   const proof = realToolProof("odoo");
   const existing = new Set([
@@ -2373,6 +2415,12 @@ function realRunArtifactContent(path, tool) {
   if (path.endsWith("failure-log.md")) {
     return [
       "# failure log",
+      "",
+      "## run",
+      "",
+      `- tool: ${tool}`,
+      `- flow id: ${tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status"}`,
+      "- run id: real-proof",
       "",
       "## result",
       "",

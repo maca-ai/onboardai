@@ -145,6 +145,7 @@ after eval:
 - [ ] write a redacted final screen artifact under `evals/runs/<tool>/<run-id>/`.
 - [ ] write or retain `evals/runs/<tool>/<run-id>/eval-recording.mp4` as the held-out eval screen recording evidence.
 - [ ] write `evals/runs/<tool>/<run-id>/failure-log.md`, even when no failure occurred.
+- [ ] confirm `failure-log.md` `tool`, `run id`, and `flow id` match the audited run and `flow-evidence.json`.
 - [ ] for a passing run, confirm `failure-log.md` states `no failure observed`.
 - [ ] for a passing run, confirm `failure-log.md` includes exact true result lines for pass status, terminal state, zero human help, no invented steps, and no privileged access.
 - [ ] for a passing run, confirm `failure-log.md` has no false result lines for pass status, terminal state, zero human help, no invented steps, or no privileged access.

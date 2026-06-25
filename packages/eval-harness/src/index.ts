@@ -608,7 +608,14 @@ export function auditRealToolRunArtifacts(
       const content = readText(failureLogPath);
       auditShareableTextRedaction(proof.tool, failureLogPath, content, findings);
       auditRealRunTemplatePlaceholders(proof.tool, failureLogPath, content, findings);
-      auditFailureLog(proof, failureLogPath, content, findings);
+      auditFailureLog(
+        proof,
+        runDir,
+        failureLogPath,
+        content,
+        existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
+        findings
+      );
     }
   }
 
@@ -2167,10 +2174,26 @@ function flowIdFromEvidence(content: string | null): string | null {
 
 function auditFailureLog(
   proof: RealToolProofEvidence,
+  runDir: string,
   path: string,
   content: string,
+  flowEvidenceContent: string | null,
   findings: CaptureTeachGoalStatusFinding[]
 ): void {
+  if (!hasExactChecklistLine(content, "tool", proof.tool)) {
+    findings.push({ tool: proof.tool, message: `${path} failure log tool must match ${proof.tool}` });
+  }
+
+  const runId = runDir.split("/").at(-1) ?? "";
+  if (!hasExactChecklistLine(content, "run id", runId)) {
+    findings.push({ tool: proof.tool, message: `${path} failure log run id must match ${runId}` });
+  }
+
+  const flowId = flowIdFromEvidence(flowEvidenceContent);
+  if (flowId && !hasExactChecklistLine(content, "flow id", flowId)) {
+    findings.push({ tool: proof.tool, message: `${path} failure log flow id must match ${flowId}` });
+  }
+
   if (!/\bno failure observed\b/i.test(content)) {
     findings.push({ tool: proof.tool, message: `${path} must state no failure observed for a passing real run` });
   }

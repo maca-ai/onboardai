@@ -417,6 +417,7 @@ function initializeRealToolRun(tool: ToolName, runId: string): readonly string[]
     [/\breplace-with-run-id\b/g, runId],
     [/\breplace-with-capture-id\b/g, `capture-real-${tool}-${runId}`],
     [/^- tool:\s*$/gm, `- tool: ${tool}`],
+    [/^- flow id:\s*$/gm, `- flow id: ${flowIdForTool(tool)}`],
     [/^- run id:\s*$/gm, `- run id: ${runId}`]
   ];
   const templateFiles = [

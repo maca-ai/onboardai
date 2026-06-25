@@ -238,11 +238,12 @@ real-run JSON evidence files must use `schemaVersion: 1`. this applies to `step-
 `flow-evidence.json`, `demo-data-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`,
 `outcome-evidence.json`, and the referenced normalized capture manifest.
 
-`failure-log.md` must state `no failure observed` for a passing real run and must independently confirm the
-passing invariants with exact true result lines for `passed`, `terminal state reached`, `zero human help`,
-`no invented steps`, and `no privileged access`. it must not contradict the passing outcome with result lines
-such as `- passed: false`, `- terminal state reached: false`, `- zero human help: false`,
-`- no invented steps: false`, or `- no privileged access: false`.
+`failure-log.md` must identify the same tool, run id, and `flow-evidence.json` flow id as the audited run. it
+must state `no failure observed` for a passing real run and must independently confirm the passing invariants
+with exact true result lines for `passed`, `terminal state reached`, `zero human help`, `no invented steps`, and
+`no privileged access`. it must not contradict the passing outcome with result lines such as `- passed: false`,
+`- terminal state reached: false`, `- zero human help: false`, `- no invented steps: false`, or
+`- no privileged access: false`.
 
 create the editable run skeleton from templates with:
 
