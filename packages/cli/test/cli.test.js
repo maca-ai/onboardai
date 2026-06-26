@@ -14,6 +14,7 @@ test("cli prints usage for empty invocation", () => {
 
   assert.match(output, /onboardai flow validate/);
   assert.match(output, /capture normalize-run <odoo\|notion> <run-id>/);
+  assert.match(output, /capture readiness validate <path>/);
   assert.match(output, /proof real-run init <odoo\|notion> <run-id\|--generate-run-id>/);
   assert.match(output, /proof real-run <odoo\|notion> <run-id>/);
 });
@@ -134,6 +135,104 @@ test("proof scan-shareable rejects forbidden secrets and unsafe capture paths", 
     assert.match(result.stderr, /shareable-scan-validation\.md: traversal path/);
   } finally {
     rmSync(badArtifact, { force: true });
+  }
+});
+
+test("capture readiness validate accepts version-bound native documentation evidence", () => {
+  const readinessPath = new URL("evals/reports/native-readiness-validation-pass.json", workspaceRoot);
+  writeFileSync(
+    readinessPath,
+    `${JSON.stringify(
+      {
+        adapterKind: "native",
+        adapterName: "candidate-native-capture",
+        adapterVersion: "1.2.3",
+        platform: "macos",
+        docsVerified: true,
+        verifiedDocReferences: [
+          {
+            sourceType: "official-docs",
+            reference: "https://vendor.example/native-capture/macos",
+            appliesToAdapterVersion: "1.2.3",
+            behaviors: ["screen-recording", "keyboard-event-log", "mouse-event-log"]
+          },
+          {
+            sourceType: "context7",
+            reference: "/vendor/native-capture",
+            appliesToAdapterVersion: "1.2.3",
+            behaviors: ["redacted-frame-output", "raw-artifacts-ignored"]
+          }
+        ],
+        screenRecording: true,
+        keyboardEventLog: true,
+        mouseEventLog: true,
+        redactedFrameOutput: true,
+        rawArtifactsIgnored: true,
+        blockers: []
+      },
+      null,
+      2
+    )}\n`
+  );
+
+  try {
+    const result = spawnSync("node", ["dist/index.js", "capture", "readiness", "validate", "evals/reports/native-readiness-validation-pass.json"], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /native capture readiness valid/);
+  } finally {
+    rmSync(readinessPath, { force: true });
+  }
+});
+
+test("capture readiness validate rejects unverified or stale native documentation evidence", () => {
+  const readinessPath = new URL("evals/reports/native-readiness-validation-fail.json", workspaceRoot);
+  writeFileSync(
+    readinessPath,
+    `${JSON.stringify(
+      {
+        adapterKind: "native",
+        adapterName: "candidate-native-capture",
+        adapterVersion: "1.2.3",
+        platform: "windows",
+        docsVerified: true,
+        verifiedDocReferences: [
+          {
+            sourceType: "official-docs",
+            reference: "not-a-url",
+            appliesToAdapterVersion: "1.2.2",
+            behaviors: ["screen-recording"]
+          }
+        ],
+        screenRecording: true,
+        keyboardEventLog: true,
+        mouseEventLog: true,
+        redactedFrameOutput: true,
+        rawArtifactsIgnored: true,
+        blockers: []
+      },
+      null,
+      2
+    )}\n`
+  );
+
+  try {
+    const result = spawnSync("node", ["dist/index.js", "capture", "readiness", "validate", "evals/reports/native-readiness-validation-fail.json"], {
+      cwd: packageRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /native capture readiness invalid/);
+    assert.match(result.stderr, /official docs URL/);
+    assert.match(result.stderr, /adapter version attribution/);
+    assert.match(result.stderr, /verified documentation for keyboard-event-log/);
+    assert.match(result.stderr, /verified documentation for raw-artifacts-ignored/);
+  } finally {
+    rmSync(readinessPath, { force: true });
   }
 });
 

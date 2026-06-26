@@ -5,6 +5,7 @@ import {
   createNormalizedCaptureManifest,
   createNormalizedRunCaptureManifest,
   normalizeDemonstrationToFlowMarkdown,
+  validateNativeCaptureReadiness,
   writeLocalCaptureBundle,
   type SeniorDemonstration
 } from "@onboardai/capture";
@@ -79,6 +80,26 @@ if (args[0] === "flow" && args[1] === "validate") {
   } else {
     const bundle = materializeFixtureCapture(tool);
     console.log(`materialized ${tool} fixture capture: ${bundle.writes.length} raw artifact(s)`);
+  }
+} else if (args[0] === "capture" && args[1] === "readiness" && args[2] === "validate") {
+  const readinessPath = args[3];
+  if (!readinessPath || args.length > 4) {
+    console.error("usage: onboardai capture readiness validate <path>");
+    process.exitCode = 1;
+  } else {
+    try {
+      const content = readFileSync(resolveWorkspacePath(readinessPath), "utf8");
+      const validation = validateNativeCaptureReadiness(JSON.parse(content));
+      if (validation.valid) {
+        console.log(`native capture readiness valid: ${readinessPath}`);
+      } else {
+        console.error(`native capture readiness invalid: ${validation.errors.join("; ")}`);
+      }
+      process.exitCode = validation.valid ? 0 : 1;
+    } catch (error) {
+      console.error(`native capture readiness invalid: ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
+    }
   }
 } else if (args[0] === "eval" && args[1] === "run") {
   const tool = args[2];
@@ -177,7 +198,7 @@ if (args[0] === "flow" && args[1] === "validate") {
     process.exitCode = audit.passed ? 0 : 1;
   }
 } else {
-  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | capture normalize-run <odoo|notion> <run-id> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id|--generate-run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
+  console.log("usage: onboardai flow validate <path> | flow search <query> | capture materialize <odoo|notion> | capture normalize <odoo|notion> | capture normalize-run <odoo|notion> <run-id> | capture readiness validate <path> | eval run <odoo|notion> | proof fixtures | proof scan-shareable | proof status | proof real-run init <odoo|notion> <run-id|--generate-run-id> | proof real-run <odoo|notion> <run-id> [--write-summary]");
 }
 
 function listFlowFiles(root: string): string[] {

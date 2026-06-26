@@ -150,6 +150,7 @@ do not weaken any constraint to make an eval pass.
 - [x] reject self-attested run-evidence-audited proof summaries
 - [x] require real-run capture readiness to cite verified documentation references
 - [x] require native capture readiness gate to bind adapter docs to exact behavior coverage
+- [x] add CLI validation for candidate native capture readiness files
 - [x] build run-local normalized capture manifest skeleton for future real eval artifacts
 - [ ] complete retrospective
 
@@ -1925,6 +1926,31 @@ latest results on 2026-06-24:
 
 latest results on 2026-06-26:
 
+- changed: `packages/capture` now exposes `validateNativeCaptureReadiness(input)` so malformed or incomplete native readiness JSON can fail closed without relying on TypeScript-only shape checks.
+- changed: `onboardai capture readiness validate <path>` validates a local native readiness JSON file against adapter identity, exact adapter version attribution, official-docs/context7 reference shape, and required behavior coverage.
+- changed: native capture spike docs now document the read-only readiness validation command and state that passing it does not prove real odoo/notion capture or full-goal completion.
+- eval showed: targeted capture tests accept a fully version-bound native readiness contract and reject invalid source type, stale adapter attribution, invalid official-docs URL, invalid context7 id, unsupported behavior labels, and missing behavior coverage.
+- eval showed: targeted CLI tests accept a valid local readiness JSON and reject stale/unverified native documentation evidence before any real-run proof summary can be written.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on actual real odoo and notion run directories with native screen-plus-input capture/eval evidence and a concrete proof-ready native capture adapter.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: create or select a concrete candidate native capture stack, verify its exact installed-version behavior through official docs or context7, then validate its readiness JSON with `capture readiness validate` before writing a real-run `capture-readiness.json`.
+- `pnpm --filter @onboardai/capture test`: passed; 19 tests, 19 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 13 tests, 13 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 134 tests, 134 pass, 0 fail.
+- `pnpm flow:validate`: passed on sequential rerun; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 29 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths and `.pnpm-store/sample`: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-26:
+
 - changed: `packages/capture` native readiness now requires adapter name, adapter version, and verified documentation references instead of accepting `docsVerified: true` alone.
 - changed: `assertNativeCaptureReady` only credits documentation references whose official-docs URL or context7 library id is valid, whose `appliesToAdapterVersion` matches the native adapter version, and whose behavior coverage names the required capture behaviors.
 - changed: native capture spike docs now state that screen recording, keyboard event log, mouse event log, redacted frame output, and raw artifact ignore behavior must all be documented before a native adapter can be proof-ready.
@@ -2428,3 +2454,27 @@ latest results on 2026-06-25:
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
+
+latest results on 2026-06-26:
+
+- changed: `packages/capture` now exposes `validateNativeCaptureReadiness(input)` so malformed or incomplete native readiness JSON can fail closed without relying on TypeScript-only shape checks.
+- changed: `onboardai capture readiness validate <path>` validates a local native readiness JSON file against adapter identity, exact adapter version attribution, official-docs/context7 reference shape, and required behavior coverage.
+- changed: native capture spike docs now document the read-only readiness validation command and state that passing it does not prove real odoo/notion capture or full-goal completion.
+- eval showed: targeted capture tests accept a fully version-bound native readiness contract and reject invalid source type, stale adapter attribution, invalid official-docs URL, invalid context7 id, unsupported behavior labels, and missing behavior coverage.
+- eval showed: targeted CLI tests accept a valid local readiness JSON and reject stale/unverified native documentation evidence before any real-run proof summary can be written.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on actual real odoo and notion run directories with native screen-plus-input capture/eval evidence and a concrete proof-ready native capture adapter.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: create or select a concrete candidate native capture stack, verify its exact installed-version behavior through official docs or context7, then validate its readiness JSON with `capture readiness validate` before writing a real-run `capture-readiness.json`.
+- verification status: targeted `pnpm --filter @onboardai/capture test` and `pnpm --filter @onboardai/cli test` passed; full verification still in progress.
+
+latest results on 2026-06-26:
+
+- changed: `mockups/capture-ready.html` now has a visible fixture-only capture check control instead of a passive capture screen with no state transition.
+- changed: `mockups/app.js` drives the capture mockup from ready, to checking, to fixture capture saved, then reveals a continue action into the teach screen.
+- changed: `mockups/brik-mood.css` styles the new control and status copy so the button is usable as a real control in the mockup.
+- eval showed: `node --check mockups/app.js` passed, `pnpm lint` passed, and the running local server returned `200 OK` for `mockups/capture-ready.html` and `mockups/app.js`.
+- completion rate: UI mockup interaction now advances past capture for the fixture path; real odoo/notion held-out eval completion remains 0/2 tools.
+- stuck point: this is not native capture. The desktop shell and native screen-plus-input adapter are still unimplemented, so pressing capture cannot yet record a real target-tool workflow.
+- overlay misread: none observed in this mockup-only change.
+- next best experiment: replace the fixture-only capture button with a desktop-shell action that invokes a verified native capture adapter, while preserving the same fail-closed product copy when readiness is incomplete.

@@ -48,6 +48,14 @@ The readiness gate now requires more than `docsVerified: true`. A native adapter
 
 References that do not have a valid official URL or context7 library id, do not match the adapter version, or do not list behavior coverage do not count toward native readiness.
 
+Validate a candidate readiness JSON file before using it in a real run:
+
+```sh
+pnpm --filter @onboardai/cli onboardai capture readiness validate docs/native-capture-readiness-example.json
+```
+
+This command is read-only. It validates the local JSON file against the same native-readiness gate used by `packages/capture`. Passing this command proves only that the adapter readiness contract is structurally complete and documentation-bound; it does not prove real odoo or notion capture, held-out eval success, or full-goal completion.
+
 ## next experiment
 
 Verify a candidate native adapter stack through official docs or Context7 for the exact installed versions, then create a small spike that writes:

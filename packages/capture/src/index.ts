@@ -200,6 +200,11 @@ export interface CaptureAdapterReadiness {
   readonly blockers: readonly string[];
 }
 
+export interface NativeCaptureReadinessValidationResult {
+  readonly valid: boolean;
+  readonly errors: readonly string[];
+}
+
 export const belowConfidenceMessage = "screen state not recognized. ask a human or restart this step.";
 
 export function fixtureCaptureReadiness(): CaptureAdapterReadiness {
@@ -220,28 +225,48 @@ export function fixtureCaptureReadiness(): CaptureAdapterReadiness {
 }
 
 export function assertNativeCaptureReady(readiness: CaptureAdapterReadiness): void {
-  if (readiness.adapterKind !== "native") {
-    throw new Error("native capture readiness requires a native adapter");
-  }
-
-  const missing: string[] = [];
-  if (readiness.adapterName.length === 0) missing.push("native adapter name");
-  if (readiness.adapterVersion.length === 0) missing.push("native adapter version");
-  if (!readiness.docsVerified) missing.push("verified official documentation");
-  if (!readiness.screenRecording) missing.push("screen recording");
-  if (!readiness.keyboardEventLog) missing.push("keyboard event log");
-  if (!readiness.mouseEventLog) missing.push("mouse event log");
-  if (!readiness.redactedFrameOutput) missing.push("redacted frame output");
-  if (!readiness.rawArtifactsIgnored) missing.push("raw artifact git ignore");
-  missing.push(...nativeCaptureDocReferenceFindings(readiness));
-  missing.push(...readiness.blockers);
-
-  if (missing.length > 0) {
-    throw new Error(`native capture adapter is not ready: ${missing.join(", ")}`);
+  const validation = validateNativeCaptureReadiness(readiness);
+  if (!validation.valid) {
+    throw new Error(`native capture adapter is not ready: ${validation.errors.join(", ")}`);
   }
 }
 
-function nativeCaptureDocReferenceFindings(readiness: CaptureAdapterReadiness): string[] {
+export function validateNativeCaptureReadiness(input: unknown): NativeCaptureReadinessValidationResult {
+  const errors: string[] = [];
+
+  if (!isRecord(input)) {
+    return { valid: false, errors: ["native capture readiness must be an object"] };
+  }
+
+  const adapterName = typeof input.adapterName === "string" ? input.adapterName : "";
+  const adapterVersion = typeof input.adapterVersion === "string" ? input.adapterVersion : "";
+
+  if (input.adapterKind !== "native") {
+    errors.push("native adapter kind");
+  }
+
+  if (adapterName.length === 0) errors.push("native adapter name");
+  if (adapterVersion.length === 0) errors.push("native adapter version");
+  if (input.platform !== "macos" && input.platform !== "windows") errors.push("native adapter platform");
+  if (input.docsVerified !== true) errors.push("verified official documentation");
+  if (input.screenRecording !== true) errors.push("screen recording");
+  if (input.keyboardEventLog !== true) errors.push("keyboard event log");
+  if (input.mouseEventLog !== true) errors.push("mouse event log");
+  if (input.redactedFrameOutput !== true) errors.push("redacted frame output");
+  if (input.rawArtifactsIgnored !== true) errors.push("raw artifact git ignore");
+
+  if (!Array.isArray(input.blockers)) {
+    errors.push("blockers list");
+  } else if (input.blockers.length > 0) {
+    errors.push(...input.blockers.map((blocker) => (typeof blocker === "string" && blocker.length > 0 ? blocker : "native capture blocker")));
+  }
+
+  errors.push(...nativeCaptureDocReferenceFindings(input.verifiedDocReferences, adapterVersion));
+
+  return { valid: errors.length === 0, errors };
+}
+
+function nativeCaptureDocReferenceFindings(references: unknown, adapterVersion: string): string[] {
   const requiredBehaviors: readonly CaptureAdapterBehavior[] = [
     "screen-recording",
     "keyboard-event-log",
@@ -250,14 +275,20 @@ function nativeCaptureDocReferenceFindings(readiness: CaptureAdapterReadiness): 
     "raw-artifacts-ignored"
   ];
 
-  if (readiness.verifiedDocReferences.length === 0) {
+  if (!Array.isArray(references) || references.length === 0) {
     return ["verified documentation references"];
   }
 
   const findings: string[] = [];
   const coveredBehaviors = new Set<CaptureAdapterBehavior>();
 
-  readiness.verifiedDocReferences.forEach((reference, index) => {
+  references.forEach((reference, index) => {
+    if (!isRecord(reference)) {
+      findings.push(`verifiedDocReferences[${index}] object`);
+      return;
+    }
+
+    const referenceValue = typeof reference.reference === "string" ? reference.reference : "";
     let validReference = true;
 
     if (reference.sourceType !== "official-docs" && reference.sourceType !== "context7") {
@@ -265,35 +296,36 @@ function nativeCaptureDocReferenceFindings(readiness: CaptureAdapterReadiness): 
       validReference = false;
     }
 
-    if (reference.sourceType === "official-docs" && !/^https?:\/\//.test(reference.reference)) {
+    if (reference.sourceType === "official-docs" && !/^https?:\/\//.test(referenceValue)) {
       findings.push(`verifiedDocReferences[${index}] official docs URL`);
       validReference = false;
     }
 
-    if (reference.sourceType === "context7" && !reference.reference.startsWith("/")) {
+    if (reference.sourceType === "context7" && !referenceValue.startsWith("/")) {
       findings.push(`verifiedDocReferences[${index}] context7 library id`);
       validReference = false;
     }
 
-    if (reference.reference.length === 0) {
+    if (referenceValue.length === 0) {
       findings.push(`verifiedDocReferences[${index}] reference`);
       validReference = false;
     }
 
-    if (reference.appliesToAdapterVersion !== readiness.adapterVersion) {
+    if (reference.appliesToAdapterVersion !== adapterVersion) {
       findings.push(`verifiedDocReferences[${index}] adapter version attribution`);
       validReference = false;
     }
 
-    if (reference.behaviors.length === 0) {
+    const behaviors = Array.isArray(reference.behaviors) ? reference.behaviors : [];
+    if (behaviors.length === 0) {
       findings.push(`verifiedDocReferences[${index}] capture behavior coverage`);
       validReference = false;
     }
 
     if (validReference) {
-      for (const behavior of reference.behaviors) {
-        if (requiredBehaviors.includes(behavior)) {
-          coveredBehaviors.add(behavior);
+      for (const behavior of behaviors) {
+        if (typeof behavior === "string" && requiredBehaviors.includes(behavior as CaptureAdapterBehavior)) {
+          coveredBehaviors.add(behavior as CaptureAdapterBehavior);
         } else {
           findings.push(`verifiedDocReferences[${index}] unsupported behavior ${behavior}`);
         }
