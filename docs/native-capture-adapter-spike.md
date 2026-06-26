@@ -38,6 +38,16 @@ Do not add a native capture dependency yet.
 
 Keep the current fixture adapter as the only executable capture adapter. Native adapters must pass the `assertNativeCaptureReady` gate in `packages/capture` before being used as proof.
 
+The readiness gate now requires more than `docsVerified: true`. A native adapter readiness object must include:
+
+- adapter name
+- adapter version
+- official-docs or context7 references
+- `appliesToAdapterVersion` matching the adapter version
+- documented coverage for `screen-recording`, `keyboard-event-log`, `mouse-event-log`, `redacted-frame-output`, and `raw-artifacts-ignored`
+
+References that do not have a valid official URL or context7 library id, do not match the adapter version, or do not list behavior coverage do not count toward native readiness.
+
 ## next experiment
 
 Verify a candidate native adapter stack through official docs or Context7 for the exact installed versions, then create a small spike that writes:

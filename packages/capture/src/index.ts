@@ -171,11 +171,27 @@ export interface LocalCaptureBundle {
 
 export type CaptureAdapterKind = "fixture" | "native";
 export type CaptureAdapterPlatform = "fixture" | "macos" | "windows";
+export type CaptureAdapterBehavior =
+  | "screen-recording"
+  | "keyboard-event-log"
+  | "mouse-event-log"
+  | "redacted-frame-output"
+  | "raw-artifacts-ignored";
+
+export interface CaptureAdapterDocReference {
+  readonly sourceType: "official-docs" | "context7";
+  readonly reference: string;
+  readonly appliesToAdapterVersion: string;
+  readonly behaviors: readonly CaptureAdapterBehavior[];
+}
 
 export interface CaptureAdapterReadiness {
   readonly adapterKind: CaptureAdapterKind;
+  readonly adapterName: string;
+  readonly adapterVersion: string;
   readonly platform: CaptureAdapterPlatform;
   readonly docsVerified: boolean;
+  readonly verifiedDocReferences: readonly CaptureAdapterDocReference[];
   readonly screenRecording: boolean;
   readonly keyboardEventLog: boolean;
   readonly mouseEventLog: boolean;
@@ -189,8 +205,11 @@ export const belowConfidenceMessage = "screen state not recognized. ask a human 
 export function fixtureCaptureReadiness(): CaptureAdapterReadiness {
   return {
     adapterKind: "fixture",
+    adapterName: "onboardai-fixture-capture",
+    adapterVersion: "0.0.0-local",
     platform: "fixture",
     docsVerified: true,
+    verifiedDocReferences: [],
     screenRecording: true,
     keyboardEventLog: true,
     mouseEventLog: true,
@@ -206,17 +225,89 @@ export function assertNativeCaptureReady(readiness: CaptureAdapterReadiness): vo
   }
 
   const missing: string[] = [];
+  if (readiness.adapterName.length === 0) missing.push("native adapter name");
+  if (readiness.adapterVersion.length === 0) missing.push("native adapter version");
   if (!readiness.docsVerified) missing.push("verified official documentation");
   if (!readiness.screenRecording) missing.push("screen recording");
   if (!readiness.keyboardEventLog) missing.push("keyboard event log");
   if (!readiness.mouseEventLog) missing.push("mouse event log");
   if (!readiness.redactedFrameOutput) missing.push("redacted frame output");
   if (!readiness.rawArtifactsIgnored) missing.push("raw artifact git ignore");
+  missing.push(...nativeCaptureDocReferenceFindings(readiness));
   missing.push(...readiness.blockers);
 
   if (missing.length > 0) {
     throw new Error(`native capture adapter is not ready: ${missing.join(", ")}`);
   }
+}
+
+function nativeCaptureDocReferenceFindings(readiness: CaptureAdapterReadiness): string[] {
+  const requiredBehaviors: readonly CaptureAdapterBehavior[] = [
+    "screen-recording",
+    "keyboard-event-log",
+    "mouse-event-log",
+    "redacted-frame-output",
+    "raw-artifacts-ignored"
+  ];
+
+  if (readiness.verifiedDocReferences.length === 0) {
+    return ["verified documentation references"];
+  }
+
+  const findings: string[] = [];
+  const coveredBehaviors = new Set<CaptureAdapterBehavior>();
+
+  readiness.verifiedDocReferences.forEach((reference, index) => {
+    let validReference = true;
+
+    if (reference.sourceType !== "official-docs" && reference.sourceType !== "context7") {
+      findings.push(`verifiedDocReferences[${index}] source type`);
+      validReference = false;
+    }
+
+    if (reference.sourceType === "official-docs" && !/^https?:\/\//.test(reference.reference)) {
+      findings.push(`verifiedDocReferences[${index}] official docs URL`);
+      validReference = false;
+    }
+
+    if (reference.sourceType === "context7" && !reference.reference.startsWith("/")) {
+      findings.push(`verifiedDocReferences[${index}] context7 library id`);
+      validReference = false;
+    }
+
+    if (reference.reference.length === 0) {
+      findings.push(`verifiedDocReferences[${index}] reference`);
+      validReference = false;
+    }
+
+    if (reference.appliesToAdapterVersion !== readiness.adapterVersion) {
+      findings.push(`verifiedDocReferences[${index}] adapter version attribution`);
+      validReference = false;
+    }
+
+    if (reference.behaviors.length === 0) {
+      findings.push(`verifiedDocReferences[${index}] capture behavior coverage`);
+      validReference = false;
+    }
+
+    if (validReference) {
+      for (const behavior of reference.behaviors) {
+        if (requiredBehaviors.includes(behavior)) {
+          coveredBehaviors.add(behavior);
+        } else {
+          findings.push(`verifiedDocReferences[${index}] unsupported behavior ${behavior}`);
+        }
+      }
+    }
+  });
+
+  for (const behavior of requiredBehaviors) {
+    if (!coveredBehaviors.has(behavior)) {
+      findings.push(`verified documentation for ${behavior}`);
+    }
+  }
+
+  return findings;
 }
 
 export function createLocalCaptureBundle(demonstration: SeniorDemonstration): LocalCaptureBundle {

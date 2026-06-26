@@ -149,6 +149,7 @@ do not weaken any constraint to make an eval pass.
 - [x] require full-goal status to count only evidence-audited real proofs
 - [x] reject self-attested run-evidence-audited proof summaries
 - [x] require real-run capture readiness to cite verified documentation references
+- [x] require native capture readiness gate to bind adapter docs to exact behavior coverage
 - [x] build run-local normalized capture manifest skeleton for future real eval artifacts
 - [ ] complete retrospective
 
@@ -1920,6 +1921,29 @@ latest results on 2026-06-24:
 - forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
 - raw/unsafe/tmp path scan across shareable artifacts: no matches.
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
+latest results on 2026-06-26:
+
+- changed: `packages/capture` native readiness now requires adapter name, adapter version, and verified documentation references instead of accepting `docsVerified: true` alone.
+- changed: `assertNativeCaptureReady` only credits documentation references whose official-docs URL or context7 library id is valid, whose `appliesToAdapterVersion` matches the native adapter version, and whose behavior coverage names the required capture behaviors.
+- changed: native capture spike docs now state that screen recording, keyboard event log, mouse event log, redacted frame output, and raw artifact ignore behavior must all be documented before a native adapter can be proof-ready.
+- eval showed: targeted capture tests reject fixture readiness as native, reject native readiness with missing inputs, reject documentation references with stale adapter version or invalid reference shape, and accept a fully version-bound native readiness contract.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on actual real odoo and notion run directories with native screen-plus-input capture/eval evidence and proof-ready native adapter documentation.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: verify a concrete candidate native capture stack through official docs or context7 for the exact installed version, then implement the smallest adapter spike that writes local raw screen, keyboard, and mouse artifacts under ignored paths.
+- `pnpm --filter @onboardai/capture test`: passed; 19 tests, 19 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 132 tests, 132 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 29 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths and `.pnpm-store/sample`: passed.
 - `git diff --check`: passed.
 
 latest results on 2026-06-26:
