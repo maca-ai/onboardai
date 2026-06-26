@@ -162,6 +162,11 @@ after eval:
 - [ ] confirm `reviewer-checklist.md` `tool`, `run id`, and `flow id` match the audited run and `flow-evidence.json`.
 - [ ] confirm `reviewer-checklist.md` contains `- accepted: true` and does not contain `- rejected: true`.
 - [ ] confirm `reviewer-checklist.md` contains one `- <step-id>: accepted` line for every step id in `step-trace.json`.
+- [ ] write `evals/runs/<tool>/<run-id>/reviewer-signoff.json`.
+- [ ] confirm `reviewer-signoff.json` `runId`, `tool`, `flowId` or `flowPath`, and `terminalBusinessStateReviewed` match this run's directory, `flow-evidence.json`, and terminal business state.
+- [ ] confirm `reviewer-signoff.json` contains an ISO UTC `reviewedAt`, `reviewerRole: senior-reviewer`, explicit accepted `verdict`, and non-empty `reviewerNotes`.
+- [ ] confirm `reviewer-signoff.json` `evidenceBundleReviewed` cites the same-run audited files: `step-trace.json`, `final-screen.png`, `eval-recording.mp4`, `failure-log.md`, `reviewer-checklist.md`, `flow-evidence.json`, `demo-data-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`, `outcome-evidence.json`, and same-run `capture-manifest.json` when present.
+- [ ] confirm reviewer sign-off alone is not treated as proof without same-run captured evidence, and same-run captured evidence is not treated as proof without reviewer sign-off.
 - [ ] write `evals/runs/<tool>/<run-id>/capture-readiness.json` with native adapter kind, installed adapter name and version, macos or windows platform, verified docs, screen recording, keyboard event logging, mouse event logging, redacted frame output, raw artifact ignore policy, and empty blockers.
 - [ ] confirm `capture-readiness.json` `runId` matches the run directory.
 - [ ] confirm `capture-readiness.json` `verifiedDocReferences` cites official docs URLs or context7 library ids covering screen recording, keyboard event logging, mouse event logging, redacted frame output, and raw artifact ignore behavior, with `appliesToAdapterVersion` matching the installed `adapterVersion`.
@@ -241,6 +246,7 @@ evals/templates/reports/real-tool-proof-notion.json
 evals/templates/runs/tool-run-id/step-trace.json
 evals/templates/runs/tool-run-id/failure-log.md
 evals/templates/runs/tool-run-id/reviewer-checklist.md
+evals/templates/runs/tool-run-id/reviewer-signoff.json
 evals/templates/runs/tool-run-id/flow-evidence.json
 evals/templates/runs/tool-run-id/demo-data-evidence.json
 evals/templates/runs/tool-run-id/capture-readiness.json

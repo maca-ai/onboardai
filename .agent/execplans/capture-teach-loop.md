@@ -1922,6 +1922,31 @@ latest results on 2026-06-24:
 - `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
 - `git diff --check`: passed.
 
+latest results on 2026-06-26:
+
+- changed: real-run audit now requires `evals/runs/<tool>/<run-id>/reviewer-signoff.json` in addition to the reviewer checklist.
+- changed: `reviewer-signoff.json` must bind senior reviewer acceptance to the same run id, tool, flow id/path, terminal business state, and same-run evidence bundle audited for the run.
+- changed: sign-off evidence fails closed when copied from another run, pointed at the wrong tool or flow, missing terminal business state, missing an accepted/pass verdict, or citing stale/missing evidence paths.
+- changed: real-run templates, CLI initialization, eval protocol, and real-eval runbook now include the structured reviewer signoff artifact.
+- eval showed: targeted eval-harness coverage rejects copied-run signoff, wrong-tool signoff, wrong-flow signoff, accepted signoff missing terminal business state, stale evidence bundle references, and missing `reviewer-signoff.json`.
+- completion rate: deterministic fixture evals remain 6/6 taught steps; real odoo/notion held-out eval completion remains 0/2 tools because no actual real target-tool runs are present.
+- stuck point: full-goal proof is still blocked on actual real odoo and notion run directories with native screen-plus-input capture/eval evidence plus senior reviewer signoff over the same evidence bundle.
+- overlay misread: none in fixture evals; no real overlay misread evidence exists yet.
+- next best experiment: run `proof real-run init <tool> --generate-run-id`, fill one real run with actual clean-demo held-out screen/input artifacts, then require the senior reviewer to sign `reviewer-signoff.json` only after auditing the exact same evidence bundle.
+- `pnpm --filter @onboardai/eval-harness test`: passed; 79 tests, 79 pass, 0 fail.
+- `pnpm --filter @onboardai/cli test`: passed; 11 tests, 11 pass, 0 fail.
+- `pnpm lint`: passed.
+- `pnpm typecheck`: passed.
+- `pnpm test`: passed; 131 tests, 131 pass, 0 fail.
+- `pnpm flow:validate`: passed; validated 2 flow files.
+- `pnpm proof:fixtures`: passed; fixture proof passed 2/2 tools.
+- `pnpm proof:scan`: passed; scanned 29 shareable text files.
+- `pnpm proof:status`: expected failure; `full goal not proven`, `fixture proof passed`, `real-tool proof failed: 0/2 tools`.
+- forbidden secret/email scan across `flows`, `evals`, `captures/normalized`, and `captures/redacted`: no matches.
+- raw/unsafe/tmp path scan across shareable artifacts: no matches.
+- `git check-ignore` for sample raw/unsafe/tmp capture paths: passed.
+- `git diff --check`: passed.
+
 latest results on 2026-06-24:
 
 - changed: base `flow.md` validation now requires exactly one `success-condition.terminal: true` step; the minimal flow test now uses its only step as the terminal step, and new regressions reject zero-terminal and multi-terminal flows.

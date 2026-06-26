@@ -224,7 +224,9 @@ before a real proof summary is accepted, the derived run directory must contain:
 /evals/runs/<tool>/<run-id>/eval-recording.mp4
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/reviewer-signoff.json
 /evals/runs/<tool>/<run-id>/flow-evidence.json
+/evals/runs/<tool>/<run-id>/demo-data-evidence.json
 /evals/runs/<tool>/<run-id>/capture-readiness.json
 /evals/runs/<tool>/<run-id>/screen-input-evidence.json
 /evals/runs/<tool>/<run-id>/outcome-evidence.json
@@ -237,8 +239,8 @@ addresses, password assignments, token assignments, api key assignments, and ses
 the real run invalid.
 
 real-run JSON evidence files must use `schemaVersion: 1`. this applies to `step-trace.json`,
-`flow-evidence.json`, `demo-data-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`,
-`outcome-evidence.json`, and the referenced normalized capture manifest.
+`flow-evidence.json`, `demo-data-evidence.json`, `capture-readiness.json`, `reviewer-signoff.json`,
+`screen-input-evidence.json`, `outcome-evidence.json`, and the referenced normalized capture manifest.
 
 `failure-log.md` must identify the same tool, run id, and `flow-evidence.json` flow id as the audited run. it
 must state `no failure observed` for a passing real run and must independently confirm the passing invariants
@@ -376,6 +378,16 @@ same tool, run id, and `flow-evidence.json` flow id, contain `- accepted: true`,
 `- rejected: true`, and must include one per-step acceptance line for every step id in `step-trace.json`, for
 example `- step-001: accepted`.
 
+`reviewer-signoff.json` is required for real-tool proof. it must bind senior reviewer acceptance to the same
+`runId`, target `tool`, `flowId` or `flowPath`, terminal business state, and same-run evidence bundle that the
+machine audit checked. `verdict` must be an explicit accepted value such as `accepted` or `pass`, and
+`evidenceBundleReviewed` must reference the audited same-run files including `step-trace.json`,
+`final-screen.png`, `eval-recording.mp4`, `failure-log.md`, `reviewer-checklist.md`, `flow-evidence.json`,
+`demo-data-evidence.json`, `capture-readiness.json`, `screen-input-evidence.json`, and
+`outcome-evidence.json`; when `evals/runs/<tool>/<run-id>/capture-manifest.json` is present, it must also be in
+the reviewed bundle. reviewer sign-off alone is insufficient without same-run captured evidence, and same-run
+captured evidence is insufficient without reviewer sign-off.
+
 `outcome-evidence.json` must state the same `runId` as `evals/runs/<tool>/<run-id>/`, identify the held-out
 evaluator as `first-time-user` or `deterministic-mock-user-harness`, show completion rate `1`, all taught steps
 completed, terminal business state reached, terminal business state matching the referenced `flow.md`, terminal
@@ -431,6 +443,7 @@ real run templates live under:
 /evals/templates/runs/tool-run-id/step-trace.json
 /evals/templates/runs/tool-run-id/failure-log.md
 /evals/templates/runs/tool-run-id/reviewer-checklist.md
+/evals/templates/runs/tool-run-id/reviewer-signoff.json
 /evals/templates/runs/tool-run-id/flow-evidence.json
 /evals/templates/runs/tool-run-id/demo-data-evidence.json
 /evals/templates/runs/tool-run-id/capture-readiness.json
@@ -445,6 +458,7 @@ for a real run, copy the templates into:
 /evals/runs/<tool>/<run-id>/step-trace.json
 /evals/runs/<tool>/<run-id>/failure-log.md
 /evals/runs/<tool>/<run-id>/reviewer-checklist.md
+/evals/runs/<tool>/<run-id>/reviewer-signoff.json
 /evals/runs/<tool>/<run-id>/flow-evidence.json
 /evals/runs/<tool>/<run-id>/demo-data-evidence.json
 /evals/runs/<tool>/<run-id>/capture-readiness.json
@@ -551,4 +565,34 @@ state the smallest next experiment.
 - accepted:
 - rejected:
 - notes:
+```
+
+## reviewer signoff template
+
+```json
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "runId": "replace-with-run-id",
+  "substrate": "real-tool",
+  "flowId": "replace-with-flow-id",
+  "flowPath": "flows/tool/replace-with-flow.flow.md",
+  "reviewedAt": "replace-with-iso-review-timestamp",
+  "reviewerRole": "senior-reviewer",
+  "terminalBusinessStateReviewed": "replace with flow.md terminal-business-state",
+  "evidenceBundleReviewed": [
+    "evals/runs/tool/replace-with-run-id/step-trace.json",
+    "evals/runs/tool/replace-with-run-id/final-screen.png",
+    "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
+    "evals/runs/tool/replace-with-run-id/failure-log.md",
+    "evals/runs/tool/replace-with-run-id/reviewer-checklist.md",
+    "evals/runs/tool/replace-with-run-id/flow-evidence.json",
+    "evals/runs/tool/replace-with-run-id/demo-data-evidence.json",
+    "evals/runs/tool/replace-with-run-id/capture-readiness.json",
+    "evals/runs/tool/replace-with-run-id/screen-input-evidence.json",
+    "evals/runs/tool/replace-with-run-id/outcome-evidence.json"
+  ],
+  "verdict": "replace-with-accepted-or-pass",
+  "reviewerNotes": "replace with reviewer notes"
+}
 ```

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "tool": "replace-with-odoo-or-notion",
+  "runId": "replace-with-run-id",
+  "substrate": "real-tool",
+  "flowId": "replace-with-flow-id",
+  "flowPath": "flows/tool/replace-with-flow.flow.md",
+  "reviewedAt": "replace-with-iso-review-timestamp",
+  "reviewerRole": "senior-reviewer",
+  "terminalBusinessStateReviewed": "replace with flow.md terminal-business-state",
+  "evidenceBundleReviewed": [
+    "evals/runs/tool/replace-with-run-id/step-trace.json",
+    "evals/runs/tool/replace-with-run-id/final-screen.png",
+    "evals/runs/tool/replace-with-run-id/eval-recording.mp4",
+    "evals/runs/tool/replace-with-run-id/failure-log.md",
+    "evals/runs/tool/replace-with-run-id/reviewer-checklist.md",
+    "evals/runs/tool/replace-with-run-id/flow-evidence.json",
+    "evals/runs/tool/replace-with-run-id/demo-data-evidence.json",
+    "evals/runs/tool/replace-with-run-id/capture-readiness.json",
+    "evals/runs/tool/replace-with-run-id/capture-manifest.json",
+    "evals/runs/tool/replace-with-run-id/screen-input-evidence.json",
+    "evals/runs/tool/replace-with-run-id/outcome-evidence.json"
+  ],
+  "verdict": "replace-with-accepted-or-pass",
+  "reviewerNotes": "replace with reviewer notes"
+}

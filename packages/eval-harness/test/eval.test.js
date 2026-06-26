@@ -297,6 +297,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
     "evals/runs/odoo/real-proof/eval-recording.mp4",
     "evals/runs/odoo/real-proof/failure-log.md",
     "evals/runs/odoo/real-proof/reviewer-checklist.md",
+    "evals/runs/odoo/real-proof/reviewer-signoff.json",
     "evals/runs/odoo/real-proof/flow-evidence.json",
     "evals/runs/odoo/real-proof/demo-data-evidence.json",
     "evals/runs/odoo/real-proof/capture-readiness.json",
@@ -322,7 +323,7 @@ test("real target-tool run artifact audit accepts complete screen-plus-input evi
 
   assert.equal(audit.passed, true);
   assert.equal(audit.runDir, "evals/runs/odoo/real-proof");
-  assert.equal(audit.summary.requiredArtifacts, 10);
+  assert.equal(audit.summary.requiredArtifacts, 11);
   assert.equal(audit.summary.missingArtifacts, 0);
   assert.equal(audit.findings.length, 0);
   assert.equal(audit.references.some((reference) => reference.path.endsWith("screen-input-evidence.json")), true);
@@ -462,6 +463,13 @@ test("real target-tool run artifact audit accepts same-run normalized capture ma
               visibleText: flowStepDefinitions("odoo")[index].expectedVisibleText
             }))
           ]
+        });
+      }
+
+      if (path.endsWith("reviewer-signoff.json")) {
+        return JSON.stringify({
+          ...reviewerSignoff("odoo"),
+          evidenceBundleReviewed: [...reviewerSignoff("odoo").evidenceBundleReviewed, "evals/runs/odoo/real-proof/capture-manifest.json"]
         });
       }
 
@@ -766,8 +774,8 @@ test("real target-tool run artifact audit rejects missing required run artifacts
   );
 
   assert.equal(audit.passed, false);
-  assert.equal(audit.summary.requiredArtifacts, 10);
-  assert.equal(audit.summary.missingArtifacts, 9);
+  assert.equal(audit.summary.requiredArtifacts, 11);
+  assert.equal(audit.summary.missingArtifacts, 10);
   assert.equal(audit.findings.some((finding) => finding.message.includes("final-screen.png")), true);
   assert.equal(audit.findings.some((finding) => finding.message.includes("screen-input-evidence.json")), true);
 });
@@ -1746,6 +1754,148 @@ test("real target-tool run artifact audit rejects reviewer checklists copied fro
   );
 });
 
+test("real target-tool run artifact audit rejects missing reviewer signoff", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  existing.delete("evals/runs/odoo/real-proof/reviewer-signoff.json");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => realRunArtifactContent(path, "odoo")
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json required real run artifact is missing")), true);
+});
+
+test("real target-tool run artifact audit rejects reviewer signoffs copied from another run", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-signoff.json")) {
+        return JSON.stringify({
+          ...reviewerSignoff("odoo"),
+          runId: "copied-real-proof",
+          evidenceBundleReviewed: reviewerSignoff("odoo").evidenceBundleReviewed.map((entry) =>
+            entry.replace("evals/runs/odoo/real-proof/", "evals/runs/odoo/copied-real-proof/")
+          )
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json runId must match the run directory")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evidenceBundleReviewed[0] must point to evals/runs/odoo/real-proof/")), true);
+});
+
+test("real target-tool run artifact audit rejects reviewer signoffs for the wrong tool", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-signoff.json")) {
+        return JSON.stringify({
+          ...reviewerSignoff("odoo"),
+          tool: "notion"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json tool must match odoo")), true);
+});
+
+test("real target-tool run artifact audit rejects reviewer signoffs for the wrong flow", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-signoff.json")) {
+        return JSON.stringify({
+          ...reviewerSignoff("odoo"),
+          flowId: "notion-update-task-status",
+          flowPath: "flows/notion/update-task-status.flow.md"
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json flowId must match")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json flowPath must match")), true);
+});
+
+test("real target-tool run artifact audit rejects accepted reviewer signoffs missing terminal state", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-signoff.json")) {
+        const signoff = reviewerSignoff("odoo");
+        delete signoff.terminalBusinessStateReviewed;
+        return JSON.stringify(signoff);
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json terminalBusinessStateReviewed must be a non-empty string")),
+    true
+  );
+  assert.equal(
+    audit.findings.some((finding) => finding.message.includes("reviewer-signoff.json terminalBusinessStateReviewed must match")),
+    true
+  );
+});
+
+test("real target-tool run artifact audit rejects reviewer signoffs with stale evidence bundle references", () => {
+  const proof = realToolProof("odoo");
+  const existing = realRunExistingPaths("odoo");
+  const audit = auditRealToolRunArtifacts(
+    proof,
+    (path) => existing.has(path),
+    (path) => {
+      if (path.endsWith("reviewer-signoff.json")) {
+        return JSON.stringify({
+          ...reviewerSignoff("odoo"),
+          evidenceBundleReviewed: [
+            "evals/runs/odoo/real-proof/step-trace.json",
+            "evals/runs/odoo/stale-proof/final-screen.png",
+            "evals/runs/odoo/real-proof/eval-recording.mp4"
+          ]
+        });
+      }
+
+      return realRunArtifactContent(path, "odoo");
+    }
+  );
+
+  assert.equal(audit.passed, false);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evidenceBundleReviewed[1] must point to evals/runs/odoo/real-proof/")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evidenceBundleReviewed must include evals/runs/odoo/real-proof/final-screen.png")), true);
+  assert.equal(audit.findings.some((finding) => finding.message.includes("evidenceBundleReviewed must include evals/runs/odoo/real-proof/outcome-evidence.json")), true);
+});
+
 test("real target-tool run artifact audit rejects incomplete step trace and reviewer signoff evidence", () => {
   const proof = realToolProof("notion");
   const existing = new Set([
@@ -2449,6 +2599,7 @@ function realRunExistingPaths(tool) {
     `evals/runs/${tool}/real-proof/eval-recording.mp4`,
     `evals/runs/${tool}/real-proof/failure-log.md`,
     `evals/runs/${tool}/real-proof/reviewer-checklist.md`,
+    `evals/runs/${tool}/real-proof/reviewer-signoff.json`,
     `evals/runs/${tool}/real-proof/flow-evidence.json`,
     `evals/runs/${tool}/real-proof/demo-data-evidence.json`,
     `evals/runs/${tool}/real-proof/capture-readiness.json`,
@@ -2574,6 +2725,10 @@ function realRunArtifactContent(path, tool) {
       "- rejected: false",
       ""
     ].join("\n");
+  }
+
+  if (path.endsWith("reviewer-signoff.json")) {
+    return JSON.stringify(reviewerSignoff(tool));
   }
 
   if (path.endsWith("flow-evidence.json")) {
@@ -2727,6 +2882,38 @@ function flowEvidence(tool) {
     terminalBusinessState:
       tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review",
     stepIds: ["step-001", "step-002", "step-003"]
+  };
+}
+
+function reviewerSignoff(tool) {
+  const flowId = tool === "odoo" ? "odoo-qualify-opportunity" : "notion-update-task-status";
+  const flowPath = `flows/${tool}/${tool === "odoo" ? "qualify-opportunity" : "update-task-status"}.flow.md`;
+
+  return {
+    schemaVersion: 1,
+    tool,
+    runId: "real-proof",
+    substrate: "real-tool",
+    flowId,
+    flowPath,
+    reviewedAt: "2026-06-23T00:00:00.000Z",
+    reviewerRole: "senior-reviewer",
+    terminalBusinessStateReviewed:
+      tool === "odoo" ? "demo opportunity visible with stage qualified" : "demo task visible with status ready for review",
+    evidenceBundleReviewed: [
+      `evals/runs/${tool}/real-proof/step-trace.json`,
+      `evals/runs/${tool}/real-proof/final-screen.png`,
+      `evals/runs/${tool}/real-proof/eval-recording.mp4`,
+      `evals/runs/${tool}/real-proof/failure-log.md`,
+      `evals/runs/${tool}/real-proof/reviewer-checklist.md`,
+      `evals/runs/${tool}/real-proof/flow-evidence.json`,
+      `evals/runs/${tool}/real-proof/demo-data-evidence.json`,
+      `evals/runs/${tool}/real-proof/capture-readiness.json`,
+      `evals/runs/${tool}/real-proof/screen-input-evidence.json`,
+      `evals/runs/${tool}/real-proof/outcome-evidence.json`
+    ],
+    verdict: "accepted",
+    reviewerNotes: "senior reviewer accepted the audited run evidence bundle"
   };
 }
 

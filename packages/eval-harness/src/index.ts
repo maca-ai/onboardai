@@ -534,12 +534,17 @@ export function auditRealToolRunArtifacts(
     { label: "eval recording", path: `${runDir}/eval-recording.mp4` },
     { label: "failure log", path: `${runDir}/failure-log.md` },
     { label: "reviewer checklist", path: `${runDir}/reviewer-checklist.md` },
+    { label: "reviewer signoff", path: `${runDir}/reviewer-signoff.json` },
     { label: "flow evidence", path: `${runDir}/flow-evidence.json` },
     { label: "demo data evidence", path: `${runDir}/demo-data-evidence.json` },
     { label: "capture readiness evidence", path: `${runDir}/capture-readiness.json` },
     { label: "screen input evidence", path: `${runDir}/screen-input-evidence.json` },
     { label: "outcome evidence", path: `${runDir}/outcome-evidence.json` }
   ] as const;
+  const requiredEvidenceBundlePaths = [
+    ...requiredArtifacts.map((artifact) => artifact.path).filter((path) => !path.endsWith("/reviewer-signoff.json")),
+    ...(existsPath(`${runDir}/capture-manifest.json`) ? [`${runDir}/capture-manifest.json`] : [])
+  ];
 
   for (const artifact of requiredArtifacts) {
     references.push({ tool: proof.tool, label: artifact.label, path: artifact.path });
@@ -656,6 +661,29 @@ export function auditRealToolRunArtifacts(
       if (existsPath(stepTracePath)) {
         auditReviewerStepSignoff(proof, reviewerChecklistPath, content, stepTracePath, readText(stepTracePath), findings);
       }
+    }
+  }
+
+  const reviewerSignoffPath = `${runDir}/reviewer-signoff.json`;
+  if (existsPath(reviewerSignoffPath)) {
+    if (!readText) {
+      findings.push({ tool: proof.tool, message: `${reviewerSignoffPath} cannot be validated without file contents` });
+    } else {
+      const content = readText(reviewerSignoffPath);
+      auditShareableTextRedaction(proof.tool, reviewerSignoffPath, content, findings);
+      auditRealRunTemplatePlaceholders(proof.tool, reviewerSignoffPath, content, findings);
+      auditReviewerSignoff(
+        proof,
+        runDir,
+        reviewerSignoffPath,
+        content,
+        flowEvidencePath,
+        existsPath(flowEvidencePath) ? readText(flowEvidencePath) : null,
+        requiredEvidenceBundlePaths,
+        existsPath,
+        references,
+        findings
+      );
     }
   }
 
@@ -1663,7 +1691,7 @@ function readFlowEvidenceSummary(
   flowEvidencePath: string,
   flowEvidenceContent: string | null,
   findings: CaptureTeachGoalStatusFinding[]
-): { readonly flowPath: string; readonly flowId: string } | null {
+): { readonly flowPath: string; readonly flowId: string; readonly terminalBusinessState: string } | null {
   if (flowEvidenceContent === null) {
     return null;
   }
@@ -1681,14 +1709,18 @@ function readFlowEvidenceSummary(
     return null;
   }
 
-  if (typeof parsed.flowPath !== "string" || typeof parsed.flowId !== "string") {
-    findings.push({ tool: proof.tool, message: `${flowEvidencePath} must include flowPath and flowId for normalized manifest flow grounding` });
+  if (typeof parsed.flowPath !== "string" || typeof parsed.flowId !== "string" || typeof parsed.terminalBusinessState !== "string") {
+    findings.push({
+      tool: proof.tool,
+      message: `${flowEvidencePath} must include flowPath, flowId, and terminalBusinessState for flow grounding`
+    });
     return null;
   }
 
   return {
     flowPath: parsed.flowPath,
-    flowId: parsed.flowId
+    flowId: parsed.flowId,
+    terminalBusinessState: parsed.terminalBusinessState
   };
 }
 
@@ -2253,6 +2285,111 @@ function auditReviewerChecklist(
 
   if (content.includes("- rejected: true")) {
     findings.push({ tool: proof.tool, message: `${path} reviewer checklist must not contain rejected: true` });
+  }
+}
+
+function auditReviewerSignoff(
+  proof: RealToolProofEvidence,
+  runDir: string,
+  path: string,
+  content: string,
+  flowEvidencePath: string,
+  flowEvidenceContent: string | null,
+  requiredEvidenceBundlePaths: readonly string[],
+  existsPath: (path: string) => boolean,
+  references: ShareableEvidencePathReference[],
+  findings: CaptureTeachGoalStatusFinding[]
+): void {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    findings.push({ tool: proof.tool, message: `${path} must be valid JSON` });
+    return;
+  }
+
+  if (!isRecord(parsed)) {
+    findings.push({ tool: proof.tool, message: `${path} must contain an object` });
+    return;
+  }
+
+  auditSchemaVersion(proof, path, parsed, findings);
+
+  if (parsed.substrate !== "real-tool") {
+    findings.push({ tool: proof.tool, message: `${path} substrate must be real-tool` });
+  }
+
+  if (parsed.tool !== "odoo" && parsed.tool !== "notion") {
+    findings.push({ tool: proof.tool, message: `${path} tool must be odoo or notion` });
+  }
+
+  if (parsed.tool !== proof.tool) {
+    findings.push({ tool: proof.tool, message: `${path} tool must match ${proof.tool}` });
+  }
+
+  const expectedRunId = runDir.split("/").at(-1) ?? "";
+  if (parsed.runId !== expectedRunId) {
+    findings.push({ tool: proof.tool, message: `${path} runId must match the run directory` });
+  }
+
+  const flowEvidenceSummary = readFlowEvidenceSummary(proof, flowEvidencePath, flowEvidenceContent, findings);
+  if (typeof parsed.flowId !== "string" && typeof parsed.flowPath !== "string") {
+    findings.push({ tool: proof.tool, message: `${path} must include flowId or flowPath` });
+  }
+
+  if (flowEvidenceSummary) {
+    if (typeof parsed.flowId === "string" && parsed.flowId !== flowEvidenceSummary.flowId) {
+      findings.push({ tool: proof.tool, message: `${path} flowId must match ${flowEvidencePath} flowId` });
+    }
+
+    if (typeof parsed.flowPath === "string" && parsed.flowPath !== flowEvidenceSummary.flowPath) {
+      findings.push({ tool: proof.tool, message: `${path} flowPath must match ${flowEvidencePath} flowPath` });
+    }
+
+    if (parsed.terminalBusinessStateReviewed !== flowEvidenceSummary.terminalBusinessState) {
+      findings.push({ tool: proof.tool, message: `${path} terminalBusinessStateReviewed must match ${flowEvidencePath} terminalBusinessState` });
+    }
+  }
+
+  if (typeof parsed.reviewedAt !== "string" || !isIsoUtcTimestamp(parsed.reviewedAt)) {
+    findings.push({ tool: proof.tool, message: `${path} reviewedAt must be an ISO UTC timestamp` });
+  }
+
+  if (parsed.reviewerRole !== "senior-reviewer") {
+    findings.push({ tool: proof.tool, message: `${path} reviewerRole must be senior-reviewer` });
+  }
+
+  if (typeof parsed.terminalBusinessStateReviewed !== "string" || parsed.terminalBusinessStateReviewed.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} terminalBusinessStateReviewed must be a non-empty string` });
+  }
+
+  if (parsed.verdict !== "accepted" && parsed.verdict !== "pass") {
+    findings.push({ tool: proof.tool, message: `${path} verdict must be accepted or pass` });
+  }
+
+  if (typeof parsed.reviewerNotes !== "string" || parsed.reviewerNotes.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} reviewerNotes must be a non-empty string` });
+  }
+
+  if (!Array.isArray(parsed.evidenceBundleReviewed) || parsed.evidenceBundleReviewed.length === 0) {
+    findings.push({ tool: proof.tool, message: `${path} evidenceBundleReviewed must contain audited evidence paths` });
+    return;
+  }
+
+  const reviewedPaths = new Set<string>();
+  parsed.evidenceBundleReviewed.forEach((entry, index) => {
+    const field = `evidenceBundleReviewed[${index}]`;
+    if (typeof entry === "string") {
+      reviewedPaths.add(entry);
+    }
+
+    auditEvidencePathField(proof.tool, path, field, entry, `${runDir}/`, existsPath, references, findings);
+  });
+
+  for (const requiredPath of requiredEvidenceBundlePaths) {
+    if (!reviewedPaths.has(requiredPath)) {
+      findings.push({ tool: proof.tool, message: `${path} evidenceBundleReviewed must include ${requiredPath}` });
+    }
   }
 }
 
